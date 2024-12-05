@@ -1,0 +1,20 @@
+.vscode/
+.idea/
+# Virtual environment
+client/node_modules/
+venv/
+backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+
+backend/__pycache__/
+
+*.log
+*.tmp
+
+dist/
+build/
+
+node_modules/
+backend/.env
