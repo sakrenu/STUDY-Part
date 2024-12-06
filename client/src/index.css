@@ -12,6 +12,48 @@ code {
     monospace;
 }
 
+/* Dynamic dark gradient background */
+.bg-gradient-shift {
+  background: linear-gradient(45deg, #b40c7c, #06296b, #268f8f, #6413ba);
+  background-size: 400% 400%; /* Allows the animation to shift the gradient */
+  animation: gradientShift 8s ease infinite; /* Smooth infinite animation */
+}
+
+/* Keyframes for gradient animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Neon text styles with darker glow */
+.text-neon-pink {
+  color: #ff007f;
+  text-shadow: 0 0 4px #ff007f, 0 0 8px #ff007f, 0 0 12px #ff007f;
+}
+
+.text-neon-cyan {
+  color: #00ffff;
+  text-shadow: 0 0 4px #00ffff, 0 0 8px #00ffff, 0 0 12px #00ffff;
+}
+
+/* Card with dark neon border */
+.card-neon {
+  background: rgba(10, 10, 10, 0.9); /* Very dark transparent black */
+  border: 2px solid #007bff;
+  box-shadow: 0 0 8px #007bff, 0 0 16px #007bff;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+
 
 @tailwind base;
 @tailwind components;
