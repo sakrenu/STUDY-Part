@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase'; // Import googleProvider from firebase.js
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'; // Import signInWithPopup for Google login
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
@@ -24,6 +24,17 @@ const Login = () => {
         } catch (err) {
             setError(err.message);
             console.error(err);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            console.log('Google User Info:', result.user);
+            navigate('/dashboard'); // Redirect to dashboard or appropriate page
+        } catch (err) {
+            console.error(err.message);
+            setError('Failed to log in with Google');
         }
     };
 
@@ -59,6 +70,9 @@ const Login = () => {
                         Log In
                     </button>
                 </form>
+                <button className="google-button" onClick={handleGoogleLogin}>
+                    Sign in with Google
+                </button>
                 <p className="signup-link">
                     Don't have an account?{' '}
                     <span onClick={() => navigate('/signup')} className="link">
