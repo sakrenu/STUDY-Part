@@ -1,0 +1,149 @@
+/* General Container */
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f7f9fc;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Signup Card */
+.signup-card {
+    width: 400px;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.signup-card:hover {
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+}
+
+/* Title and Subtitle */
+.signup-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.signup-subtitle {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 20px;
+}
+
+/* Error and Success Messages */
+.error-message {
+    color: #e74c3c;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.success-message {
+    color: #27ae60;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+/* Signup Form */
+.signup-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #dcdfe3;
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: #f7f9fc;
+    transition: border-color 0.3s ease;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-color: #3498db;
+    outline: none;
+    background-color: #ffffff;
+}
+
+/* Role Selector */
+.role-selector {
+    display: flex;
+    justify-content: center; /* Center-align buttons */
+    gap: 20px; /* Add consistent spacing between options */
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f7f9fc;
+    border: 1px solid #dcdfe3;
+    border-radius: 5px;
+}
+
+.role-selector label {
+    font-size: 14px;
+    color: #2c3e50;
+    cursor: pointer;
+    display: flex;
+    align-items: center; /* Vertically align text and radio buttons */
+}
+
+.role-selector input {
+    margin-right: 5px; /* Space between radio button and label text */
+}
+
+/* Signup Button */
+.signup-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #3498db;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.signup-button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+/* Login Link */
+.login-link {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.login-link .link {
+    color: #3498db;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.login-link .link:hover {
+    color: #2980b9;
+}
