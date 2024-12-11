@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { auth, googleProvider } from '../firebase'; // Import googleProvider from firebase.js
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'; // Import signInWithPopup for Google login
+import { auth, googleProvider, db } from '../firebase'; // Import Firestore
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { getDoc, doc } from 'firebase/firestore'; // Import Firestore functions
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
@@ -12,6 +13,31 @@ const Login = () => {
 
     const navigate = useNavigate();
 
+    const checkRoleExists = async (uid) => {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                if (userData.role) {
+                    console.log('Role found:', userData.role);
+                    return true;
+                } else {
+                    console.error('No role assigned to this account.');
+                    setError('No role assigned. Please contact support.');
+                    return false;
+                }
+            } else {
+                console.error('User not found in Firestore.');
+                setError('User not found. Please sign up first.');
+                return false;
+            }
+        } catch (err) {
+            console.error('Error checking role:', err);
+            setError('An error occurred while checking role.');
+            return false;
+        }
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
@@ -19,8 +45,14 @@ const Login = () => {
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log('Logged In:', userCredential.user);
-            setSuccess(true);
+            const user = userCredential.user;
+            console.log('Logged In:', user);
+
+            const roleExists = await checkRoleExists(user.uid);
+            if (roleExists) {
+                setSuccess(true);
+                navigate('/dashboard'); // Redirect to dashboard
+            }
         } catch (err) {
             setError(err.message);
             console.error(err);
@@ -30,11 +62,16 @@ const Login = () => {
     const handleGoogleLogin = async () => {
         try {
             const result = await signInWithPopup(auth, googleProvider);
-            console.log('Google User Info:', result.user);
-            navigate('/dashboard'); // Redirect to dashboard or appropriate page
+            const user = result.user;
+            console.log('Google User Info:', user);
+
+            const roleExists = await checkRoleExists(user.uid);
+            if (roleExists) {
+                navigate('/dashboard'); // Redirect to dashboard
+            }
         } catch (err) {
             console.error(err.message);
-            setError('Failed to log in with Google');
+            setError('Failed to log in with Google.');
         }
     };
 

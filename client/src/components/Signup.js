@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, googleProvider, db } from '../firebase'; // Import Google Provider and Firestore
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import './Signup.css'; // Use the new Signup.css file
+import './Signup.css';
 
 const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('student'); // Default role is Student
+    const [confirmPassword, setConfirmPassword] = useState(''); // Confirm Password field
+    const [role, setRole] = useState(''); // No default to ensure selection
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
@@ -18,13 +20,66 @@ const Signup = () => {
         setError('');
         setSuccess(false);
 
+        // Check if passwords match
+        if (password !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+        }
+
+        // Check if a role is selected
+        if (!role) {
+            setError('Please select a role before signing up.');
+            return;
+        }
+
         try {
+            // Create user with email and password
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            console.log('User Created:', userCredential.user);
+            const user = userCredential.user;
+
+            // Save user details (email and role) to Firestore
+            await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                role: role, // 'student' or 'teacher'
+            });
+
+            console.log('User Created:', user);
             console.log('Role:', role); // Log the selected role
             setSuccess(true);
+            navigate('/login'); // Redirect to login page after success
         } catch (err) {
             setError(err.message);
+            console.error(err);
+        }
+    };
+
+    const handleGoogleSignup = async () => {
+        setError('');
+        setSuccess(false);
+
+        // Check if a role is selected
+        if (!role) {
+            setError('Please select a role before signing up with Google.');
+            return;
+        }
+
+        try {
+            // Authenticate with Google
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            // Save user details (email and role) to Firestore
+            await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                role: role, // 'student' or 'teacher'
+            });
+
+            console.log('Google User Created:', user);
+            console.log('Role:', role); // Log the selected role
+            setSuccess(true);
+            navigate('/login'); // Redirect to login page after success
+        } catch (err) {
+            setError('Failed to sign up with Google.');
             console.error(err);
         }
     };
@@ -35,7 +90,7 @@ const Signup = () => {
                 <h1 className="signup-title">Create an Account</h1>
                 <p className="signup-subtitle">Sign up and start using our services</p>
                 {error && <p className="error-message">{error}</p>}
-                {success && <p className="success-message">Sign-up successful! Please log in.</p>}
+                {success && <p className="success-message">Sign-up successful! Redirecting to login...</p>}
                 <form className="signup-form" onSubmit={handleSignup}>
                     <div className="form-group">
                         <label>Email</label>
@@ -54,6 +109,16 @@ const Signup = () => {
                             placeholder="Enter your password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Confirm Password</label>
+                        <input
+                            type="password"
+                            placeholder="Confirm your password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                             required
                         />
                     </div>
@@ -86,6 +151,9 @@ const Signup = () => {
                         Sign Up
                     </button>
                 </form>
+                <button className="google-button" onClick={handleGoogleSignup}>
+                    Sign up with Google
+                </button>
                 <p className="login-link">
                     Already have an account?{' '}
                     <span onClick={() => navigate('/login')} className="link">
