@@ -1,75 +1,46 @@
-// import logo from './logo.svg';
-// import './App.css';
+// import React from 'react';
+// import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// import Home from './components/Home';
+// import Login from './components/Login';
+// import Signup from './components/Signup';
 
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;
-
-// import React, { useEffect, useState } from 'react';
-// import axios from 'axios';
-
-// function App() {
-//     const [message, setMessage] = useState('');
-
-//     useEffect(() => {
-//         axios.get('http://127.0.0.1:5000/')
-//             .then(response => setMessage(response.data.message))
-//             .catch(error => console.error(error));
-//     }, []);
-
+// const App = () => {
 //     return (
-//         <div>
-//             <h1>Study-Part</h1>
-//             <p>{message}</p>
-//         </div>
+//         <Router>
+//             <Routes>
+//                 <Route path="/" element={<Home />} />
+//                 <Route path="/login" element={<Login />} />
+//                 <Route path="/signup" element={<Signup />} />
+//             </Routes>
+//         </Router>
 //     );
-// }
+// };
 
 // export default App;
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+// client/src/App.js
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import Home from './components/Home';
+import TeacherDashboard from './components/TeacherDashboard';
+import StudentDashboard from './components/StudentDashboard'; // Assuming you have a StudentDashboard component
 
-function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    axios
-      .get("http://127.0.0.1:5000/")
-      .then((response) => setMessage(response.data.message))
-      .catch((error) => console.error(error));
-  }, []);
-
+const App = () => {
   return (
-    <div className="min-h-screen bg-gradient-shift flex items-center justify-center">
-      <div className="card-neon">
-        <h1 className="text-5xl font-extrabold text-neon-pink mb-4">
-          Study-Part
-        </h1>
-        <p className="text-lg text-neon-cyan">
-          {message || "Loading message from backend..."}
-        </p>
+    <Router>
+      <div className="App">
+        <Routes>
+        <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/dashboard" element={<TeacherDashboard />} />
+          <Route path="/student-dashboard" element={<StudentDashboard />} />
+          <Route path="/" element={<Navigate to="/login" />} />
+        </Routes>
       </div>
-    </div>
+    </Router>
   );
-}
+};
 
 export default App;
