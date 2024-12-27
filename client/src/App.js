@@ -75,7 +75,7 @@
 // export default App;
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import LandingPage from ".components/Landingpage";
+import LandingPage from "./components/Landingpage";
 
 function App() {
   const [message, setMessage] = useState("");
