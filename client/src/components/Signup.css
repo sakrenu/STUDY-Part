@@ -1,0 +1,163 @@
+/* Colors */
+:root {
+    --background-dark: #1E1E2C; /* Primary dark navy background */
+    --background-darker: #2C2C54; /* Secondary background */
+    --gradient-start: #4A90E2; /* Cool blue */
+    --gradient-end: #D774E4; /* Purple/pink hues */
+    --text-light: #FFFFFF; /* White for main text */
+    --text-gray: #D3D3D3; /* Light-gray for secondary text */
+    --accent-yellow: #FFD700; /* Warm yellow for highlights */
+    --accent-orange: #FFA500; /* Warm orange for accents */
+  }
+  
+  /* General Container */
+  .signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: var(--background-dark);
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Signup Card */
+  .signup-card {
+    width: 400px;
+    padding: 30px;
+    background-color: var(--background-darker);
+    border-radius: 10px;
+    box-shadow: 0 0 10px var(--gradient-start), 0 0 20px var(--gradient-end);
+    text-align: center;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  
+  .signup-card:hover {
+    box-shadow: 0 0 15px var(--gradient-start), 0 0 30px var(--gradient-end);
+    transform: translateY(-3px);
+  }
+  
+  /* Title and Subtitle */
+  .signup-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--text-light);
+    text-shadow: 0 0 5px var(--text-light), 0 0 10px var(--gradient-start), 0 0 20px var(--gradient-end);
+  }
+  
+  .signup-subtitle {
+    font-size: 14px;
+    color: var(--text-gray);
+    margin-bottom: 20px;
+  }
+  
+  /* Error and Success Messages */
+  .error-message {
+    color: var(--accent-orange);
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+  
+  .success-message {
+    color: var(--accent-yellow);
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+  
+  /* Signup Form */
+  .signup-form {
+    text-align: left;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-light);
+  }
+  
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--text-gray);
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: var(--background-darker);
+    color: var(--text-light);
+    transition: border-color 0.3s ease;
+  }
+  
+  input[type="email"]:focus,
+  input[type="password"]:focus {
+    border-color: var(--gradient-start);
+    outline: none;
+    background-color: var(--background-dark);
+  }
+  
+  /* Role Selector */
+  .role-selector {
+    display: flex;
+    justify-content: center; /* Center-align buttons */
+    gap: 20px; /* Add consistent spacing between options */
+    margin-top: 10px;
+    padding: 10px;
+    background-color: var(--background-dark);
+    border: 1px solid var(--text-gray);
+    border-radius: 5px;
+  }
+  
+  .role-selector label {
+    font-size: 14px;
+    color: var(--text-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center; /* Vertically align text and radio buttons */
+  }
+  
+  .role-selector input {
+    margin-right: 5px; /* Space between radio button and label text */
+  }
+  
+  /* Signup Button */
+  .signup-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-light);
+    background-image: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  
+  .signup-button:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Login Link */
+  .login-link {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--text-gray);
+  }
+  
+  .login-link .link {
+    color: var(--gradient-start);
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .login-link .link:hover {
+    color: var(--gradient-end);
+  }
+  
