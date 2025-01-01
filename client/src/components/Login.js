@@ -314,9 +314,25 @@ const Login = () => {
                     navigate('/student-dashboard'); // Redirect to student dashboard
                 }
             }
-        } catch (err) {
-            setError(err.message);
-            console.error(err);
+        } 
+        catch (err) {
+            console.error('Unexpected Error:', err); // Log the full error object
+            console.error('Error Code:', err.code);
+            console.error('Error Message:', err.message);
+
+            switch (err.code) {
+                case 'auth/invalid-credential':
+                    setError('No account found with this email. Please sign up first.');
+                    break;
+                case 'auth/wrong-password':
+                    setError('Incorrect password. Please try again.');
+                    break;
+                case 'auth/invalid-email':
+                    setError('Invalid email format. Please enter a valid email.');
+                    break;
+                default:
+                    setError('An unexpected error occurred. Please try again later.');
+            }
         }
     };
 
