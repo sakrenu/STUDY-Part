@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { auth, googleProvider, db } from '../firebase'; // Import Firestore
+import { auth, googleProvider, db } from '../firebase';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { getDoc, doc } from 'firebase/firestore'; // Import Firestore functions
+import { getDoc, doc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
@@ -20,7 +20,7 @@ const Login = () => {
                 const userData = userDoc.data();
                 if (userData.role) {
                     console.log('Role found:', userData.role);
-                    return true;
+                    return userData.role;
                 } else {
                     console.error('No role assigned to this account.');
                     setError('No role assigned. Please contact support.');
@@ -48,11 +48,14 @@ const Login = () => {
             const user = userCredential.user;
             console.log('Logged In:', user);
 
-            const roleExists = await checkRoleExists(user.uid);
-            if (roleExists)
-                 {
+            const role = await checkRoleExists(user.uid);
+            if (role) {
                 setSuccess(true);
-                navigate('/dashboard'); // Redirect to dashboard
+                if (role === 'teacher') {
+                    navigate('/dashboard'); // Redirect to teacher dashboard
+                } else {
+                    navigate('/student-dashboard'); // Redirect to student dashboard
+                }
             }
         } 
         catch (err) {
@@ -82,19 +85,13 @@ const Login = () => {
             const user = result.user;
             console.log('Google User Info:', user);
 
-            // Check if user exists in Firestore
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                if (userData.role) {
-                    console.log('Google user already signed up.');
-                    navigate('/dashboard'); // Redirect to dashboard
+            const role = await checkRoleExists(user.uid);
+            if (role) {
+                if (role === 'teacher') {
+                    navigate('/dashboard'); // Redirect to teacher dashboard
                 } else {
-                    setError('No role assigned to this account. Please contact support.');
+                    navigate('/student-dashboard'); // Redirect to student dashboard
                 }
-            } else {
-                // User not found, prompt them to sign up
-                setError('No account found with this email. Please sign up first.');
             }
         } catch (err) {
             console.error(err.message);
@@ -149,3 +146,4 @@ const Login = () => {
 };
 
 export default Login;
+
