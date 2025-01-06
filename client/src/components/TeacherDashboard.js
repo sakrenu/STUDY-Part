@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase'; // Import db from the firebase configuration file
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import axios from 'axios';
@@ -14,6 +15,8 @@ const TeachersDashboard = () => {
     const [cropper, setCropper] = useState(null);
     const [croppedImage, setCroppedImage] = useState(null);
     const [error, setError] = useState(null);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -93,9 +96,19 @@ const TeachersDashboard = () => {
 
     return (
         <div className="teachers-dashboard">
-            <h1>Teacher's Dashboard</h1>
+            <header className="dashboard-header">
+                <h1>Teacher's Dashboard</h1>
+                <button
+                    className="back-button"
+                    onClick={() => navigate('/dashboard')}
+                >
+                    Back to Features Dashboard
+                </button>
+            </header>
+
             {error && <p className="error-message">{error}</p>}
-            <div className="teaching-mode">
+
+            <div className="dashboard-section">
                 <h2>Teaching Mode</h2>
                 <input type="file" accept="image/*" onChange={handleImageUpload} />
                 {image && (
@@ -109,7 +122,9 @@ const TeachersDashboard = () => {
                         }}
                     />
                 )}
-                <button onClick={handleSegmentation}>Segment Image</button>
+                <button className="dashboard-action-button" onClick={handleSegmentation}>
+                    Segment Image
+                </button>
                 {segmentedImages.map((segmentedImage, index) => (
                     <div key={index} className="segmented-image-container">
                         <img src={segmentedImage} alt={`Segmented ${index}`} />
@@ -121,17 +136,21 @@ const TeachersDashboard = () => {
                     </div>
                 ))}
             </div>
-            <div className="quiz-mode">
+
+            <div className="dashboard-section">
                 <h2>Quiz Mode</h2>
                 <p>Placeholder for future quiz feature</p>
             </div>
-            <div className="manage-students">
+
+            <div className="dashboard-section">
                 <h2>Manage Students</h2>
                 <ul>
                     {students.map(student => (
                         <li key={student.id}>
                             {student.email}
-                            <button onClick={() => handleSendToStudent(student.id)}>Send</button>
+                            <button className="dashboard-action-button" onClick={() => handleSendToStudent(student.id)}>
+                                Send
+                            </button>
                         </li>
                     ))}
                 </ul>
