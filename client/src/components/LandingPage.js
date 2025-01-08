@@ -1,9 +1,9 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom'; 
 import './LandingPage.css';
 
 const LandingPage = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
@@ -13,18 +13,16 @@ const LandingPage = () => {
   };
 
   const handleNavLinkClick = (e, sectionId) => {
-    e.preventDefault(); // Prevent default anchor behavior
+    e.preventDefault(); 
     if (sectionId === 'top') {
-      // Scroll to the top of the page
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      scrollToSection(sectionId); // Scroll to the section
+      scrollToSection(sectionId); 
     }
   };
 
-  // Function to navigate to the Signup page with a pre-selected role
   const navigateToSignup = (role) => {
-    navigate('/signup', { state: { role } }); // Pass the role as state
+    navigate('/signup', { state: { role } }); 
   };
 
   return (
@@ -39,14 +37,14 @@ const LandingPage = () => {
         </div>
         <div className="nav-links">
           <a
-            href="#top" // Use #top to indicate scrolling to the top
+            href="#top" 
             className="nav-link"
-            onClick={(e) => handleNavLinkClick(e, 'top')} // Scroll to top
+            onClick={(e) => handleNavLinkClick(e, 'top')} 
           >
             Home
           </a>
           <a
-            href="#features-section" // Link to Features Section
+            href="#features-section" 
             className="nav-link"
             onClick={(e) => handleNavLinkClick(e, 'features-section')}
           >
@@ -82,7 +80,6 @@ const LandingPage = () => {
               Create engaging learning experiences with AI-enhanced image analysis and interactive content generation for both teachers and students.
             </h2>
             <div className="cta-container">
-              {/* Update the buttons to navigate to Signup with role */}
               <button className="primary-btn" onClick={() => navigateToSignup('student')}>
                 Start learning
               </button>
@@ -91,9 +88,9 @@ const LandingPage = () => {
               </button>
             </div>
           </div>
-          <div className="hero-image">
+          {/* <div className="hero-image">
             <img src="/StudyPartImage.jpg" alt="StudyPart" />
-          </div>
+          </div> */}
         </div>
       </main>
 
