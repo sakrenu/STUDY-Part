@@ -64,29 +64,40 @@ const LandingPage = () => {
       </section>
 
       <section id="products-section" className="products-section">
-        <h2 className="product-title">Our Products</h2>
+        <h2 className="section-title">Our Products</h2>
         <div className="products-grid">
           <div className="product-card">
             <h3 className="product-title">Learning Mode</h3>
-            <p className="product-description">Helps teachers create interactive image and text-based content for their students which can be then seen by their students.</p>
+            <p className="product-description">
+              Empower teachers to create engaging and interactive content using a combination of text and images. Students can access these materials to enhance their understanding in a dynamic and visually appealing way.
+            </p>
           </div>
           <div className="product-card">
             <h3 className="product-title">Quiz Mode</h3>
-            <p className="product-description">Helps teachers conduct image interactive quizzes with images and text.</p>
+            <p className="product-description">
+              Reimagine assessments with interactive image-based and text-based quizzes. Teachers can design creative quizzes that challenge students while keeping them engaged in the learning process.
+            </p>
           </div>
           <div className="product-card">
             <h3 className="product-title">Notes Mode</h3>
-            <p className="product-description">Helps students create interactive notes for their own use.</p>
+            <p className="product-description">
+              Enable students to create their own personalized, interactive notes. These notes integrate text and visuals seamlessly, helping learners retain information more effectively and making study sessions more productive.
+            </p>
           </div>
         </div>
       </section>
 
       <section id="about-section" className="about-section">
-        <h2 className="about-title">About Us</h2>
+        <h2 className="section-title">About Us</h2>
         <p className="about-description">
-          There is a lot of learning content on the internet but all of them are mostly video lectures or just textual notes. So we bring in direct content-based interactive learning into the picture which generates interest in learning tasks. As teachers will be enabled to deliver content-based interactive learning to their students, all students can have a uniform learning curve while enjoying it as well.
+          At StudyPart, we believe that learning should be more than just passive consumption of video lectures or plain text notes. Our mission is to transform education by making it interactive, engaging, and accessible for everyone.
         </p>
+        <p className="about-description">
+          We understand the challenges faced by both teachers and students in maintaining engagement and ensuring consistent learning outcomes. StudyPart bridges this gap by offering tools that enable content-based interactive learning. Teachers can deliver immersive educational experiences, while students benefit from a fun and uniform learning curve.
+        </p>
+        <p className="about-description">Join us in reshaping the way knowledge is shared and absorbed, one interaction at a time.</p>
       </section>
+
     </div>
   );
 };
