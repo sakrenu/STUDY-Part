@@ -3,7 +3,20 @@ import './LandingPage.css';
 
 const LandingPage = () => {
   const scrollToSection = (sectionId) => {
-    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleNavLinkClick = (e, sectionId) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    if (sectionId === 'top') {
+      // Scroll to the top of the page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      scrollToSection(sectionId); // Scroll to the section
+    }
   };
 
   return (
@@ -17,9 +30,27 @@ const LandingPage = () => {
           </a>
         </div>
         <div className="nav-links">
-          <a href="/" className="nav-link">Home</a>
-          <a href="#" className="nav-link" onClick={() => scrollToSection('products-section')}>Products</a>
-          <a href="#" className="nav-link" onClick={() => scrollToSection('about-section')}>About</a>
+          <a
+            href="#top" // Use #top to indicate scrolling to the top
+            className="nav-link"
+            onClick={(e) => handleNavLinkClick(e, 'top')} // Scroll to top
+          >
+            Home
+          </a>
+          <a
+            href="#products-section"
+            className="nav-link"
+            onClick={(e) => handleNavLinkClick(e, 'products-section')}
+          >
+            Products
+          </a>
+          <a
+            href="#about-section"
+            className="nav-link"
+            onClick={(e) => handleNavLinkClick(e, 'about-section')}
+          >
+            About
+          </a>
           <a href="/login" className="nav-link">Sign in</a>
           <a href="/signup" className="register-btn">Register</a>
         </div>
