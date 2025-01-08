@@ -1,13 +1,4 @@
-// /** @type {import('tailwindcss').Config} */
-// module.exports = {
-//   content: [],
-//   theme: {
-//     extend: {},
-//   },
-//   plugins: [],
-// }
-
-
+// tailwind.config.js
 const customTheme = require('./src/styles/theme.js'); // Import the custom theme
 
 module.exports = {
