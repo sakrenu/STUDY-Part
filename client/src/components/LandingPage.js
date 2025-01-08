@@ -46,6 +46,13 @@ const LandingPage = () => {
             Home
           </a>
           <a
+            href="#features-section" // Link to Features Section
+            className="nav-link"
+            onClick={(e) => handleNavLinkClick(e, 'features-section')}
+          >
+            Features
+          </a>
+          <a
             href="#products-section"
             className="nav-link"
             onClick={(e) => handleNavLinkClick(e, 'products-section')}
@@ -90,7 +97,8 @@ const LandingPage = () => {
         </div>
       </main>
 
-      <section className="features-section">
+      <section id="features-section" className="features-section"> {/* Added id for navigation */}
+        <h2 className="section-title">Features</h2>
         <div className="features-grid">
           <div className="feature-card">
             <h3 className="feature-title">AI-Powered Analysis</h3>
@@ -141,7 +149,6 @@ const LandingPage = () => {
         </p>
         <p className="about-description">Join us in reshaping the way knowledge is shared and absorbed, one interaction at a time.</p>
       </section>
-
     </div>
   );
 };
