@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom'; // Import useLocation
+import { useLocation, useNavigate } from 'react-router-dom'; // Import useLocation and useNavigate
 import { auth, googleProvider, db } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -54,7 +54,13 @@ const Signup = () => {
       console.log('User Created:', user);
       console.log('Role:', role); // Log the selected role
       setSuccess(true);
-      navigate('/login'); // Redirect to login page after success
+
+      // Redirect based on role
+      if (role === 'teacher') {
+        navigate('/dashboard/teaching'); // Redirect to teacher dashboard
+      } else {
+        navigate('/student-dashboard'); // Redirect to student dashboard
+      }
     } catch (err) {
       setError(err.message);
       console.error(err);
@@ -85,7 +91,13 @@ const Signup = () => {
       console.log('Google User Created:', user);
       console.log('Role:', role); // Log the selected role
       setSuccess(true);
-      navigate('/login'); // Redirect to login page after success
+
+      // Redirect based on role
+      if (role === 'teacher') {
+        navigate('/dashboard/teaching'); // Redirect to teacher dashboard
+      } else {
+        navigate('/student-dashboard'); // Redirect to student dashboard
+      }
     } catch (err) {
       setError('Failed to sign up with Google.');
       console.error(err);
@@ -95,7 +107,7 @@ const Signup = () => {
     // Function to handle the close/back button click
     const handleClose = () => {
         navigate('/'); // Navigate back to the landing page
-    };
+  };
 
   return (
     <div className="signup-container">
