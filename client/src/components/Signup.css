@@ -22,6 +22,7 @@
   
   /* Signup Card */
   .signup-card {
+    position: relative;
     width: 400px;
     padding: 30px;
     background-color: var(--background-darker);
@@ -161,3 +162,19 @@
     color: var(--gradient-end);
   }
   
+/* Close Button */
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-button:hover {
+  color: var(--gradient-start);
+}

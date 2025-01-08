@@ -84,9 +84,18 @@ const Signup = () => {
         }
     };
 
+    // Function to handle the close/back button click
+    const handleClose = () => {
+        navigate('/'); // Navigate back to the landing page
+    };
+
     return (
         <div className="signup-container">
             <div className="signup-card">
+                {/* Close Button */}
+                <button className="close-button" onClick={handleClose}>
+                    &times; {/* Unicode for close symbol */}
+                </button>
                 <h1 className="signup-title">Create an Account</h1>
                 <p className="signup-subtitle">Sign up and start using our services</p>
                 {error && <p className="error-message">{error}</p>}
