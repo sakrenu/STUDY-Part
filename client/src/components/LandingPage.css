@@ -17,7 +17,7 @@ html, body {
 
 /* Dynamic dark gradient background */
 .bg-gradient-shift {
-  background: linear-gradient(45deg, #b40c7c, #06296b, #268f8f, #6413ba);
+  background: linear-gradient(45deg, #b40c7c, #06296b, #073e3a, #4d0896);
   background-size: 400% 400%; /* Allows the animation to shift the gradient */
   animation: gradientShift 8s ease infinite; /* Smooth infinite animation */
 }
@@ -37,7 +37,7 @@ html, body {
 
 /* Navigation */
 .nav-container {
-  background-color: #2C2C54;
+  background-color: #193d66;
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -139,7 +139,7 @@ html, body {
   font-size: 4.5rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
-  text-shadow: 0 0 5px #FFFFFF, 0 0 5px #4A90E2, 0 0 5px #D774E4;
+  text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
 }
 
 .hero-subtitle {
@@ -190,7 +190,7 @@ html, body {
 
 /* Features Section */
 .features-section {
-  padding: 1rem 1.5rem;
+  padding: 3.5rem 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -202,7 +202,7 @@ html, body {
 }
 
 .feature-card {
-  background-color: #2C2C54;
+  background: linear-gradient(135deg, #965cd4, #2752a1, #105656); /* Static gradient matching wave colors */
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
@@ -237,7 +237,7 @@ html, body {
 }
 
 .product-card {
-  background-color: #2C2C54;
+  background: linear-gradient(135deg, #965cd4, #2752a1, #105656); /* Static gradient matching wave colors */
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
@@ -280,4 +280,10 @@ html, body {
   margin-bottom: 1.5rem;
   text-align: justify;
   padding: 0 1rem;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-shadow: 0 0 2px #FFFFFF, 0 0 10px #D774E4;
 }
