@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { db } from '../firebase'; // Import db from the firebase configuration file
+import { db } from '../../firebase'; // Import db from the firebase configuration file
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import axios from 'axios';
-import './TeachersDashboard.css';
+import './TeacherDashboard.css';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 
