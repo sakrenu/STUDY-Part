@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import './LandingPage.css';
 
 const LandingPage = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
+
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
@@ -17,6 +20,11 @@ const LandingPage = () => {
     } else {
       scrollToSection(sectionId); // Scroll to the section
     }
+  };
+
+  // Function to navigate to the Signup page with a pre-selected role
+  const navigateToSignup = (role) => {
+    navigate('/signup', { state: { role } }); // Pass the role as state
   };
 
   return (
@@ -67,8 +75,13 @@ const LandingPage = () => {
               Create engaging learning experiences with AI-enhanced image analysis and interactive content generation for both teachers and students.
             </h2>
             <div className="cta-container">
-              <button className="primary-btn">Start learning</button>
-              <button className="secondary-btn">Become a teacher</button>
+              {/* Update the buttons to navigate to Signup with role */}
+              <button className="primary-btn" onClick={() => navigateToSignup('student')}>
+                Start learning
+              </button>
+              <button className="secondary-btn" onClick={() => navigateToSignup('teacher')}>
+                Become a teacher
+              </button>
             </div>
           </div>
           <div className="hero-image">
