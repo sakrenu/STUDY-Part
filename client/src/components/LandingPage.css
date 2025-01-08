@@ -15,6 +15,26 @@ html, body {
   overflow: hidden;
 }
 
+/* Dynamic dark gradient background */
+.bg-gradient-shift {
+  background: linear-gradient(45deg, #b40c7c, #06296b, #268f8f, #6413ba);
+  background-size: 400% 400%; /* Allows the animation to shift the gradient */
+  animation: gradientShift 8s ease infinite; /* Smooth infinite animation */
+}
+
+/* Keyframes for gradient animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* Navigation */
 .nav-container {
   background-color: #2C2C54;
@@ -22,10 +42,10 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: fixed; 
-  top: 0; 
-  width: 100%; 
-  z-index: 1000; 
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
 }
 
 .logo-container {

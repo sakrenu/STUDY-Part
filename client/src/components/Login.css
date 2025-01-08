@@ -22,6 +22,7 @@
   
   /* Login Card */
   .login-card {
+    position: relative;
     width: 360px;
     padding: 30px;
     background-color: var(--background-darker);
@@ -152,4 +153,23 @@
 .google-button:hover {
     background-color: #357ae8; /* Darker Google Blue */
     transform: translateY(-2px);
+}
+
+/* Close Button */
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  opacity: 1; /* Ensure it's always visible */
+  z-index: 1000; /* Ensure it's above other elements */
+}
+
+.close-button:hover {
+  color: var(--gradient-start);
 }

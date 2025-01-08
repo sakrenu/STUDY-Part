@@ -20,7 +20,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="landing-container">
+    <div className="landing-container bg-gradient-shift">
       <nav className="nav-container">
         <div className="logo-container">
           <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
