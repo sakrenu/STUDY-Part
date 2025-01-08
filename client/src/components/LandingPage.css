@@ -1,3 +1,11 @@
+/* Reset default margins and padding */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
 /* Base layout */
 .landing-container {
   min-height: 100vh;
@@ -14,10 +22,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: fixed; /* Make the navbar fixed */
-  top: 0; /* Position it at the top of the page */
-  width: 95.8%; /* Make it span the full width of the page */
-  z-index: 1000; /* Ensure it stays above other content */
+  position: fixed; 
+  top: 0; 
+  width: 100%; 
+  z-index: 1000; 
 }
 
 .logo-container {
@@ -56,6 +64,7 @@
 
 .nav-links {
   display: flex;
+  margin-right: 40px;
   gap: 2rem;
   align-items: center;
 }
