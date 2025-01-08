@@ -115,8 +115,8 @@ html, body {
 /* Hero Section */
 .hero-section {
   padding: 7rem 1.5rem 5rem; /* Add extra padding at the top */
-  max-width: 100%;
-  margin-left: 20px;
+  max-width: 53%;
+  margin-left: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
