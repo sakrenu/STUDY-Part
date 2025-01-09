@@ -1,3 +1,4 @@
+// client/src/styles/theme.js
 module.exports = {
     theme: {
       extend: {
