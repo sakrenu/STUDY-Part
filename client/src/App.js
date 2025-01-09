@@ -3,7 +3,6 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Signup from './components/Signup';
-import Home from './components/Home';
 import TeacherDashboard from './pages/teachers/TeacherDashboard';
 import StudentDashboard from './pages/students/StudentDashboard';
 import LandingPage from './components/LandingPage'; 
