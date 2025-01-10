@@ -1,99 +1,240 @@
-/* Reset Default Browser Margins and Padding */
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden; /* Prevent horizontal scrolling */
-}
 
-/* Full Page Styling for Teacher Feature Page */
-.teacher-feature-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #1E1E2C, #2C2C54); /* Dark gradient background */
-    color: #FFFFFF;
+  /* Sidebar Styling */
+  .sidebar {
+    width: 250px;
+    background-color: #2C2C54; /* Secondary dark navy background */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 20px 0; /* Add padding for spacing */
-    font-family: 'Arial', sans-serif;
-}
-
-/* Top Navigation Bar */
-.top-navigation {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    background: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
-    padding: 10px 20px;
-    border-radius: 10px;
-    margin-top: 30px; /* Adjust spacing from the top */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.top-navigation button {
-    background: linear-gradient(90deg, #4A90E2, #D774E4); /* Gradient background */
-    color: #FFFFFF;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.top-navigation button:hover {
-    background: linear-gradient(90deg, #FFD700, #FFA500); /* Warm gradient on hover */
-    color: #1E1E2C; /* Dark text for contrast */
-    transform: scale(1.05);
-}
-
-/* Main Content Section */
-.feature-info {
-    text-align: center;
-    margin-top: 20px;
-    width: 90%;
-    max-width: 1200px;
-}
-
-.feature-info h1 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    text-shadow: 0 0 5px #FFFFFF, 0 0 10px #4A90E2, 0 0 15px #D774E4; /* Neon glow */
-}
-
-.feature-info p {
-    font-size: 1.2rem;
-    color: #D3D3D3; /* Light gray text for descriptions */
-    margin-bottom: 30px;
-}
-
-/* Feature Details Grid */
-.feature-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    width: 100%;
-}
-
-.feature-details section {
-    background: rgba(0, 0, 0, 0.7); /* Semi-transparent dark background */
+    justify-content: space-between;
     padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+  }
+  
+  .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .menu button {
+    background: linear-gradient(90deg, #4A90E2, #D774E4); /* Gradient for buttons */
+    border: none;
+    color: #FFFFFF; /* White text */
+    padding: 12px 20px;
+    font-size: 16px;
     text-align: left;
-    color: #FFFFFF;
-}
-
-.feature-details section h2 {
-    font-size: 1.5rem;
-    color: #4A90E2; /* Cool blue text */
+    cursor: pointer;
+    border-radius: px;
+    transition: box-shadow 0.3s, transform 0.3s;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .menu button:hover {
+    box-shadow: 0 0 10px #4A90E2, 0 0 20px #D774E4; /* Neon glow effect */
+    transform: scale(1.05); /* Slightly enlarge on hover */
+  }
+  
+  .logout {
+    margin-top: auto;
+  }
+  
+  .logout button {
+    background: linear-gradient(90deg, #FFD700, #FFA500); /* Yellow-orange gradient */
+    color: #1E1E2C; /* Dark text for contrast */
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+  }
+  
+  .logout button:hover {
+    box-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500; /* Neon glow effect */
+    transform: scale(1.05); /* Slightly enlarge on hover */
+  }
+  
+  /* Main Content Styling */
+  .feature-info {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+  }
+  
+  .feature-info h1 {
+    margin-bottom: 20px;
+    color: #FFFFFF; /* White text */
+    text-shadow: 0 0 5px #FFFFFF, 0 0 10px #4A90E2, 0 0 20px #D774E4; /* Neon text shadow effect */
+  }
+  
+  .feature-details section {
+    margin-bottom: 20px;
+  }
+  
+  .feature-details section h2 {
     margin-bottom: 10px;
+    color: #FFFFFF; /* Warm yellow for section headings */
+  }
+  
+  .feature-details section p {
+    color: #D3D3D3; /* Light-gray text for descriptions */
+  }
+  .image-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 40px 0;
+    padding: 30px;
+    background-color: #2C2C54; /* Match sidebar color */
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4); /* Subtle shadow */
+  }
+  .image-content img {
+    max-width: 200px; /* Set a smaller maximum width */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 15px; /* Keep rounded corners */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3); /* Subtle shadow */
 }
 
-.feature-details section p {
-    font-size: 1rem;
-    color: #D3D3D3; /* Light gray for paragraph text */
+  .text-content {
+    flex: 1;
+    color: #FFFFFF; /* Warm yellow text for the main headline */
+    font-family: 'Arial', sans-serif;
+    line-height: 1.5;
+    margin-right: 30px; /* Space between text and image */
+  }
+
+  .text-content h1 {
+    font-size: 2.5rem; /* Larger headline */
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 0 0 15px rgba(255, 225, 225, 0.5); /* Soft glow effect */
+  }
+ 
+  .text-content p {
+    font-size: 1.1rem; /* Subtext size */
+    color: #D3D3D3; /* Light-gray for subtext */
+    margin-top: 10px;
+  }    
+
+.image-content {
+    flex-shrink: 0;
+  }
+  
+  .teacher-feature-page {
+    display: flex;
+    width: 100%; /* Ensure it spans the full width */
+    height: 100%; /* Ensure it spans the full height */
+    background-color: #1E1E2C; /* Primary dark navy background */
+    color: #FFFFFF; /* Light text color */
+    font-family: 'Arial', sans-serif; /* Consistent font */
+    margin: 0; /* Remove any potential margins */
+    padding: 0; /* Remove any potential paddings */
+}
+/* Sidebar Styling */
+.sidebar {
+    position: fixed; /* Ensure the sidebar stays fixed */
+    top: 0;
+    left: 0;
+    height: 100vh; /* Full height */
+    width: 250px; /* Sidebar width */
+    background-color: #2C2C54; /* Sidebar background */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Keep the Logout button at the bottom */
+    padding: 10px; /* Adjust padding to ensure all elements fit */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    overflow: hidden; /* Prevent overflow */
+}
+
+/* Main Content Styling */
+.feature-info {
+    margin-left: 250px; /* Add a left margin equal to the sidebar width */
+    padding: 40px; /* Add padding for spacing */
+    overflow-y: auto; /* Allow scrolling within the main content */
+}
+
+/* Menu Buttons */
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Reduce spacing between buttons */
+    flex-grow: 1; /* Ensure the menu takes up available space */
+}
+
+.menu button {
+    background: linear-gradient(90deg, #4A90E2, #D774E4); /* Gradient background */
+    border: none;
+    color: #FFFFFF; /* White text */
+    padding: 8px; /* Adjust padding for smaller buttons */
+    font-size: 14px; /* Reduce font size slightly */
+    text-align: left;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.menu button:hover {
+    box-shadow: 0 0 8px #4A90E2, 0 0 16px #D774E4; /* Glow effect */
+    transform: scale(1.05); /* Enlarge on hover */
+}
+
+/* Logout Button */
+.logout {
+    margin-top: 30px; /* Adjust margin to bring it slightly up */
+    margin-bottom: 20px; /* Add space below if needed */
+}
+.logout button {
+    background: linear-gradient(90deg, #FFD700, #FFA500); /* Yellow gradient */
+    border: none;
+    color: #1E1E2C; /* Contrast text */
+    padding: 10px; /* Adjust padding for a smaller button */
+    font-size: 14px; /* Adjust font size */
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%; /* Ensure the button spans the width of the sidebar */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.logout button:hover {
+    box-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500; /* Glow effect */
+    transform: scale(1.05); /* Slight enlarge on hover */
+}
+/* Teacher Feature Page Specific Styling */
+.teacher-feature-page {
+    margin: 0; /* Remove any margin above the page */
+    padding: 0; /* Remove any padding above the page */
+    width: 100%;
+    height: 100vh; /* Full viewport height */
+    display: flex;
+    background-color: #1E1E2C; /* Primary dark navy background */
+    color: #FFFFFF; /* Light text color */
+    font-family: 'Arial', sans-serif; /* Consistent font */
+}
+/* Settings and Logout Button Container */
+/* Settings and Logout Button Container */
+.logout {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Add spacing between the buttons */
+}
+
+/* Settings and Logout Buttons */
+.logout button {
+    background: linear-gradient(90deg, #4A90E2, #D774E4); /* Same gradient as Teaching Mode */
+    color: #FFFFFF; /* White text */
+    border: none;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%; /* Full width */
+    transition: transform 0.3s; /* Remove glow, keep transform */
+}
+
+/* Hover Effect (Remove Glow) */
+.logout button:hover {
+    transform: scale(1.05); /* Slightly enlarge on hover */
 }

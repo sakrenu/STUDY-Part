@@ -5,7 +5,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Home from './components/Home';
 import TeacherFeaturePage from './components/TeacherFeaturePage';
-import TeacherDashboard from './components/TeacherDashboard';
+import TeachingMode from './components/Teaching-Mode';
 import StudentDashboard from './components/StudentDashboard'; // Assuming you have a StudentDashboard component
 
 const App = () => {
@@ -17,7 +17,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<TeacherFeaturePage />} />
-          <Route path="/dashboard/teaching" element={<TeacherDashboard />} />
+          <Route path="/dashboard/teaching" element={<TeachingMode/>} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
