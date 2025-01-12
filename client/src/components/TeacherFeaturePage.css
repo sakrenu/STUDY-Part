@@ -1,23 +1,32 @@
-/* Reset margin and padding for body and html */
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body, html {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: #1E1E2C; /* Match the background color of your main content area */
+  overflow: hidden; /* Prevent scrollbars from appearing */
 }
 
-/* Specific styles for TeacherFeaturePage */
+/* Scoped styles for TeacherFeaturePage */
 .teacher-feature-page {
   display: flex;
   width: 100%;
-  height: 100%;
+  height: 100vh; /* Ensure it takes the full viewport height */
   background-color: #1E1E2C;
   color: #FFFFFF;
   font-family: 'Arial', sans-serif;
+  margin: 0; /* Remove default margin */
+  padding: 0; /* Remove default padding */
+  overflow: hidden; /* Prevent scrollbars from appearing */
 }
 
-.sidebar {
+.teacher-feature-page .sidebar {
   position: fixed;
   top: 0;
   left: 0;
@@ -34,22 +43,22 @@ body, html {
   transform: translateX(0); /* Initial position */
 }
 
-.sidebar.open {
+.teacher-feature-page .sidebar.open {
   transform: translateX(0);
 }
 
-.sidebar.closed {
+.teacher-feature-page .sidebar.closed {
   transform: translateX(-260px); /* Move completely out of view, including the box-shadow */
 }
 
-.menu {
+.teacher-feature-page .menu {
   display: flex;
   flex-direction: column;
   gap: 10px;
   flex-grow: 1;
 }
 
-.menu button {
+.teacher-feature-page .menu button {
   background: linear-gradient(90deg, #4A90E2, #D774E4);
   border: none;
   color: #FFFFFF;
@@ -62,12 +71,12 @@ body, html {
   font-family: 'Arial', sans-serif;
 }
 
-.menu button:hover {
+.teacher-feature-page .menu button:hover {
   box-shadow: 0 0 10px #4A90E2, 0 0 20px #D774E4;
   transform: scale(1.05);
 }
 
-.logout {
+.teacher-feature-page .logout {
   margin-top: auto;
   display: flex;
   flex-direction: column;
@@ -75,7 +84,7 @@ body, html {
   margin-bottom: 20px; /* Add margin to move the logout button up */
 }
 
-.logout button {
+.teacher-feature-page .logout button {
   background: linear-gradient(90deg, #FFD700, #FFA500);
   color: #1E1E2C;
   border: none;
@@ -87,25 +96,28 @@ body, html {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
-.logout button:hover {
+.teacher-feature-page .logout button:hover {
   box-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
   transform: scale(1.05);
 }
 
-.feature-info {
+.teacher-feature-page .feature-info {
   margin-left: 260px; /* Adjusted to match the sidebar width including box-shadow */
   padding: 40px;
-  overflow-y: auto;
+  overflow-y: auto; /* Allow vertical scrolling */
   transition: margin-left 0.3s ease;
   width: calc(100% - 260px); /* Adjust the width to exclude the sidebar width */
+  height: 100vh; /* Make the main content take the full viewport height */
+  margin-top: 0; /* Ensure no extra space at the top */
+  box-sizing: border-box; /* Include padding in the height calculation */
 }
 
-.feature-info.closed {
+.teacher-feature-page .feature-info.closed {
   margin-left: 0; /* Move completely to the left */
   width: 100%; /* Take full width when sidebar is closed */
 }
 
-.toggle-button-container {
+.teacher-feature-page .toggle-button-container {
   position: fixed;
   top: 10px;
   z-index: 1000;
@@ -115,28 +127,28 @@ body, html {
   align-items: center;
 }
 
-.toggle-button-container.open {
+.teacher-feature-page .toggle-button-container.open {
   left: 270px; /* Adjust this value to position the button correctly */
 }
 
-.toggle-button-container.closed {
+.teacher-feature-page .toggle-button-container.closed {
   left: 10px; /* Adjust this value to position the button correctly when the sidebar is closed */
 }
 
-.toggle-button {
+.teacher-feature-page .toggle-button {
   border: none;
   padding: 0;
   cursor: pointer;
   background: none; /* Remove background */
 }
 
-.toggle-icon {
+.teacher-feature-page .toggle-icon {
   width: 30px; /* Adjust the size as needed */
   height: 30px; /* Adjust the size as needed */
   filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%) drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5)); /* Added drop-shadow for a bolder appearance */
 }
 
-.toggle-text {
+.teacher-feature-page .toggle-text {
   color: #FFFFFF;
   font-size: 14px;
   margin-top: 5px;
@@ -146,60 +158,18 @@ body, html {
   transition: opacity 0.3s ease;
 }
 
-.toggle-button-container:hover .toggle-text {
+.teacher-feature-page .toggle-button-container:hover .toggle-text {
   opacity: 1;
 }
 
-.header-text {
+.teacher-feature-page .header-text {
+  margin-top: 0; /* Ensure no extra space at the top */
   margin-bottom: 20px;
   color: #FFFFFF;
   text-shadow: 0 0 5px #FFFFFF, 0 0 10px #4A90E2, 0 0 20px #D774E4;
 }
 
-.image-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 40px 0;
-  padding: 30px;
-  background-color: #2C2C54;
-  border-radius: 20px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-}
-
-.image-content img {
-  max-width: 200px;
-  height: auto;
-  border-radius: 15px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-}
-
-.text-content {
-  flex: 1;
-  color: #FFFFFF;
-  font-family: 'Arial', sans-serif;
-  line-height: 1.5;
-  margin-right: 30px;
-}
-
-.text-content h1 {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-shadow: 0 0 15px rgba(255, 225, 225, 0.5);
-}
-
-.text-content p {
-  font-size: 1.1rem;
-  color: #D3D3D3;
-  margin-top: 10px;
-}
-
-.image-content {
-  flex-shrink: 0;
-}
-/* Add these styles to your existing CSS file */
-.image-box {
+.teacher-feature-page .image-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -212,7 +182,43 @@ body, html {
   transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
 }
 
-.image-box:hover {
+.teacher-feature-page .image-box:last-child {
+  margin-bottom: 0; /* Remove margin from the last image-box */
+}
+
+.teacher-feature-page .image-box:hover {
   transform: scale(1.02); /* Slightly scale up on hover */
   box-shadow: 0 0 20px rgba(74, 144, 226, 0.6), 0 0 30px rgba(215, 116, 228, 0.6); /* Glow effect */
+}
+
+.teacher-feature-page .image-content img {
+  max-width: 200px;
+  height: auto;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.teacher-feature-page .text-content {
+  flex: 1;
+  color: #FFFFFF;
+  font-family: 'Arial', sans-serif;
+  line-height: 1.5;
+  margin-right: 30px;
+}
+
+.teacher-feature-page .text-content h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 0 0 15px rgba(255, 225, 225, 0.5);
+}
+
+.teacher-feature-page .text-content p {
+  font-size: 1.1rem;
+  color: #D3D3D3;
+  margin-top: 10px;
+}
+
+.teacher-feature-page .image-content {
+  flex-shrink: 0;
 }
