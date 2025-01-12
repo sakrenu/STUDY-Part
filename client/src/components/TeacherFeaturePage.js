@@ -47,7 +47,7 @@ const TeacherFeaturePage = () => {
       </div>
 
       {/* Main Content */}
-      <main className={`feature-info ${isSidebarOpen ? 'open' : 'closed'}`}>
+      <main className={`feature-info ${isSidebarOpen ? '' : 'closed'}`}>
         {/* Header Text (Outside of Boxes) */}
         <div className="header-text">
           <h1>Discover the Teacher Features</h1>
@@ -56,7 +56,10 @@ const TeacherFeaturePage = () => {
         </div>
 
         {/* Teaching Mode Box */}
-        <div className="image-box">
+        <div
+          className="image-box"
+          onClick={() => navigate('/dashboard/teaching')}
+        >
           <div className="text-content">
             <h2>Teaching Mode</h2>
             <p>Create engaging lessons, manage classroom interactions, and upload resources seamlessly.</p>
@@ -67,7 +70,10 @@ const TeacherFeaturePage = () => {
         </div>
 
         {/* Quiz Mode Box */}
-        <div className="image-box">
+        <div
+          className="image-box"
+          onClick={() => alert('Quiz Mode coming soon!')}
+        >
           <div className="text-content">
             <h2>Quiz Mode</h2>
             <p>Design custom quizzes, track student performance, and foster an interactive learning environment.</p>
@@ -78,7 +84,10 @@ const TeacherFeaturePage = () => {
         </div>
 
         {/* Manage Students Box */}
-        <div className="image-box">
+        <div
+          className="image-box"
+          onClick={() => alert('Manage Students coming soon!')}
+        >
           <div className="text-content">
             <h2>Manage Students</h2>
             <p>Organize student data, communicate effectively, and monitor individual progress in one place.</p>
