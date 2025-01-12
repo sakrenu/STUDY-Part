@@ -1,27 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './TeacherFeaturePage.css';
 
 const TeacherFeaturePage = () => {
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showToggleText, setShowToggleText] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleMouseEnter = () => {
+    setShowToggleText(true);
+  };
+
+  const handleMouseLeave = () => {
+    setShowToggleText(false);
+  };
 
   return (
     <div className="teacher-feature-page">
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
         <nav className="menu">
           <button onClick={() => navigate('/dashboard/teaching')}>Teaching Mode</button>
           <button onClick={() => alert('Quiz Mode coming soon!')}>Quiz Mode</button>
           <button onClick={() => alert('Manage Students coming soon!')}>Manage Students</button>
         </nav>
         <div className="logout">
-        <button onClick={() => alert('Settings are under development!')}>Settings</button>
+          <button onClick={() => alert('Settings are under development!')}>Settings</button>
           <button onClick={() => navigate('/')}>Logout</button>
         </div>
       </aside>
 
+      {/* Toggle Button */}
+      <div
+        className={`toggle-button-container ${isSidebarOpen ? 'open' : 'closed'}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <button className="toggle-button" onClick={toggleSidebar}>
+          <img src={`${process.env.PUBLIC_URL}/toggle-icon.svg`} alt="Toggle" className="toggle-icon" />
+        </button>
+        {showToggleText && <span className="toggle-text">{isSidebarOpen ? 'Close' : 'Open'}</span>}
+      </div>
+
       {/* Main Content */}
-      <main className="feature-info">
+      <main className={`feature-info ${isSidebarOpen ? 'open' : 'closed'}`}>
         {/* Header Text (Outside of Boxes) */}
         <div className="header-text">
           <h1>Discover the Teacher Features</h1>
