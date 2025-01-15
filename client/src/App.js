@@ -4,9 +4,9 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Home from './components/Home';
-import TeacherFeaturePage from './components/TeacherFeaturePage';
-import TeachingMode from './components/Teaching-Mode';
-import StudentDashboard from './components/StudentDashboard'; // Assuming you have a StudentDashboard component
+import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
+import TeachingMode from './pages/teachers/Teaching-Mode';
+import StudentDashboard from './pages/students/StudentDashboard';
 
 const App = () => {
   return (
