@@ -8,7 +8,7 @@ const LandingPage = () => {
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -88,13 +88,10 @@ const LandingPage = () => {
               </button>
             </div>
           </div>
-          {/* <div className="hero-image">
-            <img src="/StudyPartImage.jpg" alt="StudyPart" />
-          </div> */}
         </div>
       </main>
 
-      <section id="features-section" className="features-section"> {/* Added id for navigation */}
+      <section id="features-section" className="features-section">
         <h2 className="section-title">Features</h2>
         <div className="features-grid">
           <div className="feature-card">
