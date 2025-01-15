@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase'; // Import db from the firebase configuration file
+import { db } from '../../firebase'; // Import db from the firebase configuration file
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import axios from 'axios';
 import './Teaching-Mode.css';
