@@ -5,7 +5,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Home from './components/Home';
 import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
-import TeachingMode from './pages/teachers/Teaching-Mode';
+import TeachingMode from './pages/teachers/TeachingMode';
 import StudentDashboard from './pages/students/StudentDashboard';
 
 const App = () => {
