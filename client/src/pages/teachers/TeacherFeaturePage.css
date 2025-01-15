@@ -46,9 +46,9 @@ body, html {
 /* Sidebar */
 .teacher-feature-page .sidebar {
   position: fixed;
-  top: 80px; /* Start below the title */
+  top: 70px; /* Start below the title */
   left: 0;
-  height: calc(100vh - 80px); /* Adjust height to account for the title */
+  height: calc(100vh - 70px); /* Adjust height to account for the title */
   width: 250px;
   background-color: #2C2C54;
   display: flex;
@@ -139,7 +139,7 @@ body, html {
 
 .teacher-feature-page .toggle-button-container {
   position: fixed;
-  top: 90px; /* Adjust to align with the sidebar */
+  top: 80px; /* Adjust to align with the sidebar */
   left: 250px; /* Position next to the sidebar */
   z-index: 1000;
   transition: left 0.3s ease;
@@ -260,4 +260,16 @@ body, html {
 
 .teacher-feature-page .image-content {
   flex-shrink: 0;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 250px; 
+  margin-bottom: 20px;
 }
