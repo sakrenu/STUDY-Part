@@ -53,7 +53,7 @@ const Login = () => {
             if (role) {
                 setSuccess(true);
                 if (role === 'teacher') {
-                    navigate('/dashboard/teaching'); // Redirect to teacher dashboard
+                    navigate('/dashboard'); // Redirect to teacher dashboard
                 } else {
                     navigate('/student-dashboard'); // Redirect to student dashboard
                 }
@@ -89,7 +89,7 @@ const Login = () => {
             const role = await checkRoleExists(user.uid);
             if (role) {
                 if (role === 'teacher') {
-                    navigate('/dashboard/teaching'); // Redirect to teacher dashboard
+                    navigate('/dashboard'); // Redirect to teacher dashboard
                 } else {
                     navigate('/student-dashboard'); // Redirect to student dashboard
                 }
