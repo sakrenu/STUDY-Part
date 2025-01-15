@@ -1,3 +1,4 @@
+// client/src/components/Login.js
 import React, { useState } from 'react';
 import { auth, googleProvider, db } from '../firebase';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
@@ -52,7 +53,7 @@ const Login = () => {
             if (role) {
                 setSuccess(true);
                 if (role === 'teacher') {
-                    navigate('/dashboard'); // Redirect to teacher dashboard
+                    navigate('/dashboard/teaching'); // Redirect to teacher dashboard
                 } else {
                     navigate('/student-dashboard'); // Redirect to student dashboard
                 }
@@ -88,7 +89,7 @@ const Login = () => {
             const role = await checkRoleExists(user.uid);
             if (role) {
                 if (role === 'teacher') {
-                    navigate('/dashboard'); // Redirect to teacher dashboard
+                    navigate('/dashboard/teaching'); // Redirect to teacher dashboard
                 } else {
                     navigate('/student-dashboard'); // Redirect to student dashboard
                 }
@@ -99,9 +100,16 @@ const Login = () => {
         }
     };
 
+    const handleClose = () => {
+        navigate('/'); // Navigate back to the landing page
+    };
+
     return (
         <div className="login-container">
             <div className="login-card">
+                <button className="close-button" onClick={handleClose}>
+                    &times; {/* Unicode for close symbol */}
+                </button>
                 <h1 className="login-title">Welcome Back</h1>
                 <p className="login-subtitle">Log in to continue</p>
                 {error && <p className="error-message">{error}</p>}
@@ -146,4 +154,3 @@ const Login = () => {
 };
 
 export default Login;
-
