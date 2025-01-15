@@ -57,7 +57,7 @@ const Signup = () => {
 
       // Redirect based on role
       if (role === 'teacher') {
-        navigate('/dashboard/teaching'); // Redirect to teacher dashboard
+        navigate('/dashboard'); // Redirect to teacher dashboard
       } else {
         navigate('/student-dashboard'); // Redirect to student dashboard
       }
@@ -94,7 +94,7 @@ const Signup = () => {
 
       // Redirect based on role
       if (role === 'teacher') {
-        navigate('/dashboard/teaching'); // Redirect to teacher dashboard
+        navigate('/dashboard'); // Redirect to teacher dashboard
       } else {
         navigate('/student-dashboard'); // Redirect to student dashboard
       }
