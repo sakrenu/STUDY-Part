@@ -65,7 +65,7 @@ const LandingPage = () => {
             About
           </a>
           <a href="/login" className="nav-link">Sign in</a>
-          <a href="/signup" className="register-btn">Register</a>
+          <a href="/signup" className="register-btn">Sign up</a>
         </div>
       </nav>
 
