@@ -54,10 +54,10 @@ const TeacherFeaturePage = () => {
   {/* Main Content */}
   <main className={`feature-info ${isSidebarOpen ? '' : 'closed'}`}>
     {/* Header Text (Outside of Boxes) */}
-    <div className="header-text">
-      <h1>Discover the Teacher Features</h1>
-      <h2>Explore Powerful Teaching Tools</h2>
-      <p>Enhance your teaching experience with cutting-edge tools designed for modern educators.</p>
+    <div>
+      <h1 className="header-text">Discover the Teacher Features</h1>
+      <h3>Explore Powerful Teaching Tools with StudyPart</h3>
+      <h3>Enhance your teaching experience with cutting-edge AI tools</h3>
     </div>
 
     {/* Teaching Mode Box */}

@@ -190,6 +190,11 @@ body, html {
   text-shadow: 0 0 5px #FFFFFF, 0 0 10px #4A90E2, 0 0 20px #D774E4;
 }
 
+.teacher-feature-page h3 {
+  margin-bottom: 10px;
+  text-shadow: 0 0 2px #FFFFFF, 0 0 5px #4A90E2, 0 0 5px #D774E4;
+}
+
 .teacher-feature-page .header-text h1 {
   margin-bottom: 10px; /* Add space below the h1 */
 }
