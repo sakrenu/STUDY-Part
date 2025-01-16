@@ -8,7 +8,7 @@ import {
     getDoc,
     arrayUnion // Import arrayUnion
 } from 'firebase/firestore';
-import { db } from '../firebase'; // Import db from Firebase
+import { db } from '../../firebase'; // Import db from Firebase
 import axios from 'axios';
 import './TeachingMode.css';
 import Cropper from 'react-cropper';

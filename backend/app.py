@@ -10,13 +10,22 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 import requests
+from firebase_admin import credentials, firestore, initialize_app
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Initialize Cloudinary
 cloudinary.config(
-    cloud_name='duvdshhrz',
-    api_key='784524479772363',
-    api_secret='wVfzkP0KX1wSKdkP2sT2kY13SHs'
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
 )
+
+# Initialize Firebase
+cred = credentials.Certificate('./firebase-credentials-2.json')  # Specify the path to your Firebase credentials
+initialize_app(cred)
+db = firestore.client()
 
 app = Flask(__name__)
 CORS(app)
@@ -43,6 +52,7 @@ def segment():
     data = request.json
     image_url = data.get('image_url')
     bounding_box = data.get('bounding_box')
+    teacher_id = data.get('teacher_id')  # Teacher ID to associate segmented parts and notes
 
     try:
         # Download image from Cloudinary
@@ -62,37 +72,44 @@ def segment():
         image.save(temp_image_path)
 
         # Perform segmentation
-        rle_masks, confidences = segment_image(temp_image_path, bounding_box_array)
+        cutouts, confidences = segment_image(temp_image_path, bounding_box_array)
+
         segmented_urls = []
-        for idx, mask in enumerate(rle_masks):
-            mask_image = mask_utils.decode(mask)
-            if mask_image.dtype != np.uint8:
-                mask_image = mask_image.astype(np.uint8)
-
-            # Convert the mask to a 3-channel image (RGB)
-            mask_image_rgb = np.stack((mask_image,) * 3, axis=-1) * 255
-            mask_image_rgb = Image.fromarray(mask_image_rgb.astype(np.uint8))
-
-            # Create an RGBA base image
-            segmented_image = Image.new('RGBA', image.size)
-
-            # Use the single-channel mask as the transparency mask
-            mask_image_alpha = Image.fromarray(mask_image * 255).convert('L')
-
-            # Paste the mask onto the segmented image
-            segmented_image.paste(mask_image_rgb, (0, 0), mask_image_alpha)
+        for idx, cutout in enumerate(cutouts):
+            # Convert the cutout to a PIL image
+            cutout_image = Image.fromarray(cutout.astype(np.uint8))
 
             # Save segmented image to Cloudinary
             segmented_image_buffer = io.BytesIO()
-            # segmented_image.save(segmented_image_buffer, format='PNG')
-            segmented_image.convert('RGB').save(segmented_image_buffer, format='JPEG')
+            cutout_image.convert('RGB').save(segmented_image_buffer, format='JPEG')
             segmented_image_buffer.seek(0)
             upload_result = cloudinary.uploader.upload(segmented_image_buffer, public_id=f'segmented_part_{idx}')
             segmented_urls.append(upload_result['secure_url'])
 
-
         # Clean up
         os.remove(temp_image_path)
+
+        # Store segmented URLs and initialize notes in Firestore
+        teacher_ref = db.collection('teachers').document(teacher_id)
+        teacher_data = teacher_ref.get()
+
+        if teacher_data.exists:
+            # Add segmented image URLs to teacher's data
+            segments = teacher_data.to_dict().get('segments', {})
+            segments[image_url] = {
+                'segments': segmented_urls,
+                'notes': {}  # Initialize an empty dictionary for notes
+            }
+            teacher_ref.update({'segments': segments})
+        else:
+            teacher_ref.set({
+                'segments': {
+                    image_url: {
+                        'segments': segmented_urls,
+                        'notes': {}
+                    }
+                }
+            })
 
         return jsonify({'segmented_urls': segmented_urls, 'confidences': confidences}), 200
 
@@ -102,6 +119,35 @@ def segment():
     except Exception as e:
         app.logger.error(f"Unexpected error during segmentation: {str(e)}")
         return jsonify({"error": "Internal server error."}), 500
+
+@app.route('/add_note', methods=['POST'])
+def add_note():
+    data = request.json
+    image_url = data.get('image_url')
+    segment_index = data.get('segment_index')
+    note = data.get('note')
+    teacher_id = data.get('teacher_id')
+
+    try:
+        # Retrieve the teacher's data
+        teacher_ref = db.collection('teachers').document(teacher_id)
+        teacher_data = teacher_ref.get()
+
+        if teacher_data.exists:
+            segments = teacher_data.to_dict().get('segments', {})
+            if image_url in segments:
+                # Add or update the note for the specified segment
+                segments[image_url]['notes'][segment_index] = note
+                teacher_ref.update({'segments': segments})
+                return jsonify({"message": "Note added successfully!"}), 200
+            else:
+                return jsonify({"error": "Image not found in teacher's segments."}), 404
+        else:
+            return jsonify({"error": "Teacher not found."}), 404
+
+    except Exception as e:
+        app.logger.error(f"Error adding note: {str(e)}")
+        return jsonify({"error": "Failed to add note."}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

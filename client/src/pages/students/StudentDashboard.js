@@ -1,43 +1,59 @@
-import React, { useEffect, useState } from 'react';
-import { db, auth } from '../../firebase';
+import React, { useState, useEffect } from 'react';
+import { db } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-// import './StudentDashboard.css';
+import './StudentDashboard.css';
 
-const StudentDashboard = () => {
-    const [segmentedImages, setSegmentedImages] = useState([]);
-    const [notes, setNotes] = useState({});
+const StudentsDashboard = ({ studentId }) => {
+    const [originalImage, setOriginalImage] = useState(null);
+    const [segmentedParts, setSegmentedParts] = useState([]);
+    const [selectedNotes, setSelectedNotes] = useState('');
 
     useEffect(() => {
-        const fetchLearningContent = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    setSegmentedImages(userData.segmentedImages);
-                    setNotes(userData.notes);
+        const fetchData = async () => {
+            try {
+                const studentRef = doc(db, 'students_notes', studentId);
+                const studentData = (await getDoc(studentRef)).data();
+
+                if (studentData) {
+                    setOriginalImage(studentData.originalImage);
+                    setSegmentedParts(studentData.segmentedImages);
                 }
+            } catch (err) {
+                console.error('Failed to fetch data:', err);
             }
         };
 
-        fetchLearningContent();
-    }, []);
+        fetchData();
+    }, [studentId]);
+
+    const handlePartClick = (notes) => {
+        setSelectedNotes(notes);
+    };
 
     return (
-        <div className="student-dashboard">
+        <div className="students-dashboard">
             <h1>Student's Dashboard</h1>
-            <div className="learning-mode">
-                <h2>Learning Mode</h2>
-                {segmentedImages.map((segmentedImage, index) => (
-                    <div key={index}>
-                        <img src={segmentedImage} alt={`Segmented ${index}`} />
-                        <p>{notes[index]}</p>
-                    </div>
-                ))}
-            </div>
+            {originalImage && (
+                <div className="image-container">
+                    <img src={originalImage} alt="Original" className="original-image" />
+                    {segmentedParts.map((part, index) => (
+                        <div
+                            key={index}
+                            className="segment-highlight"
+                            style={{ top: part.top, left: part.left, width: part.width, height: part.height }}
+                            onClick={() => handlePartClick(part.notes)}
+                        />
+                    ))}
+                </div>
+            )}
+            {selectedNotes && (
+                <div className="notes-section">
+                    <h2>Notes</h2>
+                    <p>{selectedNotes}</p>
+                </div>
+            )}
         </div>
     );
 };
 
-export default StudentDashboard;
+export default StudentsDashboard;

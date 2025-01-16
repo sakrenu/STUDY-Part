@@ -1,0 +1,45 @@
+.students-dashboard {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.image-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.original-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.segment-highlight {
+    position: absolute;
+    border: 2px solid #ff5722;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.segment-highlight:hover {
+    border-color: #ff9800;
+}
+
+.notes-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notes-section h2 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.notes-section p {
+    color: #555;
+    line-height: 1.6;
+}
