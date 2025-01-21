@@ -1,69 +1,115 @@
 .manage-students {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    background: #042b52; /* Light background for better contrast */
+    color: #e0cece; /* Dark text for readability */
+    padding: 2rem;
+    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Helvetica Neue', sans-serif;
+}
+
+.error-message {
+    background: #ff6b6b; /* Coral red for errors */
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    text-align: center;
 }
 
 .create-group-section,
 .add-students-section,
-.group-management-section {
-    margin-bottom: 30px;
+.share-notes-section {
+    margin-bottom: 2rem;
 }
 
 input[type="text"],
 select {
-    padding: 8px;
-    margin-right: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 0.75rem;
+    border: 1px solid #64ffda; /* Teal border */
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+    color: #1a1a1a; /* Dark text */
+    font-size: 1rem;
+    margin-right: 1rem;
 }
 
 button {
-    padding: 8px 12px;
-    background-color: #007bff;
-    color: white;
+    padding: 0.75rem 1.5rem;
+    background: #64ffda; /* Teal for buttons */
+    color: #0a192f; /* Dark blue text */
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
+    transition: background 0.3s ease;
+    margin-right: 0.5rem;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background: #52d1b2; /* Darker teal on hover */
 }
 
 .student-list {
-    margin-top: 10px;
+    margin-top: 1rem;
 }
 
 .student-item {
     display: flex;
     align-items: center;
-    margin-bottom: 5px;
+    margin-bottom: 0.5rem;
 }
 
 .student-item input {
-    margin-right: 10px;
+    margin-right: 0.5rem;
+}
+
+.group-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
 }
 
 .group-card {
-    border: 1px solid #ccc;
-    padding: 15px;
+    background: #ffffff; /* White background for cards */
+    border: 1px solid #64ffda; /* Teal border */
     border-radius: 8px;
-    margin-bottom: 15px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 .group-card h3 {
     margin-top: 0;
+    color: #0a192f; /* Dark blue text */
 }
 
-.group-card ul {
+.existing-students-list {
+    margin-top: 1rem;
+    background: #ffffff; /* White background */
+    border: 1px solid #64ffda; /* Teal border */
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.existing-students-list h3 {
+    margin-top: 0;
+    color: #0a192f; /* Dark blue text */
+}
+
+.group-students {
+    margin-bottom: 1rem;
+}
+
+.group-students h4 {
+    margin: 0.5rem 0;
+    color: #0a192f; /* Dark blue text */
+}
+
+.group-students ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 }
 
-.group-card li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0;
+.group-students li {
+    padding: 0.25rem 0;
+    color: #1a1a1a; /* Dark text */
 }

@@ -1,6 +1,7 @@
+// 
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, getDocs, doc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import './ManageStudents.css';
 
 const ManageStudents = ({ teacherId }) => {
@@ -9,80 +10,150 @@ const ManageStudents = ({ teacherId }) => {
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState('');
     const [newGroupName, setNewGroupName] = useState('');
+    const [error, setError] = useState(null);
+    const [showExistingStudents, setShowExistingStudents] = useState(false); // New state for toggling existing students
 
-    // Fetch all students and groups
+    // Fetch all students
     useEffect(() => {
-        const fetchData = async () => {
-            const studentsSnapshot = await getDocs(collection(db, 'students'));
-            const studentsData = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setStudents(studentsData);
-
-            const groupsSnapshot = await getDocs(collection(db, 'groups'));
-            const groupsData = groupsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setGroups(groupsData);
+        const fetchStudents = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'users'));
+                const studentList = querySnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(user => user.role === 'student');
+                setStudents(studentList);
+            } catch (err) {
+                setError('Failed to fetch students: ' + err.message);
+            }
         };
 
-        fetchData();
+        fetchStudents();
+    }, []);
+
+    // Fetch all groups
+    useEffect(() => {
+        const fetchGroups = async () => {
+            try {
+                const teacherRef = doc(db, 'teachers', teacherId);
+                const teacherData = (await getDoc(teacherRef)).data();
+                if (teacherData && teacherData.groups) {
+                    setGroups(teacherData.groups);
+                }
+            } catch (err) {
+                setError('Failed to fetch groups: ' + err.message);
+            }
+        };
+
+        fetchGroups();
     }, [teacherId]);
 
     // Create a new group
     const handleCreateGroup = async () => {
-        if (!newGroupName) return;
+        if (!newGroupName) {
+            setError('Group name cannot be empty.');
+            return;
+        }
 
         const groupId = `group_${Date.now()}`;
-        await setDoc(doc(db, 'groups', groupId), {
-            groupId,
-            groupName: newGroupName,
-            teacherId,
-            studentIds: [],
-        });
+        const newGroup = {
+            id: groupId,
+            name: newGroupName,
+            students: [],
+        };
 
-        setGroups([...groups, { groupId, groupName: newGroupName, teacherId, studentIds: [] }]);
-        setNewGroupName('');
+        try {
+            const teacherRef = doc(db, 'teachers', teacherId);
+            await updateDoc(teacherRef, {
+                groups: arrayUnion(newGroup),
+            });
+
+            setGroups([...groups, newGroup]);
+            setNewGroupName('');
+        } catch (err) {
+            setError('Failed to create group: ' + err.message);
+        }
     };
 
-    // Add students to a group
+    // Add selected students to a group
     const handleAddStudentsToGroup = async () => {
-        if (!selectedGroup || selectedStudents.length === 0) return;
+        if (!selectedGroup || selectedStudents.length === 0) {
+            setError('Please select a group and at least one student.');
+            return;
+        }
 
-        const groupRef = doc(db, 'groups', selectedGroup);
-        await updateDoc(groupRef, {
-            studentIds: arrayUnion(...selectedStudents),
-        });
+        try {
+            const teacherRef = doc(db, 'teachers', teacherId);
+            const updatedGroups = groups.map(group => {
+                if (group.id === selectedGroup) {
+                    return {
+                        ...group,
+                        students: [...group.students, ...selectedStudents],
+                    };
+                }
+                return group;
+            });
 
-        // Update local state
-        const updatedGroups = groups.map(group =>
-            group.groupId === selectedGroup
-                ? { ...group, studentIds: [...group.studentIds, ...selectedStudents] }
-                : group
-        );
-        setGroups(updatedGroups);
-        setSelectedStudents([]);
+            await updateDoc(teacherRef, {
+                groups: updatedGroups,
+            });
+
+            setGroups(updatedGroups);
+            setSelectedStudents([]);
+        } catch (err) {
+            setError('Failed to add students to group: ' + err.message);
+        }
     };
 
-    // Remove a student from a group
-    const handleRemoveStudentFromGroup = async (groupId, studentId) => {
-        const groupRef = doc(db, 'groups', groupId);
-        const groupData = (await getDoc(groupRef)).data();
+    // Share notes with a group or all students
+    const handleShareNotes = async (groupId = null) => {
+        try {
+            const teacherRef = doc(db, 'teachers', teacherId);
+            const teacherData = (await getDoc(teacherRef)).data();
 
-        const updatedStudentIds = groupData.studentIds.filter(id => id !== studentId);
-        await updateDoc(groupRef, {
-            studentIds: updatedStudentIds,
-        });
+            if (!teacherData || !teacherData.notes) {
+                setError('No notes found to share.');
+                return;
+            }
 
-        // Update local state
-        const updatedGroups = groups.map(group =>
-            group.groupId === groupId ? { ...group, studentIds: updatedStudentIds } : group
-        );
-        setGroups(updatedGroups);
+            const notes = teacherData.notes;
+
+            if (groupId) {
+                // Share notes with a specific group
+                const group = groups.find(g => g.id === groupId);
+                if (!group) {
+                    setError('Group not found.');
+                    return;
+                }
+
+                for (const studentId of group.students) {
+                    const studentRef = doc(db, 'users', studentId);
+                    await updateDoc(studentRef, {
+                        sharedNotes: arrayUnion(...notes),
+                    });
+                }
+            } else {
+                // Share notes with all students
+                for (const student of students) {
+                    const studentRef = doc(db, 'users', student.id);
+                    await updateDoc(studentRef, {
+                        sharedNotes: arrayUnion(...notes),
+                    });
+                }
+            }
+
+            alert('Notes shared successfully!');
+        } catch (err) {
+            setError('Failed to share notes: ' + err.message);
+        }
     };
 
     return (
         <div className="manage-students">
             <h1>Manage Students</h1>
+            {error && <div className="error-message">{error}</div>}
 
             {/* Create Group Section */}
-            <div className="create-group-section">
+            <section className="create-group-section">
                 <h2>Create New Group</h2>
                 <input
                     type="text"
@@ -91,10 +162,29 @@ const ManageStudents = ({ teacherId }) => {
                     onChange={(e) => setNewGroupName(e.target.value)}
                 />
                 <button onClick={handleCreateGroup}>Create Group</button>
-            </div>
+                <button onClick={() => setShowExistingStudents(!showExistingStudents)}>
+                    {showExistingStudents ? 'Hide Existing Students' : 'Show Existing Students'}
+                </button>
+                {showExistingStudents && (
+                    <div className="existing-students-list">
+                        <h3>Existing Students in Groups</h3>
+                        {groups.map(group => (
+                            <div key={group.id} className="group-students">
+                                <h4>{group.name}</h4>
+                                <ul>
+                                    {group.students.map(studentId => {
+                                        const student = students.find(s => s.id === studentId);
+                                        return <li key={studentId}>{student ? student.name : 'Unknown Student'}</li>;
+                                    })}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
 
             {/* Add Students to Group Section */}
-            <div className="add-students-section">
+            <section className="add-students-section">
                 <h2>Add Students to Group</h2>
                 <select
                     value={selectedGroup}
@@ -102,8 +192,8 @@ const ManageStudents = ({ teacherId }) => {
                 >
                     <option value="">Select a group</option>
                     {groups.map(group => (
-                        <option key={group.groupId} value={group.groupId}>
-                            {group.groupName}
+                        <option key={group.id} value={group.id}>
+                            {group.name}
                         </option>
                     ))}
                 </select>
@@ -126,32 +216,23 @@ const ManageStudents = ({ teacherId }) => {
                     ))}
                 </div>
                 <button onClick={handleAddStudentsToGroup}>Add Selected Students to Group</button>
-            </div>
+            </section>
 
-            {/* Group Management Section */}
-            <div className="group-management-section">
-                <h2>Group Management</h2>
-                {groups.map(group => (
-                    <div key={group.groupId} className="group-card">
-                        <h3>{group.groupName}</h3>
-                        <ul>
-                            {group.studentIds.map(studentId => {
-                                const student = students.find(s => s.id === studentId);
-                                return (
-                                    <li key={studentId}>
-                                        {student?.name}
-                                        <button
-                                            onClick={() => handleRemoveStudentFromGroup(group.groupId, studentId)}
-                                        >
-                                            Remove
-                                        </button>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                ))}
-            </div>
+            {/* Share Notes Section */}
+            <section className="share-notes-section">
+                <h2>Share Notes</h2>
+                <button onClick={() => handleShareNotes()}>Share Notes with All Students</button>
+                <div className="group-list">
+                    {groups.map(group => (
+                        <div key={group.id} className="group-card">
+                            <h3>{group.name}</h3>
+                            <button onClick={() => handleShareNotes(group.id)}>
+                                Share Notes with {group.name}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </section>
         </div>
     );
 };

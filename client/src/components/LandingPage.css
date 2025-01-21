@@ -17,7 +17,7 @@ html, body {
 
 /* Dynamic dark gradient background */
 .bg-gradient-shift {
-  background: linear-gradient(45deg, #b40c7c, #06296b, #073e3a, #4d0896);
+  background: linear-gradient(45deg, #e474bf, #2955a9, #2b9e96, #8b62b8);
   background-size: 400% 400%; /* Allows the animation to shift the gradient */
   animation: gradientShift 8s ease infinite; /* Smooth infinite animation */
 }
