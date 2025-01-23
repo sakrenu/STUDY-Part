@@ -272,3 +272,96 @@
   width: 250px; 
   margin-bottom: 20px;
 }
+
+/* Media Queries for screens below 600px */
+@media (max-width: 600px) {
+  /* Logo Container */
+  .teacher-feature-page .logo-container {
+    width: 100%; 
+    padding: 0.5rem; 
+  }
+
+  .teacher-feature-page .logo-image {
+    width: 20px; 
+    height: 20px;
+  }
+
+  .teacher-feature-page .logo {
+    font-size: 1.5rem; 
+  }
+
+  /* Sidebar */
+  .teacher-feature-page .sidebar {
+    width: 200px; /* Reduce sidebar width */
+    transform: translateX(-200px); /* Adjust for new width */
+  }
+
+  .teacher-feature-page .sidebar.closed {
+    transform: translateX(-200px); /* Adjust for new width */
+  }
+
+  .teacher-feature-page .menu button {
+    padding: 10px 15px; /* Reduce button padding */
+    font-size: 14px; /* Reduce button font size */
+  }
+
+  .teacher-feature-page .logout button {
+    padding: 8px; /* Reduce logout button padding */
+    font-size: 14px; /* Reduce logout button font size */
+  }
+
+  /* Toggle Button */
+  .teacher-feature-page .toggle-button-container {
+    left: 200px; /* Adjust for new sidebar width */
+  }
+
+  .teacher-feature-page .toggle-button-container.closed {
+    left: 0; /* Adjust for closed sidebar */
+  }
+
+  /* Main Content */
+  .teacher-feature-page .feature-info {
+    margin-left: 0; /* Full width when sidebar is closed */
+    padding: 20px; /* Reduce padding */
+    width: 100%; /* Full width */
+  }
+
+  .teacher-feature-page .feature-info.closed {
+    margin-left: 0; /* Full width when sidebar is closed */
+  }
+
+  /* Header Text */
+  .teacher-feature-page .header-text {
+    text-align: center; /* Center-align header text */
+    margin-top: 20px; /* Reduce top margin */
+    margin-bottom: 10px; /* Reduce bottom margin */
+  }
+
+  .teacher-feature-page h3 {
+    text-align: center; /* Center-align subheadings */
+  }
+
+  /* Image Boxes */
+  .teacher-feature-page .image-box {
+    flex-direction: column; /* Stack text and image vertically */
+    align-items: center; /* Center-align content */
+    padding: 20px; /* Reduce padding */
+    margin: 20px 0; /* Reduce margin */
+  }
+
+  .teacher-feature-page .text-content {
+    text-align: justify; /* Justify text inside tiles */
+    margin-right: 0; /* Remove right margin */
+    margin-bottom: 20px; /* Add space below text */
+  }
+
+  .teacher-feature-page .text-content h2 {
+    text-align: center; /* Center-align headings */
+  }
+
+  .teacher-feature-page .image-content img {
+    max-width: 80%;
+    margin-left: 40px;
+    margin-top: 10px; /* Add space above the image */
+  }
+}
