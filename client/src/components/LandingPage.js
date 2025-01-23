@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import './LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
@@ -13,16 +18,17 @@ const LandingPage = () => {
   };
 
   const handleNavLinkClick = (e, sectionId) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (sectionId === 'top') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      scrollToSection(sectionId); 
+      scrollToSection(sectionId);
     }
+    setIsMenuOpen(false); // Close the menu after clicking a link
   };
 
   const navigateToSignup = (role) => {
-    navigate('/signup', { state: { role } }); 
+    navigate('/signup', { state: { role } });
   };
 
   return (
@@ -35,16 +41,16 @@ const LandingPage = () => {
             <span className="part">Part</span>
           </a>
         </div>
-        <div className="nav-links">
+        <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
           <a
-            href="#top" 
+            href="#top"
             className="nav-link"
-            onClick={(e) => handleNavLinkClick(e, 'top')} 
+            onClick={(e) => handleNavLinkClick(e, 'top')}
           >
             Home
           </a>
           <a
-            href="#features-section" 
+            href="#features-section"
             className="nav-link"
             onClick={(e) => handleNavLinkClick(e, 'features-section')}
           >
@@ -66,6 +72,9 @@ const LandingPage = () => {
           </a>
           <a href="/login" className="nav-link">Sign in</a>
           <a href="/signup" className="register-btn">Sign up</a>
+        </div>
+        <div className="menu-icon" onClick={toggleMenu}>
+          ☰
         </div>
       </nav>
 
