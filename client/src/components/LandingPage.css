@@ -84,7 +84,6 @@ html, body {
 
 .nav-links {
   display: flex;
-  margin-right: 40px;
   gap: 2rem;
   align-items: center;
 }
