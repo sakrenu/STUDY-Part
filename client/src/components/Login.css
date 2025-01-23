@@ -72,6 +72,7 @@
   
   .form-group {
     margin-bottom: 20px;
+    margin-right: 15px;
   }
   
   label {
@@ -172,4 +173,52 @@
 
 .close-button:hover {
   color: var(--gradient-start);
+}
+
+/* Media Queries for screens below 600px */
+@media (max-width: 600px) {
+  /* Scale down the login card and its contents */
+  .login-card {
+    width: 90%; /* Reduce the width to 70% of the original size */
+    padding: 20px; /* Reduce padding */
+    transform: scale(0.9); /* Scale down the entire card */
+    transform-origin: center; /* Ensure scaling happens from the center */
+  }
+
+  /* Adjust font sizes for smaller screens */
+  .login-title {
+    font-size: 20px; /* Reduce title font size */
+  }
+
+  .login-subtitle {
+    font-size: 12px; /* Reduce subtitle font size */
+  }
+
+  .error-message,
+  .success-message {
+    font-size: 12px; /* Reduce message font size */
+  }
+
+  label {
+    font-size: 12px; /* Reduce label font size */
+  }
+
+  input {
+    padding: 8px; /* Reduce input padding */
+    font-size: 12px; /* Reduce input font size */
+  }
+
+  .login-button,
+  .google-button {
+    padding: 10px; /* Reduce button padding */
+    font-size: 14px; /* Reduce button font size */
+  }
+
+  .signup-link {
+    font-size: 12px; /* Reduce signup link font size */
+  }
+
+  .close-button {
+    font-size: 20px; /* Reduce close button size */
+  }
 }
