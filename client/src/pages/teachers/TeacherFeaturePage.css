@@ -42,6 +42,7 @@
 .study-part-title:hover {
   text-decoration: none; /* Ensure no underline on hover */
 }
+
 /* Sidebar */
 .teacher-feature-page .sidebar {
   position: fixed;
@@ -273,95 +274,87 @@
   margin-bottom: 20px;
 }
 
-/* Media Queries for screens below 600px */
-@media (max-width: 600px) {
-  /* Logo Container */
+/* Media Queries for screens below 800px */
+@media (max-width: 800px) {
+  /* Center-align all headings */
+  .teacher-feature-page .header-text {
+    text-align: center;
+  }
+
+  .teacher-feature-page h2, .teacher-feature-page h3 {
+    font-size: 100%;
+  }
+
+  /* Reduce the size of the StudyPart logo */
   .teacher-feature-page .logo-container {
     width: 100%; 
-    padding: 0.5rem; 
   }
 
   .teacher-feature-page .logo-image {
-    width: 20px; 
-    height: 20px;
+    width: 20px; /* Half the original size */
+    height: 20px; /* Half the original size */
   }
 
   .teacher-feature-page .logo {
-    font-size: 1.5rem; 
+    font-size: 1.5rem; /* Adjust font size to match the smaller logo */
   }
 
-  /* Sidebar */
-  .teacher-feature-page .sidebar {
-    width: 200px; /* Reduce sidebar width */
-    transform: translateX(-200px); /* Adjust for new width */
-  }
-
-  .teacher-feature-page .sidebar.closed {
-    transform: translateX(-200px); /* Adjust for new width */
-  }
-
-  .teacher-feature-page .menu button {
-    padding: 10px 15px; /* Reduce button padding */
-    font-size: 14px; /* Reduce button font size */
-  }
-
-  .teacher-feature-page .logout button {
-    padding: 8px; /* Reduce logout button padding */
-    font-size: 14px; /* Reduce logout button font size */
-  }
-
-  /* Toggle Button */
-  .teacher-feature-page .toggle-button-container {
-    left: 200px; /* Adjust for new sidebar width */
-  }
-
-  .teacher-feature-page .toggle-button-container.closed {
-    left: 0; /* Adjust for closed sidebar */
-  }
-
-  /* Main Content */
-  .teacher-feature-page .feature-info {
-    margin-left: 0; /* Full width when sidebar is closed */
-    padding: 20px; /* Reduce padding */
-    width: 100%; /* Full width */
-  }
-
-  .teacher-feature-page .feature-info.closed {
-    margin-left: 0; /* Full width when sidebar is closed */
-  }
-
-  /* Header Text */
-  .teacher-feature-page .header-text {
-    text-align: center; /* Center-align header text */
-    margin-top: 20px; /* Reduce top margin */
-    margin-bottom: 10px; /* Reduce bottom margin */
-  }
-
-  .teacher-feature-page h3 {
-    text-align: center; /* Center-align subheadings */
-  }
-
-  /* Image Boxes */
+  /* Adjust the tiles to have the image fill the entire tile and text below */
   .teacher-feature-page .image-box {
-    flex-direction: column; /* Stack text and image vertically */
-    align-items: center; /* Center-align content */
-    padding: 20px; /* Reduce padding */
-    margin: 20px 0; /* Reduce margin */
+    flex-direction: column-reverse; 
+    align-items: center; 
   }
 
   .teacher-feature-page .text-content {
-    text-align: justify; /* Justify text inside tiles */
-    margin-right: 0; /* Remove right margin */
-    margin-bottom: 20px; /* Add space below text */
-  }
-
-  .teacher-feature-page .text-content h2 {
-    text-align: center; /* Center-align headings */
+    text-align: center; 
+    margin-right: 0;
+    margin-bottom: 20px; 
   }
 
   .teacher-feature-page .image-content img {
-    max-width: 80%;
-    margin-left: 40px;
-    margin-top: 10px; /* Add space above the image */
+    width: 100%; 
+    max-width: 100%; 
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 15px; /* Maintain rounded corners */
+    margin-bottom: 20px; /* Add space below the image */
+  }
+
+  /* Sidebar overlay */
+  .teacher-feature-page .sidebar {
+    position: fixed; /* Fix the sidebar to the viewport */
+    top: 70px; /* Align below the logo */
+    left: -250px; /* Initially hidden off-screen */
+    width: 250px; /* Sidebar width */
+    height: calc(100vh - 70px); /* Full height minus logo height */
+    background-color: rgba(44, 44, 84, 0.95); /* Semi-transparent background */
+    z-index: 1001; /* Ensure sidebar is above the content */
+    transition: left 0.3s ease; /* Smooth slide-in animation */
+  }
+
+  .teacher-feature-page .sidebar.open {
+    left: 0; /* Slide in when open */
+  }
+
+  /* Blur effect on the content when sidebar is open */
+  .teacher-feature-page .feature-info {
+    transition: filter 0.3s ease; /* Smooth transition for blur */
+  }
+
+  .teacher-feature-page .sidebar.open ~ .feature-info {
+    filter: blur(5px); /* Apply blur to the content */
+    pointer-events: none; /* Disable interactions with the blurred content */
+  }
+
+  /* Adjust toggle button position */
+  .teacher-feature-page .toggle-button-container {
+    position: fixed;
+    top: 80px; /* Align with the sidebar */
+    left: 10px; /* Move toggle button closer to the edge */
+    z-index: 1002; /* Ensure toggle button is above the sidebar */
+  }
+
+  /* Ensure the logo and other elements don't interfere */
+  .teacher-feature-page .logo-container {
+    z-index: 1003; /* Ensure logo is above the sidebar */
   }
 }

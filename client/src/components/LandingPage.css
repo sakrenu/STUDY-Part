@@ -3,13 +3,13 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
 }
 
 /* Base layout */
 .landing-container {
   min-height: 100vh;
-  background-color: #05071C; /* Updated background color */
+  background-color: #05071C;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
@@ -84,6 +84,7 @@ html, body {
 
 .nav-links {
   display: flex;
+  margin-right: 40px;
   gap: 2rem;
   align-items: center;
 }
@@ -111,9 +112,8 @@ html, body {
   box-shadow: 0 0 10px #4A90E2, 0 0 10px #4A90E2, 0 0 10px #4A90E2;
 }
 
-/* Hero Section */
 .hero-section {
-  padding: 7rem 1.5rem 5rem; /* Add extra padding at the top */
+  padding: 7rem 1.5rem 5rem;
   max-width: 53%;
   margin-left: 50px;
   display: flex;
@@ -201,7 +201,7 @@ html, body {
 }
 
 .feature-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656); /* Static gradient matching wave colors */
+  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
@@ -236,7 +236,7 @@ html, body {
 }
 
 .product-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656); /* Static gradient matching wave colors */
+  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
@@ -255,6 +255,10 @@ html, body {
 
 .product-description {
   color: #D3D3D3;
+}
+
+.menu-icon {
+  display: none; /* Hide the menu icon by default */
 }
 
 /* About Section */
