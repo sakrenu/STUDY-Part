@@ -341,7 +341,7 @@
   }
 
   .teacher-feature-page .sidebar.open ~ .feature-info {
-    filter: blur(5px); /* Apply blur to the content */
+    filter: blur(100px); /* Apply blur to the content */
     pointer-events: none; /* Disable interactions with the blurred content */
   }
 
@@ -349,7 +349,7 @@
   .teacher-feature-page .toggle-button-container {
     position: fixed;
     top: 80px; /* Align with the sidebar */
-    left: 10px; /* Move toggle button closer to the edge */
+    left: 100px; /* Move toggle button closer to the edge */
     z-index: 1002; /* Ensure toggle button is above the sidebar */
   }
 
