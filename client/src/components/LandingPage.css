@@ -3,13 +3,13 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
 }
 
 /* Base layout */
 .landing-container {
   min-height: 100vh;
-  background-color: #05071C; /* Updated background color */
+  background-color: #05071C;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
@@ -112,9 +112,8 @@ html, body {
   box-shadow: 0 0 10px #4A90E2, 0 0 10px #4A90E2, 0 0 10px #4A90E2;
 }
 
-/* Hero Section */
 .hero-section {
-  padding: 7rem 1.5rem 5rem; /* Add extra padding at the top */
+  padding: 7rem 1.5rem 5rem;
   max-width: 53%;
   margin-left: 50px;
   display: flex;
@@ -202,7 +201,7 @@ html, body {
 }
 
 .feature-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656); /* Static gradient matching wave colors */
+  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
@@ -237,7 +236,7 @@ html, body {
 }
 
 .product-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656); /* Static gradient matching wave colors */
+  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
@@ -256,6 +255,10 @@ html, body {
 
 .product-description {
   color: #D3D3D3;
+}
+
+.menu-icon {
+  display: none; /* Hide the menu icon by default */
 }
 
 /* About Section */
@@ -286,4 +289,135 @@ html, body {
   font-size: 2.5rem;
   font-weight: bold;
   text-shadow: 0 0 2px #FFFFFF, 0 0 10px #D774E4;
+}
+
+/* Media Queries for screens below 600px */
+@media (max-width: 600px) {
+  /* Navigation Bar */
+  .nav-container {
+    padding: 0.5rem 1rem;
+  }
+
+  .logo-container {
+    gap: 0.25rem;
+  }
+
+  .logo-image {
+    width: 20px;
+    height: 20px;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+  }
+
+  .nav-links {
+    display: none; 
+    flex-direction: column;
+    position: absolute;
+    top: 50px; 
+    right: 0.5rem;
+    background-color: #193d66;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  .menu-icon {
+    display: block; /* Show the menu icon */
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #FFFFFF;
+    margin-right: 30px;
+  }
+
+  /* Hero Section */
+  .hero-section {
+    padding: 5rem 1rem 3rem;
+    max-width: 100%;
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .cta-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  /* Features Section */
+  .features-section {
+    padding: 2rem 1rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card {
+    padding: 1.5rem;
+  }
+
+  .feature-title {
+    font-size: 1.25rem;
+  }
+
+  .feature-description {
+    font-size: 0.9rem;
+  }
+
+  /* Products Section */
+  .products-section {
+    padding: 3rem 1rem;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-card {
+    padding: 1.5rem;
+  }
+
+  .product-title {
+    font-size: 1.25rem;
+  }
+
+  .product-description {
+    font-size: 0.9rem;
+  }
+
+  /* About Section */
+  .about-section {
+    padding: 3rem 1rem;
+  }
+
+  .about-title {
+    font-size: 2rem;
+  }
+
+  .about-description {
+    font-size: 1rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
 }
