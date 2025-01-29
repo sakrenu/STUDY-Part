@@ -257,3 +257,15 @@
   color: #ccd6f6; /* Light blue-gray */
   font-size: 1rem;
 }
+
+.original-with-highlight {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.original-with-highlight-image {
+  max-width: 100%;
+  height: auto;
+  border: 2px solid #4CAF50; /* Green border */
+  border-radius: 8px;
+}
