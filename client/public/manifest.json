@@ -1,6 +1,6 @@
 {
   "short_name": "StudyPart",
-  "name": "StudyPart",
+  "name": "StudyPart PWA",
   "icons": [
     {
       "src": "studpartlogo.png",
@@ -16,5 +16,18 @@
   "start_url": "/",
   "background_color": "#ffffff",
   "display": "standalone",
-  "theme_color": "#000000"
+  "theme_color": "#000000",
+  "screenshots": [
+    {
+      "src": "/screenshots/wide-screenshot.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/mobile-screenshot.png",
+      "sizes": "360x740",
+      "type": "image/png"
+    }
+  ]
 }
