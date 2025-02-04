@@ -274,9 +274,7 @@
   margin-bottom: 20px;
 }
 
-/* Media Queries for screens below 800px */
 @media (max-width: 800px) {
-  /* Center-align all headings */
   .teacher-feature-page .header-text {
     text-align: center;
   }
@@ -285,21 +283,19 @@
     font-size: 100%;
   }
 
-  /* Reduce the size of the StudyPart logo */
   .teacher-feature-page .logo-container {
     width: 100%; 
   }
 
   .teacher-feature-page .logo-image {
-    width: 20px; /* Half the original size */
-    height: 20px; /* Half the original size */
+    width: 20px; 
+    height: 20px; 
   }
 
   .teacher-feature-page .logo {
-    font-size: 1.5rem; /* Adjust font size to match the smaller logo */
+    font-size: 1.5rem;
   }
 
-  /* Adjust the tiles to have the image fill the entire tile and text below */
   .teacher-feature-page .image-box {
     flex-direction: column-reverse; 
     align-items: center; 
