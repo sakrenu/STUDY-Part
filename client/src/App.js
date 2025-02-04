@@ -6,6 +6,7 @@ import Signup from './components/Signup';
 import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
 import TeachingMode from './pages/teachers/TeachingMode';
 import StudentDashboard from './pages/students/StudentDashboard';
+import QuizMode from './pages/students/QuizMode';
 import LandingPage from './components/LandingPage'; 
 
 const App = () => {
@@ -19,6 +20,7 @@ const App = () => {
           <Route path="/dashboard" element={<TeacherFeaturePage />} />
           <Route path="/dashboard/teaching" element={<TeachingMode/>} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
+          <Route path="/student-dashboard/quiz-mode" element={<QuizMode />} />
           <Route path="*" element={<Navigate to="/login" />} /> {/* Redirect unknown paths to login */}
         </Routes>
       </div>
