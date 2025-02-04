@@ -13,6 +13,7 @@ def segment_image(image_path, bounding_box):
     # Load the FastSAM model
     model = FastSAM("FastSAM-s.pt").to(device)
 
+
     # Convert bounding box to correct format
     bounding_box = [
         int(bounding_box[0]),  # x_min
