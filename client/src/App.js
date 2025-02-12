@@ -28,6 +28,7 @@ const App = () => {
 
           {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
+          <Route path="/learning-mode" element={<LearningMode />} />
 
           {/* Redirect Unknown Paths to Login */}
           <Route path="*" element={<Navigate to="/login" />} />
