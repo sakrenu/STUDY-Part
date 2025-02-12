@@ -1,5 +1,3 @@
-
-
 // export default TeachersDashboard;
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -16,6 +14,7 @@ import axios from 'axios';
 import './TeachingMode.css';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
+import BasicVersion from './BasicVersion';
 
 const TeachersDashboard = () => {
     const [image, setImage] = useState(null);
@@ -36,6 +35,16 @@ const TeachersDashboard = () => {
     const [newGroupName, setNewGroupName] = useState('');
     const [originalWithHighlight, setOriginalWithHighlight] = useState(null);
     const cropperRef = useRef(null);
+    const [basicContours, setBasicContours] = useState([]);
+    const [basicNotes, setBasicNotes] = useState({});
+    const [showNotePopup, setShowNotePopup] = useState(null);
+    const [selectedRegion, setSelectedRegion] = useState(null);
+    const [showNotesInput, setShowNotesInput] = useState(false);
+    const [currentNote, setCurrentNote] = useState('');
+    const [contourCanvas, setContourCanvas] = useState(null);
+    const canvasRef = useRef(null);
+    const imageRef = useRef(null);
+    const [processedRegions, setProcessedRegions] = useState([]);
 
     // Fetch students and groups
     useEffect(() => {
@@ -171,10 +180,22 @@ const TeachersDashboard = () => {
             const teacherRef = doc(db, 'teachers', teacherId);
             const teacherData = (await getDoc(teacherRef)).data();
 
+            // Get the cropper data for coordinates
+            const cropData = cropperRef.current.cropper.getData();
+            
             const newSegment = {
                 segment_url: segmentedImages[0],
                 notes: notes[0] || '',
+                coordinates: {
+                    x: (cropData.x / cropperRef.current.cropper.getContainerData().width) * 100,
+                    y: (cropData.y / cropperRef.current.cropper.getContainerData().height) * 100,
+                    width: (cropData.width / cropperRef.current.cropper.getContainerData().width) * 100,
+                    height: (cropData.height / cropperRef.current.cropper.getContainerData().height) * 100
+                }
             };
+
+            // Add to processed regions
+            setProcessedRegions(prev => [...prev, newSegment]);
 
             const sanitizedImageUrl = encodeURIComponent(currentImageUrl);
 
@@ -504,10 +525,168 @@ const TeachersDashboard = () => {
                         </div>
                     </div>
                 );
+            case 'basicversion':
+                return <BasicVersion />;
             default:
                 return null;
         }
     };
+
+    // Replace the handleAddContour function
+    const handleRegionSelect = () => {
+        if (!cropperRef.current || !imageRef.current) {
+            console.error('Cropper or image reference not available');
+            return;
+        }
+
+        try {
+            const cropper = cropperRef.current.cropper;
+            const cropData = cropper.getData();
+            
+            // Ensure we have valid dimensions
+            if (cropData.width <= 0 || cropData.height <= 0) {
+                console.error('Invalid crop dimensions');
+                return;
+            }
+
+            setSelectedRegion(cropData);
+
+            // Create a temporary canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas dimensions to match the cropped region
+            canvas.width = Math.round(cropData.width);
+            canvas.height = Math.round(cropData.height);
+
+            // Wait for image to load
+            const image = imageRef.current;
+            if (!image.complete) {
+                image.onload = () => processRegion(image, cropData, canvas, ctx);
+            } else {
+                processRegion(image, cropData, canvas, ctx);
+            }
+        } catch (error) {
+            console.error('Error in handleRegionSelect:', error);
+            setError('Failed to process selected region');
+        }
+    };
+
+    // Separate function to process the region
+    const processRegion = (image, cropData, canvas, ctx) => {
+        try {
+            // Draw the cropped region
+            ctx.drawImage(
+                image,
+                Math.round(cropData.x),
+                Math.round(cropData.y),
+                Math.round(cropData.width),
+                Math.round(cropData.height),
+                0,
+                0,
+                Math.round(cropData.width),
+                Math.round(cropData.height)
+            );
+
+            // Get image data and detect edges
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const edgeData = detectEdges(imageData);
+
+            // Draw edges on the contour canvas
+            if (canvasRef.current) {
+                const contourCtx = canvasRef.current.getContext('2d');
+                canvasRef.current.width = canvas.width;
+                canvasRef.current.height = canvas.height;
+                contourCtx.putImageData(edgeData, 0, 0);
+            }
+
+            setContourCanvas(canvas.toDataURL());
+        } catch (error) {
+            console.error('Error in processRegion:', error);
+            setError('Failed to process region');
+        }
+    };
+
+    const handleAddNotes = () => {
+        if (selectedRegion && currentNote) {
+            setBasicContours(prev => [...prev, selectedRegion]);
+            setBasicNotes(prev => ({
+                ...prev,
+                [basicContours.length]: currentNote
+            }));
+            // Reset states
+            setSelectedRegion(null);
+            setShowNotesInput(false);
+            setCurrentNote('');
+        }
+    };
+
+    const handleDone = () => {
+        setShowNotesInput(false);
+        setSelectedRegion(null);
+        // You can add any additional cleanup or state resets here
+    };
+
+    const detectEdges = (imageData) => {
+        const data = imageData.data;
+        const width = imageData.width;
+        const height = imageData.height;
+        const output = new Uint8ClampedArray(width * height * 4);
+
+        // Convert to grayscale and apply Sobel operator for edge detection
+        for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+                const idx = (y * width + x) * 4;
+
+                // Get surrounding pixels
+                const tl = getGrayscale(data, (y - 1) * width + (x - 1), width);
+                const t = getGrayscale(data, (y - 1) * width + x, width);
+                const tr = getGrayscale(data, (y - 1) * width + (x + 1), width);
+                const l = getGrayscale(data, y * width + (x - 1), width);
+                const r = getGrayscale(data, y * width + (x + 1), width);
+                const bl = getGrayscale(data, (y + 1) * width + (x - 1), width);
+                const b = getGrayscale(data, (y + 1) * width + x, width);
+                const br = getGrayscale(data, (y + 1) * width + (x + 1), width);
+
+                // Sobel operators
+                const gx = -tl - 2 * l - bl + tr + 2 * r + br;
+                const gy = -tl - 2 * t - tr + bl + 2 * b + br;
+
+                const g = Math.sqrt(gx * gx + gy * gy);
+
+                // Threshold for edges
+                const isEdge = g > 50 ? 255 : 0;
+
+                output[idx] = isEdge;     // R
+                output[idx + 1] = isEdge; // G
+                output[idx + 2] = isEdge; // B
+                output[idx + 3] = 255;    // A
+            }
+        }
+
+        return new ImageData(output, width, height);
+    };
+
+    const getGrayscale = (data, idx, width) => {
+        idx *= 4;
+        // Convert RGB to grayscale using luminosity method
+        return data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+    };
+
+    useEffect(() => {
+        if (image) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                imageRef.current = img;
+            };
+            img.onerror = (error) => {
+                console.error('Error loading image:', error);
+                setError('Failed to load image');
+            };
+            img.src = image instanceof File ? URL.createObjectURL(image) : image;
+        }
+    }, [image]);
 
     return (
         <div className="teachers-dashboard">
@@ -525,6 +704,12 @@ const TeachersDashboard = () => {
                     </li>
                     <li className={activeTab === 'library' ? 'active' : ''} onClick={() => setActiveTab('library')}>
                         Library
+                    </li>
+                    <li 
+                        className={activeTab === 'basicversion' ? 'active' : ''} 
+                        onClick={() => setActiveTab('basicversion')}
+                    >
+                        Basic Version
                     </li>
                 </ul>
             </nav>
