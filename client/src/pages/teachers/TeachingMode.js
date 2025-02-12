@@ -1,7 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase'; // Import db from the firebase configuration file
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+
+
+// export default TeachersDashboard;
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    updateDoc,
+    getDoc,
+    arrayUnion,
+} from 'firebase/firestore';
+import { db } from '../../firebase';
 import axios from 'axios';
 import './TeachingMode.css';
 import Cropper from 'react-cropper';
@@ -13,11 +23,21 @@ const TeachersDashboard = () => {
     const [notes, setNotes] = useState({});
     const [students, setStudents] = useState([]);
     const [cropper, setCropper] = useState(null);
-    const [croppedImage, setCroppedImage] = useState(null);
+    const [teacherId, setTeacherId] = useState('teacher_1');
     const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [uploadedImages, setUploadedImages] = useState([]);
+    const [isNotesSaved, setIsNotesSaved] = useState(false);
+    const [currentImageUrl, setCurrentImageUrl] = useState(null);
+    const [activeTab, setActiveTab] = useState('home');
+    const [groups, setGroups] = useState([]);
+    const [selectedStudents, setSelectedStudents] = useState([]);
+    const [selectedGroup, setSelectedGroup] = useState('');
+    const [newGroupName, setNewGroupName] = useState('');
+    const [originalWithHighlight, setOriginalWithHighlight] = useState(null);
+    const cropperRef = useRef(null);
 
-    const navigate = useNavigate();
-
+    // Fetch students and groups
     useEffect(() => {
         const fetchStudents = async () => {
             try {
@@ -31,130 +51,486 @@ const TeachersDashboard = () => {
             }
         };
 
-        fetchStudents();
-    }, []);
+        const fetchUploadedImages = async () => {
+            try {
+                const teacherRef = doc(db, 'teachers', teacherId);
+                const teacherData = (await getDoc(teacherRef)).data();
+                if (teacherData && teacherData.images) {
+                    setUploadedImages(Object.entries(teacherData.images));
+                }
+            } catch (err) {
+                setError('Failed to fetch uploaded images: ' + err.message);
+            }
+        };
 
+        const fetchGroups = async () => {
+            try {
+                const teacherRef = doc(db, 'teachers', teacherId);
+                const teacherData = (await getDoc(teacherRef)).data();
+                if (teacherData && teacherData.groups) {
+                    setGroups(teacherData.groups);
+                }
+            } catch (err) {
+                setError('Failed to fetch groups: ' + err.message);
+            }
+        };
+
+        fetchStudents();
+        fetchUploadedImages();
+        fetchGroups();
+    }, [teacherId]);
+
+    // Handle image upload
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
-        setImage(file);
-    };
-
-    const handleSegmentation = async () => {
-        if (cropper) {
-            const canvas = cropper.getCroppedCanvas();
-            const croppedImageUrl = canvas.toDataURL('image/jpeg');
-            setCroppedImage(croppedImageUrl);
-
-            const formData = new FormData();
-            formData.append('image', image);
-
-            try {
-                const uploadResponse = await axios.post('http://localhost:5000/upload', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                });
-
-                const imageUrl = uploadResponse.data.image_url;
-
-                const segmentResponse = await axios.post('http://localhost:5000/segment', {
-                    image_url: imageUrl,
-                    bounding_box: {
-                        left: cropper.getData().x,
-                        top: cropper.getData().y,
-                        width: cropper.getData().width,
-                        height: cropper.getData().height,
-                    },
-                });
-
-                setSegmentedImages(segmentResponse.data.segmented_urls);
-            } catch (err) {
-                setError('Failed to segment image: ' + err.message);
-                console.error('Segmentation error:', err);
-            }
+        if (file) {
+            setImage(file); // Set the image state to the File object
         }
     };
 
-    const handleNoteChange = (segmentId, note) => {
+    // Handle region selection
+    const handleSelectRegion = () => {
+        if (cropperRef.current) {
+            const cropper = cropperRef.current.cropper;
+            const canvas = cropper.getCroppedCanvas();
+
+            // Convert the canvas to a Blob
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    // Create a URL for the Blob
+                    const imageUrl = URL.createObjectURL(blob);
+                    setImage(imageUrl); // Update the image state
+                } else {
+                    setError('Failed to create image blob.');
+                }
+            }, 'image/jpeg'); // Specify the image format
+        }
+    };
+
+    // Handle segmentation
+    const handleSegmentation = async () => {
+        if (cropperRef.current) {
+            setIsLoading(true);
+            const canvas = cropperRef.current.cropper.getCroppedCanvas();
+
+            // Convert the canvas to a Blob
+            canvas.toBlob(async (blob) => {
+                if (blob) {
+                    const formData = new FormData();
+                    formData.append('image', blob, 'cropped-image.jpg'); // Append the Blob to FormData
+
+                    try {
+                        const uploadResponse = await axios.post('http://localhost:5000/upload', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' },
+                        });
+
+                        const imageUrl = uploadResponse.data.image_url;
+                        setCurrentImageUrl(imageUrl);
+
+                        const segmentResponse = await axios.post('http://localhost:5000/segment', {
+                            image_url: imageUrl,
+                            bounding_box: {
+                                left: cropperRef.current.cropper.getData().x,
+                                top: cropperRef.current.cropper.getData().y,
+                                width: cropperRef.current.cropper.getData().width,
+                                height: cropperRef.current.cropper.getData().height,
+                            },
+                            teacher_id: teacherId,
+                        });
+
+                        const segmentedUrls = segmentResponse.data.segmented_urls;
+                        const originalWithHighlightUrl = segmentResponse.data.original_with_highlight;
+
+                        // Update state variables
+                        setSegmentedImages(segmentedUrls);
+                        setOriginalWithHighlight(originalWithHighlightUrl);
+                    } catch (err) {
+                        setError('Segmentation failed: ' + err.message);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                } else {
+                    setError('Failed to create image blob.');
+                    setIsLoading(false);
+                }
+            }, 'image/jpeg'); // Specify the image format
+        }
+    };
+
+    // Handle note change
+    const handleNoteChange = (segmentIndex, note) => {
         setNotes(prevNotes => ({
             ...prevNotes,
-            [segmentId]: note,
+            [segmentIndex]: note,
         }));
     };
 
-    const handleSendToStudent = async (studentId) => {
+    // Save notes
+    const saveNotes = async () => {
         try {
-            const studentDocRef = doc(db, 'users', studentId);
-            await setDoc(studentDocRef, {
-                segmentedImages,
-                notes,
-            }, { merge: true });
+            const teacherRef = doc(db, 'teachers', teacherId);
+            const teacherData = (await getDoc(teacherRef)).data();
+
+            const newSegment = {
+                segment_url: segmentedImages[0],
+                notes: notes[0] || '',
+            };
+
+            const sanitizedImageUrl = encodeURIComponent(currentImageUrl);
+
+            if (teacherData) {
+                const existingImageData = teacherData.images?.[sanitizedImageUrl] || { segments: [] };
+                await updateDoc(teacherRef, {
+                    [`images.${sanitizedImageUrl}`]: {
+                        segments: arrayUnion(newSegment),
+                    },
+                });
+            } else {
+                await setDoc(teacherRef, {
+                    teacherId: teacherId,
+                    images: {
+                        [sanitizedImageUrl]: {
+                            segments: [newSegment],
+                        },
+                    },
+                });
+            }
+
+            setIsNotesSaved(true);
         } catch (err) {
-            setError('Failed to send to student: ' + err.message);
+            setError('Failed to save notes: ' + err.message);
+        }
+    };
+
+    // Handle segment another part
+    const handleSegmentAnotherPart = () => {
+        setSegmentedImages([]);
+        setNotes({});
+        setIsNotesSaved(false);
+    };
+
+    // Create a new group
+    const handleCreateGroup = async () => {
+        if (!newGroupName) {
+            setError('Group name cannot be empty.');
+            return;
+        }
+
+        const groupId = `group_${Date.now()}`;
+        const newGroup = {
+            id: groupId,
+            name: newGroupName,
+            students: [],
+        };
+
+        try {
+            const teacherRef = doc(db, 'teachers', teacherId);
+            await updateDoc(teacherRef, {
+                groups: arrayUnion(newGroup),
+            });
+
+            setGroups([...groups, newGroup]);
+            setNewGroupName('');
+        } catch (err) {
+            setError('Failed to create group: ' + err.message);
+        }
+    };
+
+    // Add selected students to a group
+    const handleAddStudentsToGroup = async () => {
+        if (!selectedGroup || selectedStudents.length === 0) {
+            setError('Please select a group and at least one student.');
+            return;
+        }
+
+        try {
+            const teacherRef = doc(db, 'teachers', teacherId);
+            const updatedGroups = groups.map(group => {
+                if (group.id === selectedGroup) {
+                    return {
+                        ...group,
+                        students: [...group.students, ...selectedStudents],
+                    };
+                }
+                return group;
+            });
+
+            await updateDoc(teacherRef, {
+                groups: updatedGroups,
+            });
+
+            setGroups(updatedGroups);
+            setSelectedStudents([]);
+        } catch (err) {
+            setError('Failed to add students to group: ' + err.message);
+        }
+    };
+
+    // Share notes with a group or all students
+    const handleShareNotes = async (groupId = null) => {
+        try {
+            const teacherRef = doc(db, 'teachers', teacherId);
+            const teacherData = (await getDoc(teacherRef)).data();
+
+            if (!teacherData || !teacherData.notes) {
+                setError('No notes found to share.');
+                return;
+            }
+
+            const notes = teacherData.notes;
+
+            if (groupId) {
+                // Share notes with a specific group
+                const group = groups.find(g => g.id === groupId);
+                if (!group) {
+                    setError('Group not found.');
+                    return;
+                }
+
+                for (const studentId of group.students) {
+                    const studentRef = doc(db, 'users', studentId);
+                    await updateDoc(studentRef, {
+                        sharedNotes: arrayUnion(...notes),
+                    });
+                }
+            } else {
+                // Share notes with all students
+                for (const student of students) {
+                    const studentRef = doc(db, 'users', student.id);
+                    await updateDoc(studentRef, {
+                        sharedNotes: arrayUnion(...notes),
+                    });
+                }
+            }
+
+            alert('Notes shared successfully!');
+        } catch (err) {
+            setError('Failed to share notes: ' + err.message);
+        }
+    };
+
+    // Render content based on active tab
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'home':
+                return (
+                    <div className="main-content">
+                        <header className="dashboard-header">
+                            <h1 className="dashboard-title">Teaching Mode</h1>
+                            <p className="dashboard-subtitle">Create Engaging Teaching Material for Your Students.</p>
+                        </header>
+
+                        {error && <div className="error-message">{error}</div>}
+
+                        <section className="upload-section card-neon">
+                            <h2>Upload your Image</h2>
+                            <div className="upload-container">
+                                <label className="file-upload-label">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="file-input"
+                                    />
+                                    <span className="upload-button">Choose Image</span>
+                                </label>
+                                {image && (
+                                    <div className="cropper-container">
+                                        <Cropper
+                                            src={image instanceof File ? URL.createObjectURL(image) : image}
+                                            style={{ height: 400, width: '100%' }}
+                                            aspectRatio={1}
+                                            guides={true}
+                                            ref={cropperRef}
+                                        />
+                                        <button onClick={handleSelectRegion} className="select-region-button">
+                                            Select Region
+                                        </button>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={handleSegmentation}
+                                    className="segment-button"
+                                    disabled={!image || isLoading}
+                                >
+                                    {isLoading ? 'Processing...' : 'Segment Image'}
+                                </button>
+                            </div>
+                        </section>
+
+                        {segmentedImages.length > 0 && (
+                            <section className="segmented-section card-neon">
+                                <h2>Segmented Images and Notes</h2>
+                                <div className="segmented-grid">
+                                    {segmentedImages.map((segmentedImage, index) => (
+                                        <div key={index} className="segment-card">
+                                            <img
+                                                src={segmentedImage}
+                                                alt={`Segmented Part ${index}`}
+                                                className="segmented-image"
+                                            />
+                                            <textarea
+                                                value={notes[index] || ''}
+                                                onChange={(e) => handleNoteChange(index, e.target.value)}
+                                                placeholder="Add notes..."
+                                                className="notes-textarea"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={saveNotes} className="save-notes-button">
+                                    Save Notes
+                                </button>
+                                {isNotesSaved && (
+                                    <div className="notes-saved-message">
+                                        Notes Saved!
+                                        <button onClick={handleSegmentAnotherPart} className="segment-another-button">
+                                            Segment Another Part
+                                        </button>
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
+                        {/* Display the original image with highlighted cutout */}
+                        {originalWithHighlight && (
+                            <div className="original-with-highlight">
+                                <h2>Original Image with Highlighted Cutout</h2>
+                                <img
+                                    src={originalWithHighlight}
+                                    alt="Original with Highlight"
+                                    className="original-with-highlight-image"
+                                />
+                            </div>
+                        )}
+                    </div>
+                );
+            case 'manage':
+                return (
+                    <div className="manage-students">
+                        <h2>Manage Students</h2>
+                        {error && <div className="error-message">{error}</div>}
+
+                        {/* Create Group Section */}
+                        <section className="create-group-section">
+                            <h3>Create New Group</h3>
+                            <input
+                                type="text"
+                                placeholder="Enter group name"
+                                value={newGroupName}
+                                onChange={(e) => setNewGroupName(e.target.value)}
+                            />
+                            <button onClick={handleCreateGroup}>Create Group</button>
+                        </section>
+
+                        {/* Add Students to Group Section */}
+                        <section className="add-students-section">
+                            <h3>Add Students to Group</h3>
+                            <select
+                                value={selectedGroup}
+                                onChange={(e) => setSelectedGroup(e.target.value)}
+                            >
+                                <option value="">Select a group</option>
+                                {groups.map(group => (
+                                    <option key={group.id} value={group.id}>
+                                        {group.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="student-list">
+                                {students.map(student => (
+                                    <div key={student.id} className="student-item">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedStudents.includes(student.id)}
+                                            onChange={(e) =>
+                                                setSelectedStudents(
+                                                    e.target.checked
+                                                        ? [...selectedStudents, student.id]
+                                                        : selectedStudents.filter(id => id !== student.id)
+                                                )
+                                            }
+                                        />
+                                        <span>{student.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={handleAddStudentsToGroup}>Add Selected Students to Group</button>
+                        </section>
+
+                        {/* Share Notes Section */}
+                        <section className="share-notes-section">
+                            <h3>Share Notes</h3>
+                            <button onClick={() => handleShareNotes()}>Share Notes with All Students</button>
+                            <div className="group-list">
+                                {groups.map(group => (
+                                    <div key={group.id} className="group-card">
+                                        <h4>{group.name}</h4>
+                                        <button onClick={() => handleShareNotes(group.id)}>
+                                            Share Notes with {group.name}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+                );
+            case 'library':
+                return (
+                    <div className="library-content">
+                        <h2>Library</h2>
+                        <div className="library-grid">
+                            {uploadedImages.map(([imageUrl, imageData]) => {
+                                // Ensure segments exist and is an array
+                                const segments = imageData?.segments || [];
+                                return (
+                                    <div key={imageUrl} className="library-card">
+                                        <img src={imageUrl} alt="Uploaded" className="library-image" />
+                                        <div className="library-notes">
+                                            {segments.map((segment, index) => (
+                                                <div key={index} className="segment-note">
+                                                    <img
+                                                        src={segment.segment_url}
+                                                        alt={`Segment ${index}`}
+                                                        className="segment-image"
+                                                    />
+                                                    <p>{segment.notes}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
         }
     };
 
     return (
         <div className="teachers-dashboard">
-            <header className="dashboard-header">
-                <h1>Teacher's Dashboard</h1>
-                <button
-                    className="back-button"
-                    onClick={() => navigate('/dashboard')}
-                >
-                    Back to Features Dashboard
-                </button>
-            </header>
-
-            {error && <p className="error-message">{error}</p>}
-
-            <div className="dashboard-section">
-                <h2>Teaching Mode</h2>
-                <input type="file" accept="image/*" onChange={handleImageUpload} />
-                {image && (
-                    <Cropper
-                        src={URL.createObjectURL(image)}
-                        style={{ height: 400, width: '100%' }}
-                        aspectRatio={1}
-                        guides={true}
-                        onInitialized={(instance) => {
-                            setCropper(instance);
-                        }}
-                    />
-                )}
-                <button className="dashboard-action-button" onClick={handleSegmentation}>
-                    Segment Image
-                </button>
-                {segmentedImages.map((segmentedImage, index) => (
-                    <div key={index} className="segmented-image-container">
-                        <img src={segmentedImage} alt={`Segmented ${index}`} />
-                        <textarea
-                            value={notes[index] || ''}
-                            onChange={(e) => handleNoteChange(index, e.target.value)}
-                            placeholder="Add notes..."
-                        />
-                    </div>
-                ))}
-            </div>
-
-            <div className="dashboard-section">
-                <h2>Quiz Mode</h2>
-                <p>Placeholder for future quiz feature</p>
-            </div>
-
-            <div className="dashboard-section">
-                <h2>Manage Students</h2>
+            {/* Navbar */}
+            <nav className="navbar">
                 <ul>
-                    {students.map(student => (
-                        <li key={student.id}>
-                            {student.email}
-                            <button className="dashboard-action-button" onClick={() => handleSendToStudent(student.id)}>
-                                Send
-                            </button>
-                        </li>
-                    ))}
+                    <li className={activeTab === 'home' ? 'active' : ''} onClick={() => setActiveTab('home')}>
+                        Home
+                    </li>
+                    <li className={activeTab === 'tutorial' ? 'active' : ''} onClick={() => setActiveTab('tutorial')}>
+                        Tutorial
+                    </li>
+                    <li className={activeTab === 'manage' ? 'active' : ''} onClick={() => setActiveTab('manage')}>
+                        Manage Students
+                    </li>
+                    <li className={activeTab === 'library' ? 'active' : ''} onClick={() => setActiveTab('library')}>
+                        Library
+                    </li>
                 </ul>
-            </div>
+            </nav>
+
+            {/* Main Content */}
+            {renderContent()}
         </div>
     );
 };
