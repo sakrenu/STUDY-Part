@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 
 
 // export default TeachersDashboard;
@@ -13,12 +12,6 @@ import {
     arrayUnion,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-=======
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase'; // Import db from the firebase configuration file
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
->>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12
 import axios from 'axios';
 import './TeachingMode.css';
 import Cropper from 'react-cropper';
@@ -30,7 +23,6 @@ const TeachersDashboard = () => {
     const [notes, setNotes] = useState({});
     const [students, setStudents] = useState([]);
     const [cropper, setCropper] = useState(null);
-<<<<<<< HEAD
     const [teacherId, setTeacherId] = useState('teacher_1');
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -46,13 +38,6 @@ const TeachersDashboard = () => {
     const cropperRef = useRef(null);
 
     // Fetch students and groups
-=======
-    const [croppedImage, setCroppedImage] = useState(null);
-    const [error, setError] = useState(null);
-
-    const navigate = useNavigate();
-
->>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12
     useEffect(() => {
         const fetchStudents = async () => {
             try {
@@ -66,7 +51,6 @@ const TeachersDashboard = () => {
             }
         };
 
-<<<<<<< HEAD
         const fetchUploadedImages = async () => {
             try {
                 const teacherRef = doc(db, 'teachers', teacherId);
@@ -522,74 +506,11 @@ const TeachersDashboard = () => {
                 );
             default:
                 return null;
-=======
-        fetchStudents();
-    }, []);
-
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        setImage(file);
-    };
-
-    const handleSegmentation = async () => {
-        if (cropper) {
-            const canvas = cropper.getCroppedCanvas();
-            const croppedImageUrl = canvas.toDataURL('image/jpeg');
-            setCroppedImage(croppedImageUrl);
-
-            const formData = new FormData();
-            formData.append('image', image);
-
-            try {
-                const uploadResponse = await axios.post('http://localhost:5000/upload', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                });
-
-                const imageUrl = uploadResponse.data.image_url;
-
-                const segmentResponse = await axios.post('http://localhost:5000/segment', {
-                    image_url: imageUrl,
-                    bounding_box: {
-                        left: cropper.getData().x,
-                        top: cropper.getData().y,
-                        width: cropper.getData().width,
-                        height: cropper.getData().height,
-                    },
-                });
-
-                setSegmentedImages(segmentResponse.data.segmented_urls);
-            } catch (err) {
-                setError('Failed to segment image: ' + err.message);
-                console.error('Segmentation error:', err);
-            }
-        }
-    };
-
-    const handleNoteChange = (segmentId, note) => {
-        setNotes(prevNotes => ({
-            ...prevNotes,
-            [segmentId]: note,
-        }));
-    };
-
-    const handleSendToStudent = async (studentId) => {
-        try {
-            const studentDocRef = doc(db, 'users', studentId);
-            await setDoc(studentDocRef, {
-                segmentedImages,
-                notes,
-            }, { merge: true });
-        } catch (err) {
-            setError('Failed to send to student: ' + err.message);
->>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12
         }
     };
 
     return (
         <div className="teachers-dashboard">
-<<<<<<< HEAD
             {/* Navbar */}
             <nav className="navbar">
                 <ul>
@@ -610,73 +531,8 @@ const TeachersDashboard = () => {
 
             {/* Main Content */}
             {renderContent()}
-=======
-            <header className="dashboard-header">
-                <h1>Teacher's Dashboard</h1>
-                <button
-                    className="back-button"
-                    onClick={() => navigate('/dashboard')}
-                >
-                    Back to Features Dashboard
-                </button>
-            </header>
-
-            {error && <p className="error-message">{error}</p>}
-
-            <div className="dashboard-section">
-                <h2>Teaching Mode</h2>
-                <input type="file" accept="image/*" onChange={handleImageUpload} />
-                {image && (
-                    <Cropper
-                        src={URL.createObjectURL(image)}
-                        style={{ height: 400, width: '100%' }}
-                        aspectRatio={1}
-                        guides={true}
-                        onInitialized={(instance) => {
-                            setCropper(instance);
-                        }}
-                    />
-                )}
-                <button className="dashboard-action-button" onClick={handleSegmentation}>
-                    Segment Image
-                </button>
-                {segmentedImages.map((segmentedImage, index) => (
-                    <div key={index} className="segmented-image-container">
-                        <img src={segmentedImage} alt={`Segmented ${index}`} />
-                        <textarea
-                            value={notes[index] || ''}
-                            onChange={(e) => handleNoteChange(index, e.target.value)}
-                            placeholder="Add notes..."
-                        />
-                    </div>
-                ))}
-            </div>
-
-            <div className="dashboard-section">
-                <h2>Quiz Mode</h2>
-                <p>Placeholder for future quiz feature</p>
-            </div>
-
-            <div className="dashboard-section">
-                <h2>Manage Students</h2>
-                <ul>
-                    {students.map(student => (
-                        <li key={student.id}>
-                            {student.email}
-                            <button className="dashboard-action-button" onClick={() => handleSendToStudent(student.id)}>
-                                Send
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            </div>
->>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12
         </div>
     );
 };
 
-<<<<<<< HEAD
 export default TeachersDashboard;
-=======
-export default TeachersDashboard;
->>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12
