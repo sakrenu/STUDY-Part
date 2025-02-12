@@ -30,11 +30,12 @@ const App = () => {
 
           {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
-          <Route path="/student-dashboard/quiz-mode" element={<QuizMode />} />
-          <Route path="/learning-mode" element={<LearningMode />} />
+
+          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="/students/quiz-mode" element={<QuizMode />} />
 
           {/* Redirect Unknown Paths to Login */}
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/login" />} /> {/* Redirect unknown paths to login */}
         </Routes>
       </div>
     </Router>

@@ -62,7 +62,7 @@ const StudentDashboard = () => {
             <aside className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                 <nav className="menu">
                     <button onClick={() =>navigate('/learning-mode')}>Learning Mode</button>
-                    <button onClick={() => navigate('/student-dashboard/quiz-mode')}>Quiz Mode</button> 
+                    <button onClick={() => navigate('/students/quiz-mode')}>Quiz Mode</button> {/* Updated */}
                     <button onClick={() => alert('Nodes Mode coming soon!')}>Notes Mode</button>
                 </nav>
                 <div className="logout">
@@ -103,7 +103,7 @@ const StudentDashboard = () => {
                 </div>
 
                 {/* Section 2: Quiz Mode */}
-                <div className="image-box" onClick={() => navigate('/student-dashboard/quiz-mode')}> {/* Updated */}
+                <div className="image-box" onClick={() => navigate('/students/quiz-mode')}> {/* Updated */}
                     <div className="text-content">
                         <h2>Quiz Mode</h2>
                         <p>Test your knowledge with interactive quizzes and track progress.</p>

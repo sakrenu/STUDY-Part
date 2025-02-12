@@ -81,7 +81,7 @@ const TeacherFeaturePage = () => {
         {/* Quiz Mode Box */}
         <div
           className="image-box"
-          onClick={() => alert('Quiz Mode coming soon!')}
+          onClick={() => alert("Quiz Mode Coming Soon!")}
         >
           <div className="text-content">
             <h2>Quiz Mode</h2>
