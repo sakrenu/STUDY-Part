@@ -1,0 +1,137 @@
+student-dashboard {
+    background: #0a192f; /* Dark blue background */
+    color: #ffffff;
+    padding: 2rem;
+    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+}
+
+.navbar {
+    background: #112240; /* Slightly lighter dark blue */
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 12px #64ffda; /* Teal glow */
+}
+
+.navbar ul {
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar li {
+    color: #ccd6f6; /* Light blue-gray */
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.navbar li:hover {
+    color: #64ffda; /* Teal accent */
+}
+
+.navbar li.active {
+    color: #64ffda; /* Teal accent */
+    font-weight: bold;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-title {
+    font-size: 2.5rem;
+    color: #64ffda; /* Teal accent */
+    text-shadow: 0 0 8px #64ffda;
+}
+
+.dashboard-subtitle {
+    font-size: 1.2rem;
+    color: #ccd6f6; /* Light blue-gray */
+}
+
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.image-container {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.original-image {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 0 12px #64ffda; /* Teal glow */
+}
+
+.segment-highlight {
+    position: absolute;
+    border: 2px solid #64ffda; /* Teal border */
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.segment-highlight:hover {
+    border-color: #ff6b6b; /* Coral red on hover */
+}
+
+.notes-section,
+.view-notes-section,
+.notifications-section {
+    background: #112240; /* Slightly lighter dark blue */
+    border: 2px solid #64ffda; /* Teal border */
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 12px #64ffda; /* Teal glow */
+}
+
+.notes-section h2,
+.view-notes-section h2,
+.notifications-section h2 {
+    font-size: 1.8rem;
+    color: #64ffda; /* Teal accent */
+    margin-bottom: 1rem;
+}
+
+.notes-section p,
+.view-notes-section p,
+.notifications-section p {
+    color: #ccd6f6; /* Light blue-gray */
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.note-card {
+    background: #0a192f; /* Dark blue background */
+    border: 1px solid #64ffda; /* Teal border */
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.notifications-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.notifications-section li {
+    background: #0a192f; /* Dark blue background */
+    border: 1px solid #64ffda; /* Teal border */
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}

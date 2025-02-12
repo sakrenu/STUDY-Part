@@ -1,6 +1,19 @@
 .vscode/
 .idea/
 # Virtual environment
+
+backend/__pycache__/
+
+
+dist/
+build/
+
+node_modules/
+backend/.env
+.codegpt
+.vscode/
+.idea/
+# Virtual environment
 client/node_modules/
 venv/
 backend/venv/
@@ -18,4 +31,9 @@ build/
 
 node_modules/
 backend/.env
+backend/firebase-credentials-2.json
+backend/firebase-credentials-3.json
+backend/firebase-credentials.json
+
+client/src/components/firebase.jsbackend/firebase-credentials-2.json
 .codegpt

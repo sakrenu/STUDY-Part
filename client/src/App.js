@@ -8,20 +8,33 @@ import TeachingMode from './pages/teachers/TeachingMode';
 import StudentDashboard from './pages/students/StudentDashboard';
 import QuizMode from './pages/students/QuizMode';
 import LandingPage from './components/LandingPage'; 
+import ManageStudents from './pages/teachers/ManageStudents';
+import LearningMode from './pages/students/LearningMode';
 
 const App = () => {
   return (
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<LandingPage />} /> 
+          {/* Landing Page */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Authentication Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+
+          {/* Teacher Routes */}
           <Route path="/dashboard" element={<TeacherFeaturePage />} />
-          <Route path="/dashboard/teaching" element={<TeachingMode/>} />
+          <Route path="/dashboard/teaching" element={<TeachingMode />} />
+          <Route path="/dashboard/manage-students" element={<ManageStudents />} /> {/* Add ManageStudents route */}
+
+          {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/student-dashboard/quiz-mode" element={<QuizMode />} />
-          <Route path="*" element={<Navigate to="/login" />} /> {/* Redirect unknown paths to login */}
+          <Route path="/learning-mode" element={<LearningMode />} />
+
+          {/* Redirect Unknown Paths to Login */}
+          <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>

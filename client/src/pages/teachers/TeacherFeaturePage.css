@@ -42,7 +42,6 @@
 .study-part-title:hover {
   text-decoration: none; /* Ensure no underline on hover */
 }
-
 /* Sidebar */
 .teacher-feature-page .sidebar {
   position: fixed;
