@@ -112,8 +112,6 @@ def segment_quiz():
     image_url = data.get('image_url')
     teacher_id = data.get('teacher_id')
 
-    breakpoint()
-
     try:
         # Download the image and save it locally
         response = requests.get(image_url)
