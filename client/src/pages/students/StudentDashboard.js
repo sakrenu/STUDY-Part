@@ -3,6 +3,7 @@ import { db, auth } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import './StudentDashboard.css';
+import LearningMode from './LearningMode';
 
 const StudentDashboard = () => {
     const navigate = useNavigate();
@@ -60,7 +61,7 @@ const StudentDashboard = () => {
             {/* Sidebar */}
             <aside className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                 <nav className="menu">
-                    <button onClick={() => alert('Learning Mode is active!')}>Learning Mode</button>
+                    <button onClick={() =>navigate('/learning-mode')}>Learning Mode</button>
                     <button onClick={() => alert('Quiz Mode coming soon!')}>Quiz Mode</button>
                     <button onClick={() => alert('Nodes Mode coming soon!')}>Notes Mode</button>
                 </nav>
@@ -91,7 +92,7 @@ const StudentDashboard = () => {
                 </div>
 
                 {/* Section 1: Learning Mode */}
-                <div className="image-box" onClick={() => alert('Learning Mode is active!')}>
+                <div className="image-box" onClick={() => navigate('/learning-mode')}>
                     <div className="text-content">
                         <h2>Learning Mode</h2>
                         <p>Explore segmented images, review notes, and dive into learning resources.</p>
