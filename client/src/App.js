@@ -30,8 +30,7 @@ const App = () => {
 
           {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
-
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="/learning-mode" element={<LearningMode />} />
           <Route path="/students/quiz-mode" element={<QuizMode />} />
 
           {/* Redirect Unknown Paths to Login */}
