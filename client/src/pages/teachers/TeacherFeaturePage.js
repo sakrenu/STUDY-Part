@@ -110,6 +110,7 @@ const TeacherFeaturePage = () => {
   );
 };
 
+<<<<<<< HEAD
 export default TeacherFeaturePage;
 
 // import React, { useState } from 'react';
@@ -318,3 +319,6 @@ export default TeacherFeaturePage;
 // };
 
 // export default TeacherFeaturePage;
+=======
+export default TeacherFeaturePage;
+>>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12

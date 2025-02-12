@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 /* General Styles */
 .teachers-dashboard {
@@ -167,10 +168,47 @@
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
+=======
+/* client/src/components/TeacherDashboard.css */
+.dashboard-container {
+  background-color: #1E1E2C;
+  color: #FFFFFF;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.upload-button {
+  margin-bottom: 20px;
+}
+
+.uploaded-image {
+  max-width: 100%;
+  margin-bottom: 20px;
+}
+
+.segment-button {
+  background: linear-gradient(90deg, #4A90E2, #D774E4);
+  color: #FFFFFF;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.segment-button:hover {
+  background: #FFD700;
+>>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12
 }
 
 .segmented-image {
   max-width: 100%;
+<<<<<<< HEAD
   border-radius: 8px;
   margin-bottom: 1rem;
 }
@@ -269,3 +307,45 @@
   border: 2px solid #4CAF50; /* Green border */
   border-radius: 8px;
 }
+=======
+  cursor: pointer;
+}
+
+.clickable-image:hover {
+  opacity: 0.7;
+}
+
+.students-title {
+  font-size: 20px;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.students-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.student-item {
+  background-color: #2C2C54;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.send-button {
+  background: linear-gradient(90deg, #4A90E2, #D774E4);
+  color: #FFFFFF;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.send-button:hover {
+  background: #FFD700;
+}
+>>>>>>> c693ff54d07fad4dcd84f0368cb704380b1bdc12
