@@ -5,7 +5,7 @@ import torch
 from ultralytics import SAM
 
 # Initialize ultralytics SAM model (using a lighter checkpoint suitable for small GPUs)
-ultra_model = SAM("sam2.1_l.pt")
+ultra_model = SAM("sam2.1_b.pt")
 ultra_model.info()
 
 def filter_top_masks_by_area(masks, top_n=10, iou_threshold=0.5):
