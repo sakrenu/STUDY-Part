@@ -146,7 +146,7 @@ const QuizMode = () => {
             <h1>Quiz Mode</h1>
 
             {/* Back Button */}
-            <button onClick={() => navigate('/dashboard')} className="back-button">
+            <button onClick={() => navigate('/student-dashboard')} className="back-button">
                 ← Back
             </button>
 
