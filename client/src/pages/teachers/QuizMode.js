@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Cropper from 'react-cropper';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import 'cropperjs/dist/cropper.css';
 import './QuizMode.css';
 
@@ -59,6 +60,7 @@ const DropZone = ({ id, onDrop, children }) => {
 };
 
 const QuizMode = () => {
+    const navigate = useNavigate(); // Initialize useNavigate for navigation
     const [image, setImage] = useState(null);
     const [cropper, setCropper] = useState(null);
     const [squares, setSquares] = useState([
@@ -84,7 +86,7 @@ const QuizMode = () => {
     
         try {
             console.log('Splitting image...');
-            const parts = await splitImage(croppedImageUrl); // Wait for the image to be split
+            const parts = await splitImage(croppedImageUrl);
             console.log('Image split into parts:', parts);
     
             setSquares((prev) =>
@@ -94,7 +96,6 @@ const QuizMode = () => {
             console.error('Error during segmentation:', error);
         }
     };
-    
 
     const splitImage = (imageUrl) => {
         return new Promise((resolve) => {
@@ -112,23 +113,21 @@ const QuizMode = () => {
                     for (let x = 0; x < 2; x++) {
                         canvas.width = width;
                         canvas.height = height;
-                        ctx.clearRect(0, 0, width, height); // Clear the canvas for the next part
+                        ctx.clearRect(0, 0, width, height);
                         ctx.drawImage(img, x * width, y * height, width, height, 0, 0, width, height);
-                        parts.push(canvas.toDataURL()); // Store the part as a Base64 string
+                        parts.push(canvas.toDataURL());
                     }
                 }
     
-                resolve(parts); // Resolve the promise with the parts array
+                resolve(parts);
             };
     
             img.onerror = () => {
                 console.error('Failed to load the image for segmentation.');
-                resolve([]); // Return an empty array if there's an error
+                resolve([]);
             };
         });
     };
-    
-     
 
     const handleDrop = (squareId, targetId) => {
         setSquares((prevSquares) =>
@@ -145,6 +144,11 @@ const QuizMode = () => {
     return (
         <div className="quiz-mode-container">
             <h1>Quiz Mode</h1>
+
+            {/* Back Button */}
+            <button onClick={() => navigate('/dashboard')} className="back-button">
+                ← Back
+            </button>
 
             <div>
                 <input type="file" accept="image/*" onChange={handleImageUpload} />
