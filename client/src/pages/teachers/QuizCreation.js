@@ -4,37 +4,73 @@ import './QuizCreation.css';
 import { useNavigate } from 'react-router-dom';
 
 const QuizCreation = () => {
-  const [image, setImage] = useState(null);
-  const [segmentedImage, setSegmentedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [segmentedImages, setSegmentedImages] = useState([]);
+  const [puzzleOutline, setPuzzleOutline] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const teacherId = "teacher_demo";
 
   // Handle image file selection
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImage(URL.createObjectURL(file));
-      setSegmentedImage(null);
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      setSegmentedImages([]);
+      setPuzzleOutline(null);
       setError('');
     }
   };
 
   // Handle segmentation
   const handleSegmentImage = async () => {
-    if (image) {
-      try {
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const formData = new FormData();
-        formData.append('image', blob, 'image.jpg');
+    if (!selectedFile) {
+      setError("Please select an image first.");
+      return;
+    }
+    try {
+      // First, upload the image to /upload to get a publicly accessible URL
+      const uploadForm = new FormData();
+      uploadForm.append('image', selectedFile);
+      const uploadResponse = await axios.post('http://localhost:5000/upload', uploadForm, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const imageUrl = uploadResponse.data.image_url;
 
-        const segmentResponse = await axios.post('http://localhost:5000/segment', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        setSegmentedImage(segmentResponse.data.segmented_url);
-      } catch (err) {
-        setError('Segmentation failed: ' + err.message);
-      }
+      // Now, call the /segment_quiz endpoint with the image URL and teacher ID
+      const payload = { image_url: imageUrl, teacher_id: teacherId };
+      const segmentResponse = await axios.post('http://localhost:5000/segment_quiz', payload);
+
+      // Update segmentedImages with the returned array of URLs
+      setSegmentedImages(segmentResponse.data.segmented_urls);
+    } catch (err) {
+      setError('Segmentation failed: ' + err.message);
+    }
+  };
+
+  const handleShowPuzzleOutline = async () => {
+    if (!selectedFile) {
+      setError("Please select an image first.");
+      return;
+    }
+    try {
+      // Upload the image to /upload to get a publicly accessible URL
+      const uploadForm = new FormData();
+      uploadForm.append('image', selectedFile);
+      const uploadResponse = await axios.post('http://localhost:5000/upload', uploadForm, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const imageUrl = uploadResponse.data.image_url;
+
+      // Call the /remove_masks endpoint to get the puzzle outline image
+      const payload = { image_url: imageUrl, teacher_id: teacherId };
+      const outlineResponse = await axios.post('http://localhost:5000/remove_masks', payload);
+      setPuzzleOutline(outlineResponse.data.original_without_masks_url);
+    } catch (err) {
+      setError('Show puzzle outline failed: ' + err.message);
     }
   };
 
@@ -62,10 +98,10 @@ const QuizCreation = () => {
             <span className="upload-button">Choose Image</span>
           </label>
 
-          {image && (
+          {imagePreview && (
             <div className="image-preview-container">
               <img 
-                src={image} 
+                src={imagePreview} 
                 alt="Uploaded preview" 
                 className="uploaded-image"
               />
@@ -75,15 +111,32 @@ const QuizCreation = () => {
               >
                 Segment Image
               </button>
+              <button 
+                onClick={handleShowPuzzleOutline} 
+                className="puzzle-outline-button"
+              >
+                Show Puzzle Outline
+              </button>
             </div>
           )}
         </div>
       </section>
 
-      {segmentedImage && (
+      {segmentedImages.length > 0 && (
         <section className="result-section">
-          <h2>Segmented Image</h2>
-          <img src={segmentedImage} alt="Segmented" className="segmented-image" />
+          <h2>Segmented Cutouts</h2>
+          <div className="segmented-container">
+            {segmentedImages.map((url, index) => (
+              <img key={index} src={url} alt={`Segmented ${index}`} className="segmented-floating" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {puzzleOutline && (
+        <section className="result-section">
+          <h2>Puzzle Outline</h2>
+          <img src={puzzleOutline} alt="Puzzle Outline" className="puzzle-outline-image" />
         </section>
       )}
     </div>
