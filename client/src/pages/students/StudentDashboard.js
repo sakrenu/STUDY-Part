@@ -63,7 +63,8 @@ const StudentDashboard = () => {
                 <nav className="menu">
                     <button onClick={() =>navigate('/learning-mode')}>Learning Mode</button>
                     <button onClick={() => alert('Quiz Mode coming soon!')}>Quiz Mode</button>
-                    <button onClick={() => alert('Nodes Mode coming soon!')}>Notes Mode</button>
+                    <button onClick={() => navigate('/notes-mode')}>Notes Mode</button>
+
                 </nav>
                 <div className="logout">
                     <button onClick={() => alert('Settings are under development!')}>Settings</button>
@@ -114,7 +115,8 @@ const StudentDashboard = () => {
                 </div>
 
                 {/* Section 3: Notes Mode */}
-                <div className="image-box" onClick={() => alert('Notes Mode coming soon!')}>
+                <div className="image-box" onClick={() => navigate('/notes-mode')}>
+
                     <div className="text-content">
                         <h2>Notes Mode</h2>
                         <p>Organize and revisit your notes for quick study sessions.</p>
