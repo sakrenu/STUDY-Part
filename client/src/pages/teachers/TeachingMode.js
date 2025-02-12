@@ -1,5 +1,3 @@
-
-
 // export default TeachersDashboard;
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -17,7 +15,7 @@ import './TeachingMode.css';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 
-const TeachersDashboard = () => {
+const TeachingMode = () => {
     const [image, setImage] = useState(null);
     const [segmentedImages, setSegmentedImages] = useState([]);
     const [notes, setNotes] = useState({});
@@ -535,4 +533,4 @@ const TeachersDashboard = () => {
     );
 };
 
-export default TeachersDashboard;
+export default TeachingMode;
