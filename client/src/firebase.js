@@ -5,14 +5,14 @@ import { getFirestore } from 'firebase/firestore'; // Import Firestore
 import { getStorage } from 'firebase/storage'; // Add this import
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD5VgYKSost4MSmvyKfBwSCWm4SrgPo6F0",
-  authDomain: "study-part.firebaseapp.com",
-  projectId: "study-part",
-  storageBucket: "study-part.firebasestorage.app",
-  messagingSenderId: "939764130888",
-  appId: "1:939764130888:web:25276d5a3d472f00f9a47d",
-  measurementId: "G-2FW3DNKY3G"
-  };
+  apiKey: "AIzaSyB6dIhC36wiVfp4d2tCY6NluWxJ7QSG2Ik",
+  authDomain: "react-auth-3a9f1.firebaseapp.com",
+  projectId: "react-auth-3a9f1",
+  storageBucket: "react-auth-3a9f1.firebasestorage.app",
+  messagingSenderId: "372827823627",
+  appId: "1:372827823627:web:18deaa8f2a3e28a77ab10e",
+  measurementId: "G-S3Z9STLH5D"
+};
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
