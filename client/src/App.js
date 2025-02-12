@@ -7,7 +7,8 @@ import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
 import TeachingMode from './pages/teachers/TeachingMode';
 import StudentDashboard from './pages/students/StudentDashboard';
 import LandingPage from './components/LandingPage';
-import ManageStudents from './pages/teachers/ManageStudents'; // Import the ManageStudents component
+import ManageStudents from './pages/teachers/ManageStudents';
+import LearningMode from './pages/students/LearningMode';
 
 const App = () => {
   return (
