@@ -7,12 +7,12 @@ import './BasicVersion.css';
 
 const BasicVersion = () => {
     const [image, setImage] = useState(null);
-    const [processedImage, setProcessedImage] = useState(null);
     const [selectedRegions, setSelectedRegions] = useState([]);
+    const [isSelectingRegions, setIsSelectingRegions] = useState(true);
     const [currentNote, setCurrentNote] = useState('');
-    const [showNotesInput, setShowNotesInput] = useState(false);
-    const [showPopup, setShowPopup] = useState(null);
-    const [isDone, setIsDone] = useState(false);
+    const [activeRegion, setActiveRegion] = useState(null);
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [showNotePopup, setShowNotePopup] = useState(false);
     const cropperRef = useRef(null);
 
     const handleImageUpload = (e) => {
@@ -90,7 +90,13 @@ const BasicVersion = () => {
         
         // Apply edge detection
         const processedData = detectEdges(imageData);
-        ctx.putImageData(processedData, 0, 0);
+        
+        // Create a new canvas for the contour
+        const contourCanvas = document.createElement('canvas');
+        contourCanvas.width = canvas.width;
+        contourCanvas.height = canvas.height;
+        const contourCtx = contourCanvas.getContext('2d');
+        contourCtx.putImageData(processedData, 0, 0);
 
         // Get region coordinates
         const cropData = cropper.getData();
@@ -104,78 +110,43 @@ const BasicVersion = () => {
                 width: cropData.width / containerData.width,
                 height: cropData.height / containerData.height
             },
-            contourImage: canvas.toDataURL()
+            contourImage: contourCanvas.toDataURL(),
+            notes: ''
         };
 
         setSelectedRegions([...selectedRegions, newRegion]);
-        setShowNotesInput(true);
-        updateDisplayImage(newRegion);
+    };
+
+    const handleRegionClick = (region) => {
+        if (isSelectingRegions) return;
+        
+        if (isSubmitted) {
+            // In view mode, show the saved notes
+            setActiveRegion(region);
+            setShowNotePopup(true);
+        } else {
+            // In edit mode, open the notes input
+            setActiveRegion(region);
+            setCurrentNote(region.notes || '');
+        }
     };
 
     const handleNoteSubmit = () => {
-        if (!currentNote.trim()) return;
+        if (!currentNote.trim() || !activeRegion) return;
 
-        const updatedRegions = [...selectedRegions];
-        updatedRegions[updatedRegions.length - 1].notes = currentNote;
+        const updatedRegions = selectedRegions.map(region => 
+            region.id === activeRegion.id 
+                ? { ...region, notes: currentNote }
+                : region
+        );
+
         setSelectedRegions(updatedRegions);
         setCurrentNote('');
-        setShowNotesInput(false);
+        setActiveRegion(null);
     };
 
-    const updateDisplayImage = (newRegion) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-
-            // Draw original image
-            ctx.drawImage(img, 0, 0);
-
-            // Draw contour
-            const contourImg = new Image();
-            contourImg.onload = () => {
-                ctx.drawImage(
-                    contourImg,
-                    newRegion.coordinates.x * img.width,
-                    newRegion.coordinates.y * img.height,
-                    newRegion.coordinates.width * img.width,
-                    newRegion.coordinates.height * img.height
-                );
-                setProcessedImage(canvas.toDataURL());
-            };
-            contourImg.src = newRegion.contourImage;
-        };
-        img.src = processedImage || image;
-    };
-
-    const handleImageClick = (e) => {
-        if (!isDone) return;
-
-        const rect = e.target.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
-
-        selectedRegions.forEach(region => {
-            if (isPointInRegion(x, y, region.coordinates)) {
-                setShowPopup({
-                    id: region.id,
-                    notes: region.notes,
-                    x: e.clientX,
-                    y: e.clientY
-                });
-            }
-        });
-    };
-
-    const isPointInRegion = (x, y, coords) => {
-        return (
-            x >= coords.x &&
-            x <= coords.x + coords.width &&
-            y >= coords.y &&
-            y <= coords.y + coords.height
-        );
+    const handleFinalSubmit = () => {
+        setIsSubmitted(true);
     };
 
     return (
@@ -198,72 +169,112 @@ const BasicVersion = () => {
                             </div>
                         </label>
                     </div>
-                ) : !isDone ? (
-                    <div className="editor-section">
-                        <Cropper
-                            src={image}
-                            style={{ height: 'auto', width: '100%', maxWidth: '800px', margin: '0 auto' }}
-                            guides={true}
-                            ref={cropperRef}
-                            zoomable={false}
-                            scalable={false}
-                        />
-                        <div className="controls-container">
-                            {!showNotesInput && (
-                                <button 
-                                    onClick={handleRegionSelect}
-                                    className="select-button"
-                                >
-                                    Select Region
-                                </button>
-                            )}
-                            {showNotesInput && (
-                                <div className="notes-input-container">
-                                    <textarea
-                                        value={currentNote}
-                                        onChange={(e) => setCurrentNote(e.target.value)}
-                                        placeholder="Add notes for this region..."
-                                        className="notes-textarea"
-                                    />
-                                    <div className="button-group">
-                                        <button onClick={handleNoteSubmit}>Save Notes</button>
-                                        <button onClick={() => setShowNotesInput(false)}>Cancel</button>
-                                    </div>
-                                </div>
-                            )}
-                            <button 
-                                onClick={() => setIsDone(true)}
-                                className="done-button"
-                            >
-                                Done
-                            </button>
-                        </div>
-                    </div>
                 ) : (
-                    <div className="final-view">
-                        <img
-                            src={processedImage}
-                            alt="Processed"
-                            onClick={handleImageClick}
-                            style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
-                        />
-                    </div>
-                )}
+                    <div className="editor-section">
+                        {isSelectingRegions ? (
+                            <>
+                                <Cropper
+                                    src={image}
+                                    style={{ height: 'auto', width: '100%', maxWidth: '800px', margin: '0 auto' }}
+                                    guides={true}
+                                    ref={cropperRef}
+                                    zoomable={false}
+                                    scalable={false}
+                                />
+                                <div className="controls-container">
+                                    <button 
+                                        onClick={handleRegionSelect}
+                                        className="select-button"
+                                    >
+                                        Select Region
+                                    </button>
+                                    <button 
+                                        onClick={() => setIsSelectingRegions(false)}
+                                        className="done-button"
+                                    >
+                                        Done Selecting Regions
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="annotation-section">
+                                <div className="image-container" style={{ position: 'relative' }}>
+                                    <img
+                                        src={image}
+                                        alt="Original"
+                                        style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
+                                    />
+                                    {selectedRegions.map(region => (
+                                        <div
+                                            key={region.id}
+                                            onClick={() => handleRegionClick(region)}
+                                            style={{
+                                                position: 'absolute',
+                                                left: `${region.coordinates.x * 100}%`,
+                                                top: `${region.coordinates.y * 100}%`,
+                                                width: `${region.coordinates.width * 100}%`,
+                                                height: `${region.coordinates.height * 100}%`,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <img 
+                                                src={region.contourImage}
+                                                alt={`Contour ${region.id}`}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    pointerEvents: 'none'
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
 
-                {showPopup && (
-                    <div
-                        className="region-popup"
-                        style={{
-                            position: 'fixed',
-                            left: showPopup.x + 10,
-                            top: showPopup.y + 10
-                        }}
-                    >
-                        <div className="popup-content">
-                            <p className="region-title">Notes</p>
-                            <p className="region-notes" style={{ color: 'black' }}>{showPopup.notes}</p>
-                            <button onClick={() => setShowPopup(null)}>Close</button>
-                        </div>
+                                {!isSubmitted && activeRegion && (
+                                    <div className="notes-input-container">
+                                        <textarea
+                                            value={currentNote}
+                                            onChange={(e) => setCurrentNote(e.target.value)}
+                                            placeholder="Add notes for this region..."
+                                            className="notes-textarea"
+                                        />
+                                        <div className="button-group">
+                                            <button onClick={handleNoteSubmit}>Save Notes</button>
+                                            <button onClick={() => setActiveRegion(null)}>Cancel</button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!isSubmitted && (
+                                    <div className="controls-container">
+                                        <button 
+                                            onClick={handleFinalSubmit}
+                                            className="submit-button"
+                                        >
+                                            Submit All
+                                        </button>
+                                    </div>
+                                )}
+
+                                {showNotePopup && activeRegion && (
+                                    <div className="region-popup" style={{
+                                        position: 'fixed',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)'
+                                    }}>
+                                        <div className="popup-content">
+                                            <div className="region-title">Region {activeRegion.id}</div>
+                                            <div className="region-notes">{activeRegion.notes}</div>
+                                            <button onClick={() => setShowNotePopup(false)}>Close</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
