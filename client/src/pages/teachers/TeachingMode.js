@@ -1,5 +1,3 @@
-
-
 // export default TeachersDashboard;
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -36,6 +34,10 @@ const TeachersDashboard = () => {
     const [newGroupName, setNewGroupName] = useState('');
     const [originalWithHighlight, setOriginalWithHighlight] = useState(null);
     const cropperRef = useRef(null);
+    const [processedOutput, setProcessedOutput] = useState(null);
+    const [showOutput, setShowOutput] = useState(false);
+    const [selectedSegment, setSelectedSegment] = useState(null);
+    const [segmentNotes, setSegmentNotes] = useState('');
 
     // Fetch students and groups
     useEffect(() => {
@@ -113,13 +115,13 @@ const TeachersDashboard = () => {
             setIsLoading(true);
             const canvas = cropperRef.current.cropper.getCroppedCanvas();
 
-            // Convert the canvas to a Blob
             canvas.toBlob(async (blob) => {
                 if (blob) {
                     const formData = new FormData();
-                    formData.append('image', blob, 'cropped-image.jpg'); // Append the Blob to FormData
+                    formData.append('image', blob, 'cropped-image.jpg');
 
                     try {
+                        console.log('Uploading image...');
                         const uploadResponse = await axios.post('http://localhost:5000/upload', formData, {
                             headers: { 'Content-Type': 'multipart/form-data' },
                         });
@@ -127,33 +129,34 @@ const TeachersDashboard = () => {
                         const imageUrl = uploadResponse.data.image_url;
                         setCurrentImageUrl(imageUrl);
 
+                        console.log('Processing image with SAM...');
                         const segmentResponse = await axios.post('http://localhost:5000/segment', {
                             image_url: imageUrl,
-                            bounding_box: {
-                                left: cropperRef.current.cropper.getData().x,
-                                top: cropperRef.current.cropper.getData().y,
-                                width: cropperRef.current.cropper.getData().width,
-                                height: cropperRef.current.cropper.getData().height,
-                            },
+                            bounding_box: cropperRef.current.cropper.getData(),
                             teacher_id: teacherId,
                         });
 
-                        const segmentedUrls = segmentResponse.data.segmented_urls;
-                        const originalWithHighlightUrl = segmentResponse.data.original_with_highlight;
+                        console.log('Segment response:', segmentResponse.data);
 
-                        // Update state variables
-                        setSegmentedImages(segmentedUrls);
-                        setOriginalWithHighlight(originalWithHighlightUrl);
+                        // Update state with processed images
+                        setSegmentedImages(segmentResponse.data.segmented_urls);
+                        setOriginalWithHighlight(segmentResponse.data.original_with_highlight);
+                        setProcessedOutput({
+                            originalImage: imageUrl,
+                            maskedImage: segmentResponse.data.masked_image,
+                            cutout: segmentResponse.data.cutout,
+                            highlightedOutline: segmentResponse.data.highlighted_outline,
+                            originalSize: segmentResponse.data.originalSize
+                        });
+
                     } catch (err) {
+                        console.error('Segmentation error:', err);
                         setError('Segmentation failed: ' + err.message);
                     } finally {
                         setIsLoading(false);
                     }
-                } else {
-                    setError('Failed to create image blob.');
-                    setIsLoading(false);
                 }
-            }, 'image/jpeg'); // Specify the image format
+            }, 'image/jpeg');
         }
     };
 
@@ -309,6 +312,17 @@ const TeachersDashboard = () => {
         }
     };
 
+    // Add handler for viewing output
+    const handleViewOutput = () => {
+        setShowOutput(true);
+    };
+
+    // Add handler for segment click
+    const handleSegmentClick = (segment) => {
+        setSelectedSegment(segment);
+        setSegmentNotes(segment.notes || '');
+    };
+
     // Render content based on active tab
     const renderContent = () => {
         switch (activeTab) {
@@ -381,6 +395,10 @@ const TeachersDashboard = () => {
                                 <button onClick={saveNotes} className="save-notes-button">
                                     Save Notes
                                 </button>
+                                <button onClick={handleViewOutput} className="view-output-button">
+                                    View Output
+                                </button>
+                                {showOutput && renderProcessedOutput()}
                                 {isNotesSaved && (
                                     <div className="notes-saved-message">
                                         Notes Saved!
@@ -507,6 +525,58 @@ const TeachersDashboard = () => {
             default:
                 return null;
         }
+    };
+
+    // Update the render section to include the new output view
+    const renderProcessedOutput = () => {
+        if (!processedOutput) return null;
+
+        return (
+            <div className="processed-output-container">
+                <div className="original-image-container">
+                    <img 
+                        src={processedOutput.originalImage} 
+                        alt="Original" 
+                        className="base-image"
+                    />
+                    <div className="highlighted-outline-overlay">
+                        <img 
+                            src={processedOutput.highlightedOutline}
+                            alt="Highlighted outline"
+                            className="outline-image"
+                            style={{
+                                width: `${processedOutput.originalSize.width}px`,
+                                height: `${processedOutput.originalSize.height}px`
+                            }}
+                        />
+                    </div>
+                    <div className="cutout-overlay">
+                        {processedOutput.cutout && (
+                            <img
+                                src={processedOutput.cutout}
+                                alt="Cutout"
+                                className="cutout-image clickable"
+                                style={{
+                                    width: `${processedOutput.originalSize.width}px`,
+                                    height: `${processedOutput.originalSize.height}px`
+                                }}
+                                onClick={() => handleSegmentClick({
+                                    segment_url: processedOutput.cutout,
+                                    notes: notes[0]
+                                })}
+                            />
+                        )}
+                    </div>
+                </div>
+                {selectedSegment && (
+                    <div className="segment-notes-popup">
+                        <h3>Teacher's Notes</h3>
+                        <p>{segmentNotes}</p>
+                        <button onClick={() => setSelectedSegment(null)}>Close</button>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
