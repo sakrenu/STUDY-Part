@@ -10,7 +10,7 @@ from segment_anything import sam_model_registry, SamPredictor
 
 def initialize_sam():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = FastSAM('FastSAM-s.pt')
+    model = FastSAM('FastSAM-x.pt')
     return model.to(device)
 
 def generate_mask(model, image_path, bounding_box, device='cpu'):
