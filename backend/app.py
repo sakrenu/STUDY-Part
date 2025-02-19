@@ -119,23 +119,22 @@ def segment_quiz():
         with open(temp_image_path, 'wb') as f:
             f.write(response.content)
 
-        # Use the new SAM quiz segmentation function
-        cutouts = segment_quiz_image(temp_image_path)
+        # New code: call segment_quiz_image to get both segmented cutouts and puzzle outline
+        const_output = segment_quiz_image(temp_image_path)
+        segmented_cutouts = const_output[0]
+        puzzle_outline = const_output[1]
 
         segmented_urls = []
-        for idx, cutout in enumerate(cutouts):
-            # Convert cutout numpy array to a PIL Image
+        for idx, cutout in enumerate(segmented_cutouts):
             cutout_image = Image.fromarray(cutout.astype(np.uint8))
 
-            # Save as PNG for transparency
+            # Save as PNG to preserve transparency
             segmented_image_buffer = io.BytesIO()
             cutout_image.save(segmented_image_buffer, format='PNG')
             segmented_image_buffer.seek(0)
 
             upload_result = cloudinary.uploader.upload(
-                segmented_image_buffer,
-                public_id=f'segmented_quiz_{idx}',
-                format="png"
+                segmented_image_buffer, public_id=f'segmented_quiz_{idx}', format="png"
             )
             segmented_urls.append(upload_result['secure_url'])
 
@@ -145,72 +144,36 @@ def segment_quiz():
         teacher_ref = db.collection('teachers').document(teacher_id)
         teacher_data = teacher_ref.get()
 
+        # Upload the puzzle outline image
+        puzzle_outline_rgba = cv2.cvtColor(puzzle_outline, cv2.COLOR_BGRA2RGBA)
+        pil_outline = Image.fromarray(puzzle_outline_rgba)
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+
+        upload_result_outline = cloudinary.uploader.upload(
+            outline_buffer, public_id=f'puzzle_outline', format="png"
+        )
+        puzzle_outline_url = upload_result_outline['secure_url']
+
+        # Update teacher's quiz segments in Firebase with both segmented masks and puzzle outline
         if teacher_data.exists:
             quiz_segments = teacher_data.to_dict().get('quiz_segments', {})
-            quiz_segments[image_url] = {'segments': segmented_urls}
+            quiz_segments[image_url] = {
+                  'segments': segmented_urls,
+                  'puzzle_outline': puzzle_outline_url
+            }
             teacher_ref.update({'quiz_segments': quiz_segments})
         else:
-            teacher_ref.set({'quiz_segments': {image_url: {'segments': segmented_urls}}})
+            teacher_ref.set({'quiz_segments': {image_url: {
+                  'segments': segmented_urls,
+                  'puzzle_outline': puzzle_outline_url
+            }}})
 
-        return jsonify({'segmented_urls': segmented_urls}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/remove_masks', methods=['POST'])
-def remove_masks():
-    """
-    Endpoint to get the original image with the segmented masks removed (as transparent holes).
-    First checks if the processed image exists in Firebase; if not, it runs segmentation.
-    """
-    data = request.json
-    image_url = data.get('image_url')
-    teacher_id = data.get('teacher_id')
-
-    try:
-        teacher_ref = db.collection('teachers').document(teacher_id)
-        teacher_doc = teacher_ref.get()
-        if teacher_doc.exists:
-            teacher_data = teacher_doc.to_dict()
-            # Check if the segmentation output is already stored.
-            if "original_without_masks" in teacher_data:
-                return jsonify({"original_without_masks_url": teacher_data["original_without_masks"]}), 200
-
-        # If not available, proceed with segmentation.
-        response = requests.get(image_url)
-        temp_image_path = "temp_without_masks.jpg"
-        with open(temp_image_path, "wb") as f:
-            f.write(response.content)
-        
-        # Process the image to remove the masks.
-        processed_image_bgra = get_image_without_masks(temp_image_path)
-        
-        # Convert BGRA to RGBA for proper handling by PIL.
-        image_rgba = cv2.cvtColor(processed_image_bgra, cv2.COLOR_BGRA2RGBA)
-        pil_image = Image.fromarray(image_rgba)
-        
-        # Save the resulting image to an in-memory buffer.
-        buffer = io.BytesIO()
-        pil_image.save(buffer, format="PNG")
-        buffer.seek(0)
-        
-        # Upload the processed image to Cloudinary.
-        upload_result = cloudinary.uploader.upload(
-            buffer,
-            public_id=f"original_without_masks_{teacher_id}",
-            format="png"
-        )
-        processed_image_url = upload_result['secure_url']
-        
-        os.remove(temp_image_path)
-        
-        # Update the teacher record with the new processed image.
-        if teacher_doc.exists:
-            teacher_ref.update({"original_without_masks": processed_image_url})
-        else:
-            teacher_ref.set({"original_without_masks": processed_image_url})
-            
-        return jsonify({"original_without_masks_url": processed_image_url}), 200
+        return jsonify({
+            'segmented_urls': segmented_urls,
+            'puzzle_outline_url': puzzle_outline_url
+        }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

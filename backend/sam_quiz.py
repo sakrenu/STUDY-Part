@@ -54,13 +54,16 @@ def filter_top_masks_by_area(masks, top_n=10, iou_threshold=0.5):
 
 def segment_quiz_image(image_path):
     """
-    Processes an image for quiz creation segmentation using ultralytics SAM model.
+    Processes an image for quiz creation segmentation using ultralytics SAM model,
+    and also processes the image to remove areas covered by masks to create a puzzle outline.
     
     Parameters:
       image_path (str): The path to the input image.
     
     Returns:
-      A list of cutout images (as RGBA numpy arrays) extracted from the original image.
+      A tuple (cutouts, puzzle_outline) where:
+         - cutouts is a list of cutout images (as RGBA numpy arrays) representing segmented parts.
+         - puzzle_outline is a BGRA numpy array of the original image with masks removed.
     """
     # Load image using OpenCV (BGR) and convert to RGB.
     img = cv2.imread(image_path)
@@ -102,45 +105,56 @@ def segment_quiz_image(image_path):
         
         cutouts.append(img_crop_rgba)
     
-    return cutouts
+    # Also get the puzzle outline by removing masks using the same SAM results.
+    puzzle_outline = get_image_without_masks(image_path, sam_results=results)
+    
+    return cutouts, puzzle_outline
 
-def get_image_without_masks(image_path):
+def get_image_without_masks(image_path, sam_results=None):
     """
     Processes the image to remove areas covered by the filtered masks—creating transparent holes.
-    
-    Parameters:
-      image_path (str): Path to the input image.
-    
-    Returns:
-      image_bgra (numpy array): The processed image in BGRA format with holes where the masks were.
+    If `sam_results` is provided, it will be used instead of running SAM again.
     """
+    print(f"[DEBUG] get_image_without_masks called with path: {image_path}")
+    
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Could not load image from {image_path}")
-    image_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    print(f"[DEBUG] Original image shape: {img.shape}")
     
-    # Run segmentation using GPU
-    with torch.cuda.amp.autocast() if torch.cuda.is_available() else torch.no_grad():
-        results = ultra_model(image_path)
+    image_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    print(f"[DEBUG] Converted to RGB. Shape: {image_rgb.shape}")
+    
+    if sam_results is None:
+        print(f"[DEBUG] Running SAM model on device: {device}")
+        with torch.cuda.amp.autocast() if torch.cuda.is_available() else torch.no_grad():
+            results = ultra_model(image_path)
+    else:
+        results = sam_results
+        print("[DEBUG] Using provided SAM results")
     
     masks_tensor = results[0].masks.data
+    print(f"[DEBUG] Got masks tensor. Shape: {masks_tensor.shape}")
+    
     if torch.cuda.is_available():
-        masks_tensor = masks_tensor.cpu()  # Move to CPU for numpy operations
+        masks_tensor = masks_tensor.cpu()
     masks_bool = masks_tensor.numpy().astype(bool)
+    print(f"[DEBUG] Converted to boolean masks. Shape: {masks_bool.shape}")
     
     filtered_masks = filter_top_masks_by_area(masks_bool, top_n=10, iou_threshold=0.5)
+    print(f"[DEBUG] Filtered masks count: {len(filtered_masks)}")
     
-    # Combine all filtered masks using logical OR.
     combined_mask = np.zeros(image_rgb.shape[:2], dtype=bool)
-    for mask in filtered_masks:
+    for i, mask in enumerate(filtered_masks):
         combined_mask = np.logical_or(combined_mask, mask)
+        print(f"[DEBUG] Added mask {i+1}. Total true pixels: {np.sum(combined_mask)}")
     
-    # Create an alpha channel: 0 for pixels inside the combined mask, 255 otherwise.
     alpha_channel = np.where(combined_mask, 0, 255).astype(np.uint8)
+    print(f"[DEBUG] Created alpha channel. Shape: {alpha_channel.shape}")
     
-    # Merge with original R, G, B channels to form an RGBA image and convert to BGRA for OpenCV
     r, g, b = cv2.split(image_rgb)
     image_rgba = cv2.merge([r, g, b, alpha_channel])
     image_bgra = cv2.cvtColor(image_rgba, cv2.COLOR_RGBA2BGRA)
+    print(f"[DEBUG] Final BGRA image shape: {image_bgra.shape}")
     
     return image_bgra 
