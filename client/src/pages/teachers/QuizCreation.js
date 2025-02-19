@@ -46,35 +46,13 @@ const QuizCreation = () => {
       const payload = { image_url: imageUrl, teacher_id: teacherId };
       const segmentResponse = await axios.post('http://localhost:5000/segment_quiz', payload);
 
-      // Update segmentedImages with the returned array of URLs
+      // Update state with both segmented cutout URLs and the puzzle outline URL
       setSegmentedImages(segmentResponse.data.segmented_urls);
+      setPuzzleOutline(segmentResponse.data.puzzle_outline_url);
     } catch (err) {
       setError('Segmentation failed: ' + err.message);
     } finally {
       setIsSegmenting(false);
-    }
-  };
-
-  const handleShowPuzzleOutline = async () => {
-    if (!selectedFile) {
-      setError("Please select an image first.");
-      return;
-    }
-    try {
-      // Upload the image to /upload to get a publicly accessible URL
-      const uploadForm = new FormData();
-      uploadForm.append('image', selectedFile);
-      const uploadResponse = await axios.post('http://localhost:5000/upload', uploadForm, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const imageUrl = uploadResponse.data.image_url;
-
-      // Call the /remove_masks endpoint to get the puzzle outline image
-      const payload = { image_url: imageUrl, teacher_id: teacherId };
-      const outlineResponse = await axios.post('http://localhost:5000/remove_masks', payload);
-      setPuzzleOutline(outlineResponse.data.original_without_masks_url);
-    } catch (err) {
-      setError('Show puzzle outline failed: ' + err.message);
     }
   };
 
@@ -122,20 +100,14 @@ const QuizCreation = () => {
                 className={`segment-button ${isSegmenting ? 'disabled' : ''}`}
                 disabled={isSegmenting}
               >
-                {isSegmenting ? 'Processing...' : 'Segment Image'}
-              </button>
-              <button 
-                onClick={handleShowPuzzleOutline} 
-                className="puzzle-outline-button"
-              >
-                Show Puzzle Outline
+                {isSegmenting ? 'Processing segmentation and puzzle outline...' : 'Segment Image & Create Puzzle'}
               </button>
             </div>
           )}
         </div>
       </section>
 
-      {segmentedImages.length > 0 && (
+      {(segmentedImages.length > 0 || puzzleOutline) && (
         <section className="result-section">
           <h2>Segmented Cutouts</h2>
           <div className="segmented-container">
@@ -143,13 +115,12 @@ const QuizCreation = () => {
               <img key={index} src={url} alt={`Segmented ${index}`} className="segmented-floating" />
             ))}
           </div>
-        </section>
-      )}
-
-      {puzzleOutline && (
-        <section className="result-section">
-          <h2>Puzzle Outline</h2>
-          <img src={puzzleOutline} alt="Puzzle Outline" className="puzzle-outline-image" />
+          {puzzleOutline && (
+            <>
+              <h2>Puzzle Outline</h2>
+              <img src={puzzleOutline} alt="Puzzle Outline" className="puzzle-outline-image" />
+            </>
+          )}
         </section>
       )}
     </div>
