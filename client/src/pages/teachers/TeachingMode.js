@@ -352,10 +352,25 @@ const TeachersDashboard = () => {
                                     <div className="cropper-container">
                                         <Cropper
                                             src={image instanceof File ? URL.createObjectURL(image) : image}
-                                            style={{ height: 400, width: '100%' }}
-                                            aspectRatio={1}
+                                            style={{ 
+                                                height: 600,
+                                                width: '100%',
+                                                maxWidth: 800
+                                            }}
+                                            initialAspectRatio={NaN}
+                                            aspectRatio={NaN}
                                             guides={true}
                                             ref={cropperRef}
+                                            zoomable={false}
+                                            scalable={false}
+                                            mouseWheelZoom={false}
+                                            dragMode="crop"
+                                            cropBoxMovable={true}
+                                            cropBoxResizable={true}
+                                            toggleDragModeOnDblclick={false}
+                                            viewMode={1}
+                                            minContainerWidth={800}
+                                            minContainerHeight={600}
                                         />
                                         <button onClick={handleSelectRegion} className="select-region-button">
                                             Select Region
@@ -367,7 +382,7 @@ const TeachersDashboard = () => {
                                     className="segment-button"
                                     disabled={!image || isLoading}
                                 >
-                                    {isLoading ? 'Processing...' : 'Segment Image'}
+                                    {isLoading ? 'Processing...' : 'Segment Selected Region'}
                                 </button>
                             </div>
                         </section>
@@ -538,6 +553,11 @@ const TeachersDashboard = () => {
                         src={processedOutput.originalImage} 
                         alt="Original" 
                         className="base-image"
+                        style={{
+                            width: '800px',  // Fixed width
+                            height: '600px',  // Fixed height
+                            objectFit: 'contain'
+                        }}
                     />
                     <div className="highlighted-outline-overlay">
                         <img 
@@ -545,8 +565,9 @@ const TeachersDashboard = () => {
                             alt="Highlighted outline"
                             className="outline-image"
                             style={{
-                                width: `${processedOutput.originalSize.width}px`,
-                                height: `${processedOutput.originalSize.height}px`
+                                width: '800px',  // Same as original image
+                                height: '600px',
+                                objectFit: 'contain'
                             }}
                         />
                     </div>
@@ -557,8 +578,9 @@ const TeachersDashboard = () => {
                                 alt="Cutout"
                                 className="cutout-image clickable"
                                 style={{
-                                    width: `${processedOutput.originalSize.width}px`,
-                                    height: `${processedOutput.originalSize.height}px`
+                                    width: '800px',  // Same as original image
+                                    height: '600px',  // Same as original image
+                                    objectFit: 'contain'
                                 }}
                                 onClick={() => handleSegmentClick({
                                     segment_url: processedOutput.cutout,
@@ -568,6 +590,7 @@ const TeachersDashboard = () => {
                         )}
                     </div>
                 </div>
+
                 {selectedSegment && (
                     <div className="segment-notes-popup">
                         <h3>Teacher's Notes</h3>

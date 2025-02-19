@@ -16,6 +16,7 @@ import cv2
 import json
 from ultralytics import FastSAM
 from ultralytics.models.fastsam import FastSAM
+import uuid
 
 load_dotenv()
 
@@ -40,87 +41,120 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = FastSAM('FastSAM-s.pt')  # This will automatically download if not found
 model.to(device)
 
+def get_image_without_masks(image_path, results):
+    """
+    Creates an image with transparent holes where segments were removed
+    """
+    # Read the original image
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Could not load image from {image_path}")
+    
+    # Convert to RGBA
+    rgba = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+    
+    # Get the mask from results
+    if results and len(results[0].masks.data) > 0:
+        mask = results[0].masks.data[0].cpu().numpy()
+        
+        # Resize mask to match image size if needed
+        if mask.shape[:2] != img.shape[:2]:
+            mask = cv2.resize(mask, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+        
+        # Convert to boolean mask
+        mask = mask > 0
+        
+        # Make masked areas transparent
+        rgba[mask] = [0, 0, 0, 0]
+    
+    return rgba
+
 def process_image_with_sam(image_path, bounding_box):
-    # Read image
-    image = cv2.imread(image_path)
-    original_size = image.shape[:2]  # Store original image size
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    # Convert bounding box to the format FastSAM expects
-    bbox = [
-        int(bounding_box['x']),
-        int(bounding_box['y']),
-        int(bounding_box['x'] + bounding_box['width']),
-        int(bounding_box['y'] + bounding_box['height'])
-    ]
-    
-    # Perform segmentation
-    results = model(image_path, device=device, retina_masks=True, imgsz=1024, conf=0.4, iou=0.9,
-                   bboxes=[bbox])
-    
-    # Get the first mask
-    masks = results[0].masks.data
-    if len(masks) == 0:
-        raise Exception("No mask generated")
-    
-    mask = masks[0].cpu().numpy()
-    
-    # Resize mask to match original image size
-    mask = cv2.resize(mask, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_NEAREST)
-    mask = mask > 0  # Convert to boolean mask
-    
-    # Create masked image (transparent background)
-    rgba = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
-    rgba[~mask] = [0, 0, 0, 0]
-    
-    # Create cutout maintaining original position
-    cutout = np.zeros_like(rgba)  # Create empty RGBA image
-    cutout[mask] = rgba[mask]  # Copy only the masked region
-    
-    # Store the bounding box coordinates for frontend positioning
-    x, y, w, h = bbox
-    
-    # Create highlighted outline
-    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    outline = image.copy()
-    
-    # Draw glowing outline
-    cv2.drawContours(outline, contours, -1, (0, 255, 0), 2)  # Green outline
-    blur = cv2.GaussianBlur(outline, (0, 0), sigmaX=2, sigmaY=2)
-    outline = cv2.addWeighted(outline, 1.5, blur, -0.5, 0)
-    
-    # Save temporary files
-    temp_paths = {
-        'masked': 'temp_masked.png',
-        'cutout': 'temp_cutout.png',
-        'outline': 'temp_outline.png'
-    }
-    
-    cv2.imwrite(temp_paths['masked'], rgba)
-    cv2.imwrite(temp_paths['cutout'], cutout)
-    cv2.imwrite(temp_paths['outline'], outline)
-    
-    # Upload to Cloudinary and get URLs
-    urls = {}
-    for key, path in temp_paths.items():
-        response = cloudinary.uploader.upload(path)
-        urls[key] = response['secure_url']
-        os.remove(path)  # Clean up temp files
-    
-    # Add position data to response
-    return {
-        **urls,
-        'position': {
-            'x': x,
-            'y': y,
-            'width': w,
-            'height': h
-        },
-        'originalSize': {
-            'width': image.shape[1],
-            'height': image.shape[0]
+    try:
+        # Read image
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        if image is None:
+            raise ValueError(f"Could not load image from {image_path}")
+        
+        # Convert bounding box format from Cropper.js to what FastSAM expects
+        bbox = {
+            'x': int(float(bounding_box.get('x', bounding_box.get('left', 0)))),
+            'y': int(float(bounding_box.get('y', bounding_box.get('top', 0)))),
+            'width': int(float(bounding_box.get('width', 0))),
+            'height': int(float(bounding_box.get('height', 0)))
         }
-    }
+        
+        # Perform segmentation
+        results = model(
+            image_path,
+            device=device,
+            retina_masks=True,
+            imgsz=1024,
+            conf=0.4,
+            iou=0.9,
+            bboxes=[[bbox['x'], bbox['y'], bbox['x'] + bbox['width'], bbox['y'] + bbox['height']]]
+        )
+        
+        if not results or len(results) == 0 or not hasattr(results[0], 'masks') or len(results[0].masks.data) == 0:
+            raise ValueError("No masks generated by the model")
+        
+        # Create cutout with transparency
+        mask = results[0].masks.data[0].cpu().numpy()
+        mask = cv2.resize(mask, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_NEAREST)
+        mask = mask > 0
+        
+        # Convert to RGBA
+        rgba = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+        rgba[~mask] = [0, 0, 0, 0]  # Set non-masked areas to transparent
+        
+        # Create outline with original colors
+        outline = image.copy()
+        contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(outline, contours, -1, (0, 255, 0), 2)  # Green outline
+        
+        # Save temporary files with unique names
+        temp_id = str(uuid.uuid4())[:8]
+        temp_paths = {
+            'cutout': f'temp_cutout_{temp_id}.png',
+            'outline': f'temp_outline_{temp_id}.png'
+        }
+        
+        # Save the cutout and outline images
+        cv2.imwrite(temp_paths['cutout'], rgba)
+        cv2.imwrite(temp_paths['outline'], outline)
+        
+        # Upload to Cloudinary
+        urls = {}
+        for key, path in temp_paths.items():
+            response = cloudinary.uploader.upload(
+                path,
+                resource_type="image",
+                allowed_cors_origins=["http://localhost:3000"],
+                access_mode="anonymous"
+            )
+            urls[key] = response['secure_url']
+            os.remove(path)
+        
+        return {
+            'cutout': urls['cutout'],
+            'outline': urls['outline'],
+            'position': {
+                'x': float(bbox['x']),
+                'y': float(bbox['y']),
+                'width': float(bbox['width']),
+                'height': float(bbox['height'])
+            },
+            'originalSize': {
+                'width': image.shape[1],
+                'height': image.shape[0]
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error in process_image_with_sam: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 @app.route('/')
 def home():
@@ -150,34 +184,48 @@ def upload_file():
 def segment_image():
     try:
         data = request.json
+        if not data:
+            return jsonify({'error': 'No JSON data received'}), 400
+            
         image_url = data.get('image_url')
         bounding_box = data.get('bounding_box')
         teacher_id = data.get('teacher_id')
+        
+        print(f"Received request with: image_url={image_url}, bounding_box={bounding_box}, teacher_id={teacher_id}")
         
         if not all([image_url, bounding_box, teacher_id]):
             return jsonify({'error': 'Missing required parameters'}), 400
         
         # Download image from Cloudinary
-        temp_path = 'temp_original.jpg'
-        os.system(f"curl {image_url} > {temp_path}")
-        
-        # Process image with SAM
-        processed_data = process_image_with_sam(temp_path, bounding_box)
-        
-        # Clean up
-        os.remove(temp_path)
-        
-        return jsonify({
-            'segmented_urls': [processed_data['cutout']],
-            'masked_image': processed_data['masked'],
-            'cutout': processed_data['cutout'],
-            'highlighted_outline': processed_data['outline'],
-            'original_with_highlight': processed_data['outline'],
-            'position': processed_data['position'],
-            'originalSize': processed_data['originalSize']
-        })
+        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
+        try:
+            response = requests.get(image_url)
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(response.content)
+            
+            # Process image with SAM
+            processed_data = process_image_with_sam(temp_path, bounding_box)
+            
+            return jsonify({
+                'segmented_urls': [processed_data['cutout']],
+                'cutout': processed_data['cutout'],
+                'highlighted_outline': processed_data['outline'],
+                'original_with_highlight': processed_data['outline'],
+                'position': processed_data['position'],
+                'originalSize': processed_data['originalSize']
+            })
+            
+        except requests.exceptions.RequestException as e:
+            return jsonify({'error': f'Failed to download image: {str(e)}'}), 500
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
     
     except Exception as e:
+        print(f"Error in segment_image endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/add_note', methods=['POST'])
