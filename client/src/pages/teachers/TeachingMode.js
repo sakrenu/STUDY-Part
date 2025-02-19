@@ -839,10 +839,7 @@ const TeachingMode = () => {
                     <li className={activeTab === 'library' ? 'active' : ''} onClick={() => setActiveTab('library')}>
                         Library
                     </li>
-                    <li 
-                        className={activeTab === 'basicversion' ? 'active' : ''} 
-                        onClick={() => setActiveTab('basicversion')}
-                    >
+                    <li className={activeTab === 'basicversion' ? 'active' : ''} onClick={() => setActiveTab('basicversion')}>
                         Basic Version
                     </li>
                 </ul>
@@ -851,11 +848,12 @@ const TeachingMode = () => {
             {/* Main Content */}
             {renderContent()}
             
-            {/* Show loading state */}
-            {isLoading && <div className="loading-message">Processing regions...</div>}
+            {/* Only show SAM processing outputs in the Home tab */}
+            { activeTab === 'home' && isLoading && 
+              <div className="loading-message">Processing regions...</div> 
+            }
             
-            {/* Show the processed output when we have regions */}
-            {(isAddingNotes || isViewingOutput) && renderProcessedOutput()}
+            { activeTab === 'home' && (isAddingNotes || isViewingOutput) && renderProcessedOutput() }
         </div>
     );
 };
