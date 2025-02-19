@@ -4,8 +4,13 @@ import numpy as np
 import torch
 from ultralytics import SAM
 
-# Initialize ultralytics SAM model (using a lighter checkpoint suitable for small GPUs)
+# Check if CUDA is available and set the device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+
+# Initialize ultralytics SAM model with GPU support
 ultra_model = SAM("sam2.1_b.pt")
+ultra_model.to(device)  # Move model to GPU if available
 ultra_model.info()
 
 def filter_top_masks_by_area(masks, top_n=10, iou_threshold=0.5):
@@ -63,11 +68,15 @@ def segment_quiz_image(image_path):
         raise ValueError(f"Could not load image from {image_path}")
     image_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     
-    # Run segmentation using the ultralytics SAM model.
-    results = ultra_model(image_path)
+    # Run segmentation using the ultralytics SAM model with GPU
+    with torch.cuda.amp.autocast() if torch.cuda.is_available() else torch.no_grad():
+        results = ultra_model(image_path)
+    
     # Get the masks from the first result (assumes a single-image batch)
-    masks_tensor = results[0].masks.data.cpu().numpy()  # shape: [num_masks, H, W]
-    masks_bool = masks_tensor.astype(bool)
+    masks_tensor = results[0].masks.data
+    if torch.cuda.is_available():
+        masks_tensor = masks_tensor.cpu()  # Move to CPU for numpy operations
+    masks_bool = masks_tensor.numpy().astype(bool)
     
     # Filter to keep only the top masks by area with minimal overlap.
     filtered_masks = filter_top_masks_by_area(masks_bool, top_n=10, iou_threshold=0.5)
@@ -110,9 +119,14 @@ def get_image_without_masks(image_path):
         raise ValueError(f"Could not load image from {image_path}")
     image_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     
-    results = ultra_model(image_path)
-    masks_tensor = results[0].masks.data.cpu().numpy()
-    masks_bool = masks_tensor.astype(bool)
+    # Run segmentation using GPU
+    with torch.cuda.amp.autocast() if torch.cuda.is_available() else torch.no_grad():
+        results = ultra_model(image_path)
+    
+    masks_tensor = results[0].masks.data
+    if torch.cuda.is_available():
+        masks_tensor = masks_tensor.cpu()  # Move to CPU for numpy operations
+    masks_bool = masks_tensor.numpy().astype(bool)
     
     filtered_masks = filter_top_masks_by_area(masks_bool, top_n=10, iou_threshold=0.5)
     

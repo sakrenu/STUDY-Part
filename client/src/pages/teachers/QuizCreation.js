@@ -9,6 +9,7 @@ const QuizCreation = () => {
   const [segmentedImages, setSegmentedImages] = useState([]);
   const [puzzleOutline, setPuzzleOutline] = useState(null);
   const [error, setError] = useState('');
+  const [isSegmenting, setIsSegmenting] = useState(false);
   const navigate = useNavigate();
 
   const teacherId = "teacher_demo";
@@ -32,6 +33,7 @@ const QuizCreation = () => {
       return;
     }
     try {
+      setIsSegmenting(true);
       // First, upload the image to /upload to get a publicly accessible URL
       const uploadForm = new FormData();
       uploadForm.append('image', selectedFile);
@@ -48,6 +50,8 @@ const QuizCreation = () => {
       setSegmentedImages(segmentResponse.data.segmented_urls);
     } catch (err) {
       setError('Segmentation failed: ' + err.message);
+    } finally {
+      setIsSegmenting(false);
     }
   };
 
@@ -100,16 +104,25 @@ const QuizCreation = () => {
 
           {imagePreview && (
             <div className="image-preview-container">
-              <img 
-                src={imagePreview} 
-                alt="Uploaded preview" 
-                className="uploaded-image"
-              />
+              <div className={`preview-wrapper ${isSegmenting ? 'segmenting' : ''}`}>
+                <img 
+                  src={imagePreview} 
+                  alt="Uploaded preview" 
+                  className="uploaded-image"
+                />
+                {isSegmenting && (
+                  <div className="scanning-overlay">
+                    <div className="scanner-line"></div>
+                    <div className="scanning-text">Creating Puzzle...</div>
+                  </div>
+                )}
+              </div>
               <button 
                 onClick={handleSegmentImage} 
-                className="segment-button"
+                className={`segment-button ${isSegmenting ? 'disabled' : ''}`}
+                disabled={isSegmenting}
               >
-                Segment Image
+                {isSegmenting ? 'Processing...' : 'Segment Image'}
               </button>
               <button 
                 onClick={handleShowPuzzleOutline} 
