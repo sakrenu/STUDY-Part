@@ -161,12 +161,22 @@ def segment_quiz():
 def remove_masks():
     """
     Endpoint to get the original image with the segmented masks removed (as transparent holes).
+    First checks if the processed image exists in Firebase; if not, it runs segmentation.
     """
     data = request.json
     image_url = data.get('image_url')
     teacher_id = data.get('teacher_id')
+
     try:
-        # Download the image and save it temporarily.
+        teacher_ref = db.collection('teachers').document(teacher_id)
+        teacher_doc = teacher_ref.get()
+        if teacher_doc.exists:
+            teacher_data = teacher_doc.to_dict()
+            # Check if the segmentation output is already stored.
+            if "original_without_masks" in teacher_data:
+                return jsonify({"original_without_masks_url": teacher_data["original_without_masks"]}), 200
+
+        # If not available, proceed with segmentation.
         response = requests.get(image_url)
         temp_image_path = "temp_without_masks.jpg"
         with open(temp_image_path, "wb") as f:
@@ -194,10 +204,8 @@ def remove_masks():
         
         os.remove(temp_image_path)
         
-        # Optionally update the teacher's record in Firebase with this image.
-        teacher_ref = db.collection('teachers').document(teacher_id)
-        teacher_data = teacher_ref.get()
-        if teacher_data.exists:
+        # Update the teacher record with the new processed image.
+        if teacher_doc.exists:
             teacher_ref.update({"original_without_masks": processed_image_url})
         else:
             teacher_ref.set({"original_without_masks": processed_image_url})
