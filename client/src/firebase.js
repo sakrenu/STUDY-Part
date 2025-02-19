@@ -21,12 +21,10 @@ const db = getFirestore(app);
 
 // Initialize Storage
 const storage = getStorage(app);
-
-// Export Firebase Auth and Providers
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 console.log(app);
 export{db ,auth  , googleProvider, storage};
 
 
-
+export default app;

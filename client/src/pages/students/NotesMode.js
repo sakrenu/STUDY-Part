@@ -1,77 +1,41 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './NotesMode.css';
-import { storage, db } from '../../firebase';
+import { storage } from '../../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { 
-    collection, 
-    addDoc, 
-    getDocs, 
-    deleteDoc, 
-    doc, 
-    query, 
-    where,
-    orderBy 
-} from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { db } from '../../firebase';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
 const NotesMode = () => {
     const navigate = useNavigate();
-    const [notes, setNotes] = useState([]);
-    const [newNote, setNewNote] = useState("");
     const [image, setImage] = useState(null);
-    const [selectedPosition, setSelectedPosition] = useState(null);
     const [loading, setLoading] = useState(false);
-    const imageContainerRef = useRef(null);
-    const [imageId, setImageId] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showToggleText, setShowToggleText] = useState(false);
+    const [note, setNote] = useState('');
+    const [savedNotes, setSavedNotes] = useState([]);
 
-    // Fetch existing image and notes on component mount
-    useEffect(() => {
-        fetchImageAndNotes();
-    }, []);
-
-    const fetchImageAndNotes = async () => {
-        try {
-            // Get the most recent image document
-            const imagesQuery = query(
-                collection(db, 'images'),
-                orderBy('timestamp', 'desc')
-            );
-            const imageSnapshot = await getDocs(imagesQuery);
-            
-            if (!imageSnapshot.empty) {
-                const imageDoc = imageSnapshot.docs[0];
-                setImageId(imageDoc.id);
-                setImage(imageDoc.data().url);
-
-                // Fetch notes for this image
-                const notesQuery = query(
-                    collection(db, 'notes'), 
-                    where('imageId', '==', imageDoc.id),
-                    orderBy('timestamp', 'asc')
-                );
-                const notesSnapshot = await getDocs(notesQuery);
-                const notesData = notesSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                setNotes(notesData);
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        }
-    };
-
-    // Handle image upload
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+            console.log('No file selected');
+            return;
+        }
+
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+            console.error('User is not authenticated');
+            alert('Please sign in to upload images.');
+            return;
+        }
 
         try {
             setLoading(true);
-            console.log('Starting image upload...'); // Debug log
+            console.log('Starting image upload...');
 
             // Show preview immediately
             const reader = new FileReader();
@@ -82,28 +46,19 @@ const NotesMode = () => {
 
             // Create a reference to the storage location
             const storageRef = ref(storage, `notes-images/${Date.now()}-${file.name}`);
-            console.log('Storage reference created'); // Debug log
-            
+            console.log('Storage reference created');
+
             // Upload the file
-            const uploadTask = await uploadBytes(storageRef, file);
-            console.log('File uploaded to storage', uploadTask); // Debug log
+            console.log('Uploading file...');
+            await uploadBytes(storageRef, file);
+            console.log('File uploaded to storage');
 
             // Get the download URL
+            console.log('Fetching download URL...');
             const downloadURL = await getDownloadURL(storageRef);
-            console.log('Download URL obtained:', downloadURL); // Debug log
+            console.log('Download URL obtained');
 
-            // Save image reference to Firestore
-            const imageDoc = await addDoc(collection(db, 'images'), {
-                url: downloadURL,
-                timestamp: new Date().toISOString(),
-                fileName: file.name,
-                uploadedAt: new Date().toISOString()
-            });
-            console.log('Image document created in Firestore:', imageDoc.id); // Debug log
-
-            setImageId(imageDoc.id);
             setImage(downloadURL);
-            setNotes([]); // Clear existing notes for new image
 
         } catch (error) {
             console.error("Error uploading image:", error);
@@ -111,83 +66,6 @@ const NotesMode = () => {
             setImagePreview(null);
         } finally {
             setLoading(false);
-        }
-    };
-
-    // Handle click on image to position note
-    const handleImageClick = (e) => {
-        if (!imageContainerRef.current || !image) {
-            console.log('Cannot add note: No image or container reference');
-            return;
-        }
-
-        // Get the image element's bounds
-        const imgElement = imageContainerRef.current.querySelector('img');
-        if (!imgElement) return;
-
-        const rect = imgElement.getBoundingClientRect();
-        
-        // Calculate position relative to the image
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-        // Only set position if click is within image bounds
-        if (x >= 0 && x <= 100 && y >= 0 && y <= 100) {
-            setSelectedPosition({ x, y });
-            console.log('Selected position:', { x, y });
-        }
-    };
-
-    // Add a new note
-    const handleAddNote = async () => {
-        if (!newNote.trim() || !selectedPosition || !imageId) {
-            console.log('Validation failed:', {
-                hasText: !!newNote.trim(),
-                hasPosition: !!selectedPosition,
-                hasImageId: !!imageId
-            });
-            return;
-        }
-
-        try {
-            // Create the note data
-            const noteData = {
-                text: newNote.trim(),
-                position: {
-                    x: selectedPosition.x,
-                    y: selectedPosition.y
-                },
-                imageId: imageId,
-                timestamp: new Date().toISOString()
-            };
-
-            // Add to Firestore
-            const docRef = await addDoc(collection(db, 'notes'), noteData);
-            
-            // Add to local state
-            const newNote = {
-                id: docRef.id,
-                ...noteData
-            };
-            
-            setNotes(prevNotes => [...prevNotes, newNote]);
-            setNewNote(''); // Clear input
-            setSelectedPosition(null); // Reset position
-            
-            console.log('Note added successfully:', newNote);
-        } catch (error) {
-            console.error('Error adding note:', error);
-            alert('Error adding note: ' + error.message);
-        }
-    };
-
-    // Delete a note
-    const handleDeleteNote = async (noteId) => {
-        try {
-            await deleteDoc(doc(db, 'notes', noteId));
-            setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
-        } catch (error) {
-            console.error("Error deleting note:", error);
         }
     };
 
@@ -203,24 +81,98 @@ const NotesMode = () => {
         setShowToggleText(false);
     };
 
+    const handleNoteChange = (e) => {
+        setNote(e.target.value);
+    };
+
+    const handleSaveNote = async () => {
+        if (!note.trim() || !image) {
+            alert('Please add both an image and a note');
+            return;
+        }
+
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert('Please sign in to save notes');
+            return;
+        }
+
+        try {
+            const noteData = {
+                userId: user.uid,
+                imageUrl: image,
+                note: note,
+                createdAt: new Date().toISOString(),
+            };
+
+            await addDoc(collection(db, 'notes'), noteData);
+            
+            // Add the new note to the state
+            setSavedNotes([...savedNotes, noteData]);
+            
+            // Clear the note input
+            setNote('');
+            setImage(null);
+            setImagePreview(null);
+            
+            alert('Note saved successfully!');
+            
+            // Refresh notes
+            fetchNotes();
+        } catch (error) {
+            console.error("Error saving note:", error);
+            alert('Error saving note: ' + error.message);
+        }
+    };
+
+    const fetchNotes = async () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        try {
+            const q = query(
+                collection(db, 'notes'),
+                where('userId', '==', user.uid)
+            );
+            const querySnapshot = await getDocs(q);
+            const notes = [];
+            querySnapshot.forEach((doc) => {
+                notes.push({ id: doc.id, ...doc.data() });
+            });
+            setSavedNotes(notes);
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotes();
+    }, []);
+
     return (
         <div className="notes-mode-container">
             {/* Sidebar for Notes */}
             <div className={`notes-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                 <h2>Notes List</h2>
                 <div className="sidebar-notes">
-                    {notes.length === 0 ? (
-                        <p className="no-notes">No notes yet. Click on the image to add notes.</p>
+                    {savedNotes.length === 0 ? (
+                        <p className="no-notes">No notes yet.</p>
                     ) : (
-                        notes.map((note) => (
-                            <div key={note.id} className="sidebar-note-item">
-                                <p>{note.text}</p>
-                                <button 
-                                    onClick={() => handleDeleteNote(note.id)}
-                                    className="delete-button"
-                                >
-                                    ✖
-                                </button>
+                        savedNotes.map((note, index) => (
+                            <div key={note.id || index} className="sidebar-note-item">
+                                <img 
+                                    src={note.imageUrl} 
+                                    alt="Note thumbnail" 
+                                    className="note-thumbnail"
+                                />
+                                <p>{note.note}</p>
+                                <p className="note-date">
+                                    {new Date(note.createdAt).toLocaleDateString()}
+                                </p>
                             </div>
                         ))
                     )}
@@ -263,72 +215,48 @@ const NotesMode = () => {
                     )}
                 </div>
 
-                {/* Image Display with Notes */}
-                <div className="image-container" ref={imageContainerRef}>
+                {/* Image Display */}
+                <div className="image-container">
                     {(image || imagePreview) && (
-                        <div className="image-wrapper" onClick={handleImageClick}>
-                            <img 
-                                src={image || imagePreview} 
-                                alt="Uploaded content" 
-                                style={{ 
+                        <div className="image-wrapper">
+                            <img
+                                src={image || imagePreview}
+                                alt="Uploaded content"
+                                style={{
                                     maxWidth: '100%',
                                     maxHeight: '600px',
                                     display: 'block',
                                     margin: '0 auto'
                                 }}
                             />
-                            {/* Display Notes on Image */}
-                            {notes.map((note) => (
-                                <div
-                                    key={note.id}
-                                    className="note-on-image"
-                                    style={{
-                                        left: `${note.position.x}%`,
-                                        top: `${note.position.y}%`
-                                    }}
-                                >
-                                    <div className="note-content">
-                                        {note.text}
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteNote(note.id);
-                                            }} 
-                                            className="delete-button"
-                                        >
-                                            ✖
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                     )}
                 </div>
 
-                {!image && !imagePreview && (
-                    <div className="no-image-message">
-                        <p>Please select an image to add notes</p>
+                {/* Add Notes Section */}
+                {(image || imagePreview) && (
+                    <div className="notes-input">
+                        <textarea
+                            value={note}
+                            onChange={handleNoteChange}
+                            placeholder="Add your notes here..."
+                            rows="4"
+                        />
+                        <button 
+                            onClick={handleSaveNote}
+                            className="save-note-button"
+                            disabled={!note.trim() || !image}
+                        >
+                            Save Note
+                        </button>
                     </div>
                 )}
 
-                {/* Note Input */}
-                <div className="notes-input">
-                    <textarea
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        placeholder={selectedPosition 
-                            ? "Write your note here..." 
-                            : "Click on the image to place a note"}
-                        disabled={!selectedPosition || !image}
-                    />
-                    <button 
-                        onClick={handleAddNote} 
-                        className="add-note-button"
-                        disabled={!selectedPosition || !image || newNote.trim() === "" || loading}
-                    >
-                        Add Note
-                    </button>
-                </div>
+                {!image && !imagePreview && (
+                    <div className="no-image-message">
+                        <p>Please select an image to upload</p>
+                    </div>
+                )}
             </div>
         </div>
     );

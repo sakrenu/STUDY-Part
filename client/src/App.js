@@ -1,6 +1,7 @@
 // client/src/App.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
@@ -10,7 +11,23 @@ import LandingPage from './components/LandingPage';
 import ManageStudents from './pages/teachers/ManageStudents';
 import LearningMode from './pages/students/LearningMode';
 import NotesMode from './pages/students/NotesMode';
+import './firebase'; // Make sure this points to your firebase.js file
+
 const App = () => {
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('User is signed in:', user.uid);
+      } else {
+        console.log('User is signed out');
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
   return (
     <Router>
       <div className="App">
@@ -25,7 +42,7 @@ const App = () => {
           {/* Teacher Routes */}
           <Route path="/dashboard" element={<TeacherFeaturePage />} />
           <Route path="/dashboard/teaching" element={<TeachingMode />} />
-          <Route path="/dashboard/manage-students" element={<ManageStudents />} /> {/* Add ManageStudents route */}
+          <Route path="/dashboard/manage-students" element={<ManageStudents />} />
 
           {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />

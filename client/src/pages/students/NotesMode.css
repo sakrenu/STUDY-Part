@@ -76,12 +76,16 @@
 }
 
 .sidebar-note-item {
-    background: white;
+    background: rgba(255, 255, 255, 0.1);
     padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    position: relative;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+
+.sidebar-note-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .sidebar-note-item p {
@@ -128,13 +132,16 @@
 
 .notes-input {
     margin-top: 20px;
+    width: 100%;
 }
 
 .notes-input textarea {
     width: 100%;
-    min-height: 100px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     margin-bottom: 10px;
-    padding: 10px;
+    font-size: 14px;
     resize: vertical;
 }
 
@@ -344,5 +351,39 @@ h2 {
 
 .image-input:disabled {
     opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.note-thumbnail {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.note-date {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.save-note-button {
+    background: #4A90E2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.save-note-button:hover {
+    background: #357ABD;
+}
+
+.save-note-button:disabled {
+    background: #ccc;
     cursor: not-allowed;
 }
