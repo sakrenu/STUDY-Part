@@ -17,6 +17,8 @@ import json
 from ultralytics import FastSAM
 from ultralytics.models.fastsam import FastSAM
 import uuid
+import base64
+import hashlib
 
 load_dotenv()
 
@@ -40,6 +42,16 @@ CORS(app)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = FastSAM('FastSAM-s.pt')  # This will automatically download if not found
 model.to(device)
+
+# Define different colors for different regions
+HIGHLIGHT_COLORS = [
+    (0, 255, 0),    # Green
+    (255, 0, 0),    # Red
+    (0, 0, 255),    # Blue
+    (255, 255, 0),  # Yellow
+    (255, 0, 255),  # Magenta
+    (0, 255, 255),  # Cyan
+]
 
 def get_image_without_masks(image_path, results):
     """
@@ -69,20 +81,22 @@ def get_image_without_masks(image_path, results):
     
     return rgba
 
-def process_image_with_sam(image_path, bounding_box):
+def process_image_with_sam(image_path, bounding_box, region_index=0):
     try:
         # Read image
         image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
         if image is None:
             raise ValueError(f"Could not load image from {image_path}")
         
-        # Convert bounding box format from Cropper.js to what FastSAM expects
+        # Ensure bounding box values are valid
         bbox = {
-            'x': int(float(bounding_box.get('x', bounding_box.get('left', 0)))),
-            'y': int(float(bounding_box.get('y', bounding_box.get('top', 0)))),
-            'width': int(float(bounding_box.get('width', 0))),
-            'height': int(float(bounding_box.get('height', 0)))
+            'x': max(0, int(float(bounding_box.get('x', bounding_box.get('left', 0))))),
+            'y': max(0, int(float(bounding_box.get('y', bounding_box.get('top', 0))))),
+            'width': min(int(float(bounding_box.get('width', 0))), image.shape[1]),
+            'height': min(int(float(bounding_box.get('height', 0))), image.shape[0])
         }
+        
+        print(f"Debug - Processed bbox: {bbox}")
         
         # Perform segmentation
         results = model(
@@ -107,10 +121,11 @@ def process_image_with_sam(image_path, bounding_box):
         rgba = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
         rgba[~mask] = [0, 0, 0, 0]  # Set non-masked areas to transparent
         
-        # Create outline with original colors
+        # Create outline with different color for each region
         outline = image.copy()
         contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(outline, contours, -1, (0, 255, 0), 2)  # Green outline
+        color = HIGHLIGHT_COLORS[region_index % len(HIGHLIGHT_COLORS)]  # Cycle through colors
+        cv2.drawContours(outline, contours, -1, color, 2)  # Draw colored outline
         
         # Save temporary files with unique names
         temp_id = str(uuid.uuid4())[:8]
@@ -151,7 +166,7 @@ def process_image_with_sam(image_path, bounding_box):
         }
         
     except Exception as e:
-        print(f"Error in process_image_with_sam: {str(e)}")
+        print(f"Debug - Error in process_image_with_sam: {str(e)}")
         import traceback
         traceback.print_exc()
         raise
@@ -190,11 +205,16 @@ def segment_image():
         image_url = data.get('image_url')
         bounding_box = data.get('bounding_box')
         teacher_id = data.get('teacher_id')
+        region_index = data.get('region_index', 0)  # Get region index
         
-        print(f"Received request with: image_url={image_url}, bounding_box={bounding_box}, teacher_id={teacher_id}")
+        if not image_url:
+            return jsonify({'error': 'Missing image_url parameter'}), 400
+        if not bounding_box:
+            return jsonify({'error': 'Missing bounding_box parameter'}), 400
+        if not teacher_id:
+            return jsonify({'error': 'Missing teacher_id parameter'}), 400
         
-        if not all([image_url, bounding_box, teacher_id]):
-            return jsonify({'error': 'Missing required parameters'}), 400
+        print(f"Debug - Received request with: image_url={image_url}, bounding_box={bounding_box}, teacher_id={teacher_id}, region_index={region_index}")
         
         # Download image from Cloudinary
         temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
@@ -204,8 +224,24 @@ def segment_image():
             with open(temp_path, 'wb') as f:
                 f.write(response.content)
             
+            # Validate image was downloaded
+            if not os.path.exists(temp_path):
+                raise ValueError("Failed to save downloaded image")
+                
+            # Debug print image size
+            image = cv2.imread(temp_path)
+            if image is None:
+                raise ValueError("Failed to read downloaded image")
+            print(f"Debug - Image shape: {image.shape}")
+            print(f"Debug - Bounding box: {bounding_box}")
+            
             # Process image with SAM
-            processed_data = process_image_with_sam(temp_path, bounding_box)
+            processed_data = process_image_with_sam(temp_path, bounding_box, region_index)
+            
+            if not processed_data:
+                raise ValueError("Failed to process image")
+                
+            print(f"Debug - Processed data: {processed_data}")
             
             return jsonify({
                 'segmented_urls': [processed_data['cutout']],
@@ -217,41 +253,75 @@ def segment_image():
             })
             
         except requests.exceptions.RequestException as e:
+            print(f"Debug - Download error: {str(e)}")
             return jsonify({'error': f'Failed to download image: {str(e)}'}), 500
+        except Exception as e:
+            print(f"Debug - Processing error: {str(e)}")
+            return jsonify({'error': f'Failed to process image: {str(e)}'}), 500
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
     
     except Exception as e:
-        print(f"Error in segment_image endpoint: {str(e)}")
+        print(f"Debug - General error: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/add_note', methods=['POST'])
 def add_note():
-    data = request.json
-    image_url = data.get('image_url')
-    segment_index = data.get('segment_index')
-    note = data.get('note')
-    teacher_id = data.get('teacher_id')
-
     try:
-        teacher_ref = db.collection('teachers').document(teacher_id)
-        teacher_data = teacher_ref.get()
+        data = request.json
+        image_url = data.get('image_url')
+        segment_index = data.get('segment_index')
+        note = data.get('note')
+        teacher_id = data.get('teacher_id')
 
-        if teacher_data.exists:
-            segments = teacher_data.to_dict().get('segments', {})
-            if image_url in segments:
-                segments[image_url]['notes'][segment_index] = note
-                teacher_ref.update({'segments': segments})
-                return jsonify({"message": "Note added successfully!"}), 200
-            else:
-                return jsonify({"error": "Image not found in teacher's segments."}), 404
+        if not all([image_url, note, teacher_id]):
+            return jsonify({'error': 'Missing required parameters'}), 400
+
+        # Create a safe key from the image URL using a hash function
+        safe_image_key = hashlib.sha256(image_url.encode()).hexdigest()
+
+        # Initialize the document reference
+        teacher_ref = db.collection('teachers').document(teacher_id)
+
+        # First check if document exists
+        doc = teacher_ref.get()
+        
+        if not doc.exists:
+            # Create new document if it doesn't exist
+            teacher_ref.set({
+                'segments': {
+                    safe_image_key: {
+                        'url': image_url,
+                        'notes': {
+                            segment_index: note
+                        }
+                    }
+                }
+            })
         else:
-            return jsonify({"error": "Teacher not found."}), 404
+            # Update existing document
+            current_data = doc.to_dict()
+            segments = current_data.get('segments', {})
+            
+            if safe_image_key not in segments:
+                segments[safe_image_key] = {
+                    'url': image_url,
+                    'notes': {}
+                }
+            
+            # Update the specific note
+            teacher_ref.update({
+                f'segments.{safe_image_key}.url': image_url,
+                f'segments.{safe_image_key}.notes.{segment_index}': note
+            })
+
+        return jsonify({"message": "Note added successfully!"}), 200
 
     except Exception as e:
+        print(f"Error in add_note: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

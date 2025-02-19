@@ -190,6 +190,7 @@
   color: white;
   font-size: 1rem;
   resize: none;
+  margin-bottom: 1rem;
 }
 
 .save-notes-button {
@@ -287,8 +288,8 @@
 
 .original-image-container {
     position: relative;
-    width: 800px;  /* Fixed width */
-    height: 600px;  /* Fixed height */
+    width: 800px;
+    height: 600px;
     margin: 0 auto;
     overflow: hidden;
 }
@@ -405,4 +406,143 @@
 
 .view-output-button:hover {
     background: #52d1b2;
+}
+
+.region-selection-controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.select-another-button {
+    background: #64ffda;
+    color: #0a192f;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.done-selecting-button {
+    background: #ff6b6b;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.notes-addition-container {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #112240;
+    border-radius: 12px;
+    border: 2px solid #64ffda;
+}
+
+.region-note-section {
+    position: relative;
+    cursor: pointer;
+}
+
+.note-input-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1f2e;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 2px solid #64ffda;
+    z-index: 1000;
+    width: 90%;
+    max-width: 500px;
+}
+
+.done-notes-button {
+    margin-top: 1rem;
+    background: #64ffda;
+    color: #0a192f;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    display: block;
+    margin: 1rem auto;
+}
+
+.region-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.region-outline {
+    transition: filter 0.3s ease;
+}
+
+/* Hover effect for highlights */
+.region-overlay:hover .region-outline {
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(100, 255, 218, 0.8));
+}
+
+.notes-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1f2e;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 2px solid #64ffda;
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.3);
+    z-index: 1000;
+    width: 90%;
+    max-width: 500px;
+}
+
+.notes-popup h3 {
+    color: #64ffda;
+    margin-bottom: 1rem;
+}
+
+.notes-popup-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.notes-content {
+    color: #ccd6f6;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.done-notes-button {
+    margin: 2rem auto;
+    display: block;
+    background: #64ffda;
+    color: #0a192f;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.close-button,
+.cancel-button {
+    background: #ff6b6b;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 }
