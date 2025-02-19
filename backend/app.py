@@ -10,6 +10,9 @@ from flask_cors import CORS
 from PIL import Image
 import numpy as np
 import torch
+import cv2
+from sam import segment_image
+from sam_quiz import segment_quiz_image, get_image_without_masks
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import cv2
@@ -267,6 +270,81 @@ def segment_image():
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/segment_quiz', methods=['POST'])
+def segment_quiz():
+    """
+    Endpoint to process images for quiz creation.
+    """
+    data = request.json
+    image_url = data.get('image_url')
+    teacher_id = data.get('teacher_id')
+
+    try:
+        # Download the image and save it locally
+        response = requests.get(image_url)
+        temp_image_path = "temp_quiz_image.jpg"
+        with open(temp_image_path, 'wb') as f:
+            f.write(response.content)
+
+        # New code: call segment_quiz_image to get both segmented cutouts and puzzle outline
+        const_output = segment_quiz_image(temp_image_path)
+        segmented_cutouts = const_output[0]
+        puzzle_outline = const_output[1]
+
+        segmented_urls = []
+        for idx, cutout in enumerate(segmented_cutouts):
+            cutout_image = Image.fromarray(cutout.astype(np.uint8))
+
+            # Save as PNG to preserve transparency
+            segmented_image_buffer = io.BytesIO()
+            cutout_image.save(segmented_image_buffer, format='PNG')
+            segmented_image_buffer.seek(0)
+
+            upload_result = cloudinary.uploader.upload(
+                segmented_image_buffer, public_id=f'segmented_quiz_{idx}', format="png"
+            )
+            segmented_urls.append(upload_result['secure_url'])
+
+        os.remove(temp_image_path)
+
+        # Optionally update teacher's quiz segments in the database
+        teacher_ref = db.collection('teachers').document(teacher_id)
+        teacher_data = teacher_ref.get()
+
+        # Upload the puzzle outline image
+        puzzle_outline_rgba = cv2.cvtColor(puzzle_outline, cv2.COLOR_BGRA2RGBA)
+        pil_outline = Image.fromarray(puzzle_outline_rgba)
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+
+        upload_result_outline = cloudinary.uploader.upload(
+            outline_buffer, public_id=f'puzzle_outline', format="png"
+        )
+        puzzle_outline_url = upload_result_outline['secure_url']
+
+        # Update teacher's quiz segments in Firebase with both segmented masks and puzzle outline
+        if teacher_data.exists:
+            quiz_segments = teacher_data.to_dict().get('quiz_segments', {})
+            quiz_segments[image_url] = {
+                  'segments': segmented_urls,
+                  'puzzle_outline': puzzle_outline_url
+            }
+            teacher_ref.update({'quiz_segments': quiz_segments})
+        else:
+            teacher_ref.set({'quiz_segments': {image_url: {
+                  'segments': segmented_urls,
+                  'puzzle_outline': puzzle_outline_url
+            }}})
+
+        return jsonify({
+            'segmented_urls': segmented_urls,
+            'puzzle_outline_url': puzzle_outline_url
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/add_note', methods=['POST'])
 def add_note():

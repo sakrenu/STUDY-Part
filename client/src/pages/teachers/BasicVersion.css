@@ -1,0 +1,130 @@
+.basic-version-content {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.upload-container {
+    margin: 20px auto;
+    text-align: center;
+}
+
+.upload-section {
+    border: 2px dashed #ccc;
+    padding: 40px;
+    border-radius: 8px;
+    background: #f9f9f9;
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.upload-label {
+    cursor: pointer;
+}
+
+.upload-button {
+    background: #64ffda;
+    color: #333;
+    padding: 15px 30px;
+    border-radius: 4px;
+    display: inline-block;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.upload-button:hover {
+    background: #52d1b2;
+}
+
+.editor-section {
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.controls-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.notes-input-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 15px auto;
+    padding: 15px;
+    background: #080808;
+    border-radius: 8px;
+}
+
+.notes-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #0c0c0c;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #64ffda;
+    color: #333;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background: #52d1b2;
+}
+
+.done-button {
+    background: #4CAF50;
+    color: white;
+}
+
+.submit-button {
+    background: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.region-popup {
+    background: rgb(58, 45, 45);
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.popup-content {
+    padding: 15px;
+}
+
+.region-title {
+    background: #f0f0f0;
+    padding: 5px 10px;
+    margin: 0 0 10px 0;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.region-notes {
+    margin: 10px 0;
+    line-height: 1.4;
+} 

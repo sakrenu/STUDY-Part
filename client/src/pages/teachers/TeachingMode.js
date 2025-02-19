@@ -14,8 +14,9 @@ import axios from 'axios';
 import './TeachingMode.css';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
+import BasicVersion from './BasicVersion';
 
-const TeachersDashboard = () => {
+const TeachingMode = () => {
     const [image, setImage] = useState(null);
     const [segmentedImages, setSegmentedImages] = useState([]);
     const [notes, setNotes] = useState({});
@@ -46,6 +47,15 @@ const TeachersDashboard = () => {
     const [processedRegions, setProcessedRegions] = useState([]);
     const [currentRegionForNotes, setCurrentRegionForNotes] = useState(null);
     const [isViewingOutput, setIsViewingOutput] = useState(false);
+    const [basicContours, setBasicContours] = useState([]);
+    const [basicNotes, setBasicNotes] = useState({});
+    const [showNotePopup, setShowNotePopup] = useState(null);
+    const [selectedRegion, setSelectedRegion] = useState(null);
+    const [showNotesInput, setShowNotesInput] = useState(false);
+    const [currentNote, setCurrentNote] = useState('');
+    const [contourCanvas, setContourCanvas] = useState(null);
+    const canvasRef = useRef(null);
+    const imageRef = useRef(null);
 
     // Fetch students and groups
     useEffect(() => {
@@ -187,10 +197,22 @@ const TeachersDashboard = () => {
             const teacherRef = doc(db, 'teachers', teacherId);
             const teacherData = (await getDoc(teacherRef)).data();
 
+            // Get the cropper data for coordinates
+            const cropData = cropperRef.current.cropper.getData();
+            
             const newSegment = {
                 segment_url: segmentedImages[0],
                 notes: notes[0] || '',
+                coordinates: {
+                    x: (cropData.x / cropperRef.current.cropper.getContainerData().width) * 100,
+                    y: (cropData.y / cropperRef.current.cropper.getContainerData().height) * 100,
+                    width: (cropData.width / cropperRef.current.cropper.getContainerData().width) * 100,
+                    height: (cropData.height / cropperRef.current.cropper.getContainerData().height) * 100
+                }
             };
+
+            // Add to processed regions
+            setProcessedRegions(prev => [...prev, newSegment]);
 
             const sanitizedImageUrl = encodeURIComponent(currentImageUrl);
 
@@ -675,6 +697,8 @@ const TeachersDashboard = () => {
                         </div>
                     </div>
                 );
+            case 'basicversion':
+                return <BasicVersion />;
             default:
                 return null;
         }
@@ -783,6 +807,21 @@ const TeachersDashboard = () => {
         );
     };
 
+    useEffect(() => {
+        if (image) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                imageRef.current = img;
+            };
+            img.onerror = (error) => {
+                console.error('Error loading image:', error);
+                setError('Failed to load image');
+            };
+            img.src = image instanceof File ? URL.createObjectURL(image) : image;
+        }
+    }, [image]);
+
     return (
         <div className="teachers-dashboard">
             {/* Navbar */}
@@ -800,6 +839,12 @@ const TeachersDashboard = () => {
                     <li className={activeTab === 'library' ? 'active' : ''} onClick={() => setActiveTab('library')}>
                         Library
                     </li>
+                    <li 
+                        className={activeTab === 'basicversion' ? 'active' : ''} 
+                        onClick={() => setActiveTab('basicversion')}
+                    >
+                        Basic Version
+                    </li>
                 </ul>
             </nav>
 
@@ -815,4 +860,4 @@ const TeachersDashboard = () => {
     );
 };
 
-export default TeachersDashboard;
+export default TeachingMode;
