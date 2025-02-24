@@ -10,6 +10,15 @@ const QuizCreation = () => {
   const [puzzleOutline, setPuzzleOutline] = useState(null);
   const [error, setError] = useState('');
   const [isSegmenting, setIsSegmenting] = useState(false);
+  const [quizMeta, setQuizMeta] = useState({
+    title: '',
+    description: '',
+    subject: '',
+    difficulty: 'medium'
+  });
+  const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+  const [segmentedUrls, setSegmentedUrls] = useState([]);
+  const [puzzleOutlineUrl, setPuzzleOutlineUrl] = useState('');
   const navigate = useNavigate();
 
   const teacherId = "teacher_demo";
@@ -34,26 +43,55 @@ const QuizCreation = () => {
     }
     try {
       setIsSegmenting(true);
-      // First, upload the image to /upload to get a publicly accessible URL
       const uploadForm = new FormData();
       uploadForm.append('image', selectedFile);
       const uploadResponse = await axios.post('http://localhost:5000/upload', uploadForm, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const imageUrl = uploadResponse.data.image_url;
-
-      // Now, call the /segment_quiz endpoint with the image URL and teacher ID
+      setUploadedImageUrl(imageUrl); // Add this line
+    
       const payload = { image_url: imageUrl, teacher_id: teacherId };
       const segmentResponse = await axios.post('http://localhost:5000/segment_quiz', payload);
-
-      // Update state with both segmented cutout URLs and the puzzle outline URL
+    
       setSegmentedImages(segmentResponse.data.segmented_urls);
       setPuzzleOutline(segmentResponse.data.puzzle_outline_url);
+      setSegmentedUrls(segmentResponse.data.segmented_urls); // Add this
+      setPuzzleOutlineUrl(segmentResponse.data.puzzle_outline_url); // Add this
     } catch (err) {
       setError('Segmentation failed: ' + err.message);
     } finally {
       setIsSegmenting(false);
     }
+  };
+
+  const handleSaveQuiz = async () => {
+    try {
+      const response = await axios.post('http://localhost:5000/save_quiz', {
+        teacher_id: teacherId,
+        image_url: uploadedImageUrl,
+        segments: segmentedUrls,
+        puzzle_outline: puzzleOutlineUrl,
+        meta: quizMeta
+      });
+
+      if (response.data.success) {
+        alert('Quiz saved successfully!');
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      setError('Failed to save quiz: ' + error.message);
+    }
+  };
+
+  // Function to handle segmented URLs
+  const handleSegmentedUrls = (urls) => {
+    setSegmentedUrls(urls);
+  };
+
+  // Function to handle puzzle outline URL
+  const handlePuzzleOutlineUrl = (url) => {
+    setPuzzleOutlineUrl(url);
   };
 
   return (
@@ -108,19 +146,36 @@ const QuizCreation = () => {
       </section>
 
       {(segmentedImages.length > 0 || puzzleOutline) && (
-        <section className="result-section">
-          <h2>Segmented Cutouts</h2>
-          <div className="segmented-container">
-            {segmentedImages.map((url, index) => (
-              <img key={index} src={url} alt={`Segmented ${index}`} className="segmented-floating" />
-            ))}
+        <section className="metadata-section">
+          <h2>Quiz Details</h2>
+          <div className="metadata-form">
+            <input
+              type="text"
+              placeholder="Quiz Title"
+              value={quizMeta.title}
+              onChange={(e) => setQuizMeta({...quizMeta, title: e.target.value})}
+            />
+            <textarea
+              placeholder="Description"
+              value={quizMeta.description}
+              onChange={(e) => setQuizMeta({...quizMeta, description: e.target.value})}
+            />
+            <select
+              value={quizMeta.difficulty}
+              onChange={(e) => setQuizMeta({...quizMeta, difficulty: e.target.value})}
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button 
+              className="save-button"
+              onClick={handleSaveQuiz}
+              disabled={!quizMeta.title.trim()}
+            >
+              Save Quiz
+            </button>
           </div>
-          {puzzleOutline && (
-            <>
-              <h2>Puzzle Outline</h2>
-              <img src={puzzleOutline} alt="Puzzle Outline" className="puzzle-outline-image" />
-            </>
-          )}
         </section>
       )}
     </div>

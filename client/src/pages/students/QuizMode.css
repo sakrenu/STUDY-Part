@@ -1,38 +1,103 @@
 .quiz-mode-container {
+    background: #0a192f;
+    min-height: 100vh;
+    padding: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .loading {
+    font-size: 2rem;
     text-align: center;
-    padding: 20px;
-}
-
-.small-squares {
+    color: #64ffda;
+    margin-top: 5rem;
+  }
+  
+  .puzzle-container {
     display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-}
-
-.big-square {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    width: 200px;
-    height: 200px;
-    border: 4px solid black;
+    gap: 2rem;
+    max-width: 1200px;
     margin: 0 auto;
-}
-
-
-.drop-zone {
+  }
+  
+  .puzzle-toolbar {
+    width: 250px;
+    padding: 1rem;
+    background: #112240;
+    border-radius: 8px;
+    border: 1px solid #64ffda55;
+  }
+  
+  .puzzle-area {
+    flex-grow: 1;
+    position: relative;
+    background: #020c1b;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #64ffda;
+    box-shadow: 0 0 20px #64ffda33;
+  }
+  
+  .puzzle-outline {
+    display: block;
+    width: 100%;
+    height: auto;
+    opacity: 0.8;
+  }
+  
+  .puzzle-piece {
+    position: absolute;
     width: 100px;
     height: 100px;
-    border: 2px solid black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.dashboard-action-button {
-    margin: 20px 0;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-}
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #64ffda;
+    border-radius: 8px;
+    cursor: move;
+    transition: all 0.3s ease;
+    z-index: 1;
+  }
+  
+  .puzzle-piece.placed {
+    cursor: default;
+    border-color: #52d1b2;
+    box-shadow: 0 0 15px #52d1b2;
+  }
+  
+  .puzzle-piece.dragging {
+    z-index: 1000;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px #64ffda;
+  }
+  
+  .shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    50% { transform: translateX(10px); }
+    75% { transform: translateX(-5px); }
+  }
+  
+  .completion-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #112240;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid #64ffda;
+    box-shadow: 0 0 30px #64ffda;
+    z-index: 1000;
+  }
+  
+  .completion-message h2 {
+    color: #64ffda;
+    margin: 0;
+    font-size: 2rem;
+  }

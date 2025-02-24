@@ -271,6 +271,34 @@ def segment_image():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/save_quiz', methods=['POST'])
+def save_quiz():
+    try:
+        data = request.json
+        teacher_id = data['teacher_id']
+        
+        # Create quiz document
+        quiz_ref = db.collection('quizzes').document()
+        quiz_ref.set({
+            'teacher_id': teacher_id,
+            'image_url': data['image_url'],
+            'segments': data['segments'],
+            'puzzle_outline': data['puzzle_outline'],
+            'meta': data.get('meta', {}),
+            'created_at': firestore.SERVER_TIMESTAMP
+        })
+
+        # Update teacher's document
+        teacher_ref = db.collection('teachers').document(teacher_id)
+        teacher_ref.update({
+            'quizzes': firestore.ArrayUnion([quiz_ref.id])
+        })
+
+        return jsonify({'success': True, 'quiz_id': quiz_ref.id}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/segment_quiz', methods=['POST'])
 def segment_quiz():
     """

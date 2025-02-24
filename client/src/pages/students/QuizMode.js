@@ -1,204 +1,217 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import Cropper from 'react-cropper';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import 'cropperjs/dist/cropper.css';
+import axios from 'axios';
+import { useParams } from 'react-router-dom';
+import { db } from '../../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import Confetti from 'react-confetti';
 import './QuizMode.css';
 
 const ItemTypes = {
-    IMAGE_PART: 'image_part',
+  PUZZLE_PIECE: 'puzzlePiece'
 };
 
-const DraggableImagePart = ({ id, src, isDropped }) => {
-    const [{ isDragging }, drag] = useDrag(() => ({
-        type: ItemTypes.IMAGE_PART,
-        item: { id },
-        collect: (monitor) => ({
-            isDragging: !!monitor.isDragging(),
-        }),
-    }));
+const PuzzlePiece = ({ id, index, imageUrl, position, onPositionChange, isPlaced }) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: ItemTypes.PUZZLE_PIECE,
+    item: { id, index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
 
-    return (
-        !isDropped && (
-            <img
-                ref={drag}
-                src={src}
-                alt={`Part ${id}`}
-                className="image-part"
-                style={{ opacity: isDragging ? 0.5 : 1, width: '100px', height: '100px' }}
-            />
-        )
-    );
+  return (
+    <div
+      ref={drag}
+      className={`puzzle-piece ${isDragging ? 'dragging' : ''} ${isPlaced ? 'placed' : ''}`}
+      style={{
+        backgroundImage: `url(${imageUrl})`,
+        left: position.x,
+        top: position.y,
+        opacity: isDragging ? 0.5 : 1,
+      }}
+    />
+  );
 };
 
-const DropZone = ({ id, onDrop, children }) => {
-    const [{ isOver }, drop] = useDrop(() => ({
-        accept: ItemTypes.IMAGE_PART,
-        drop: (item) => onDrop(item.id, id),
-        collect: (monitor) => ({
-            isOver: !!monitor.isOver(),
-        }),
-    }));
+const PuzzleArea = ({ children, onDrop, originalSize, currentSize }) => {
+  const [, drop] = useDrop(() => ({
+    accept: ItemTypes.PUZZLE_PIECE,
+    drop: (item, monitor) => {
+      const offset = monitor.getClientOffset();
+      if (offset) {
+        const rect = document.querySelector('.puzzle-container').getBoundingClientRect();
+        const scaleX = currentSize.width / originalSize.width;
+        const scaleY = currentSize.height / originalSize.height;
+        
+        const x = (offset.x - rect.left) / scaleX;
+        const y = (offset.y - rect.top) / scaleY;
+        
+        onDrop(item.index, { x, y });
+      }
+    },
+  }));
 
-    return (
-        <div
-            ref={drop}
-            className="drop-zone"
-            style={{
-                border: isOver ? '2px solid green' : '2px solid black',
-                width: '100px',
-                height: '100px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-            }}
-        >
-            {children}
-        </div>
-    );
+  return (
+    <div ref={drop} className="puzzle-area">
+      {children}
+    </div>
+  );
 };
 
 const QuizMode = () => {
-    const navigate = useNavigate(); // Initialize useNavigate for navigation
-    const [image, setImage] = useState(null);
-    const [cropper, setCropper] = useState(null);
-    const [squares, setSquares] = useState([
-        { id: 1, src: null, isDropped: false },
-        { id: 2, src: null, isDropped: false },
-        { id: 3, src: null, isDropped: false },
-        { id: 4, src: null, isDropped: false },
-    ]);
+  const { quizId } = useParams();
+  const [quizData, setQuizData] = useState(null);
+  const [pieces, setPieces] = useState([]);
+  const [completed, setCompleted] = useState(false);
+  const [puzzleSize, setPuzzleSize] = useState({ width: 0, height: 0 });
+  const [error, setError] = useState(null);
 
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        setImage(file);
-    };
+  const loadQuizData = useCallback(async () => {
+    try {
+      const quizRef = doc(db, 'quizzes', quizId);
+      const quizSnap = await getDoc(quizRef);
+      
+      if (quizSnap.exists()) {
+        const data = quizSnap.data();
+        setQuizData(data);
+        
+        // Initialize pieces with random positions on the right side
+        const initialPieces = data.segments.map((url, index) => ({
+          id: `piece-${index}`,
+          index,
+          imageUrl: url,
+          originalPosition: data.positions[index],
+          currentPosition: {
+            x: window.innerWidth - 200 + Math.random() * 50,
+            y: 100 + index * 120 + Math.random() * 50
+          },
+          isPlaced: false
+        }));
+        
+        setPieces(initialPieces);
+      } else {
+        setError('Quiz not found');
+      }
+    } catch (error) {
+      console.error('Error loading quiz:', error);
+      setError('Failed to load quiz data. Please try again.');
+    }
+  }, [quizId]);
 
-    const handleSegmentation = async () => {
-        if (!cropper) {
-            console.error('Cropper not initialized');
-            return;
-        }
-    
-        const canvas = cropper.getCroppedCanvas();
-        const croppedImageUrl = canvas.toDataURL('image/jpeg');
-    
-        try {
-            console.log('Splitting image...');
-            const parts = await splitImage(croppedImageUrl);
-            console.log('Image split into parts:', parts);
-    
-            setSquares((prev) =>
-                prev.map((square, index) => ({ ...square, src: parts[index] }))
-            );
-        } catch (error) {
-            console.error('Error during segmentation:', error);
-        }
-    };
+  useEffect(() => {
+    loadQuizData();
+  }, [loadQuizData]);
 
-    const splitImage = (imageUrl) => {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.src = imageUrl;
-    
-            img.onload = () => {
-                const parts = [];
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const width = img.width / 2;
-                const height = img.height / 2;
-    
-                for (let y = 0; y < 2; y++) {
-                    for (let x = 0; x < 2; x++) {
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.clearRect(0, 0, width, height);
-                        ctx.drawImage(img, x * width, y * height, width, height, 0, 0, width, height);
-                        parts.push(canvas.toDataURL());
-                    }
-                }
-    
-                resolve(parts);
+  const handleDrop = async (index, position) => {
+    try {
+      const response = await axios.post('http://localhost:5000/validate_placement', {
+        quiz_id: quizId,
+        segment_index: index,
+        position: position
+      });
+
+      if (response.data.correct) {
+        setPieces(prev => prev.map(piece => {
+          if (piece.index === index) {
+            return {
+              ...piece,
+              currentPosition: {
+                x: piece.originalPosition.x * (puzzleSize.width / quizData.original_size.width),
+                y: piece.originalPosition.y * (puzzleSize.height / quizData.original_size.height)
+              },
+              isPlaced: true
             };
+          }
+          return piece;
+        }));
+
+        // Check if all pieces are placed
+        const allPlaced = pieces.every(p => p.isPlaced);
+        if (allPlaced) {
+          setCompleted(true);
+          setTimeout(() => setCompleted(false), 5000); // Hide confetti after 5s
+        }
+      } else {
+        // Return to original position with shake animation
+        const piece = document.querySelector(`#piece-${index}`);
+        piece.classList.add('shake');
+        setTimeout(() => piece.classList.remove('shake'), 500);
+      }
+    } catch (error) {
+      console.error('Validation error:', error);
+    }
+  };
+
+  const handlePuzzleSize = (width, height) => {
+    const aspectRatio = quizData.original_size.width / quizData.original_size.height;
+    const maxWidth = Math.min(800, window.innerWidth - 300);
+    const calculatedHeight = maxWidth / aspectRatio;
     
-            img.onerror = () => {
-                console.error('Failed to load the image for segmentation.');
-                resolve([]);
-            };
-        });
-    };
+    setPuzzleSize({
+      width: maxWidth,
+      height: calculatedHeight
+    });
+  };
 
-    const handleDrop = (squareId, targetId) => {
-        setSquares((prevSquares) =>
-            prevSquares.map((square) =>
-                square.id === squareId && squareId === targetId
-                    ? { ...square, isDropped: true }
-                    : square
-            )
-        );
-    };
+  const handlePositionChange = (index, position) => {
+    setPieces(prev => prev.map(piece => {
+      if (piece.index === index) {
+        return {
+          ...piece,
+          currentPosition: position
+        };
+      }
+      return piece;
+    }));
+  };
 
-    const completed = squares.every((square) => square.isDropped);
+  if (!quizData) return <div className="loading">Loading Puzzle...</div>;
 
-    return (
-        <div className="quiz-mode-container">
-            <h1>Quiz Mode</h1>
-
-            {/* Back Button */}
-            <button onClick={() => navigate('/student-dashboard')} className="back-button">
-                ← Back
-            </button>
-
-            <div>
-                <input type="file" accept="image/*" onChange={handleImageUpload} />
-                {image && (
-                    <Cropper
-                        src={URL.createObjectURL(image)}
-                        style={{ height: 400, width: '100%' }}
-                        aspectRatio={1}
-                        guides={true}
-                        onInitialized={(instance) => {
-                            setCropper(instance);
-                        }}
-                    />
-                )}
-            </div>
-
-            <button className="dashboard-action-button" onClick={handleSegmentation}>
-                Segment Image
-            </button>
-
-            <DndProvider backend={HTML5Backend}>
-                <div className="small-squares">
-                    {squares.map((square) => (
-                        <DraggableImagePart
-                            key={square.id}
-                            id={square.id}
-                            src={square.src}
-                            isDropped={square.isDropped}
-                        />
-                    ))}
-                </div>
-
-                <div className="big-square">
-                    {squares.map((square) => (
-                        <DropZone key={square.id} id={square.id} onDrop={handleDrop}>
-                            {square.isDropped && (
-                                <img
-                                    src={square.src}
-                                    alt={`Part ${square.id}`}
-                                    style={{ width: '100%', height: '100%' }}
-                                />
-                            )}
-                        </DropZone>
-                    ))}
-                </div>
-            </DndProvider>
-
-            {completed && <h2>Congratulations! Puzzle Completed!</h2>}
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <div className="quiz-mode-container">
+        {completed && <Confetti recycle={false} numberOfPieces={400} />}
+        
+        <div className="puzzle-container">
+          <div className="puzzle-toolbar">
+            <h2>Drag the pieces to complete the puzzle!</h2>
+          </div>
+          
+          <PuzzleArea 
+            onDrop={handleDrop}
+            originalSize={quizData.original_size}
+            currentSize={puzzleSize}
+          >
+            <img 
+              src={quizData.puzzle_outline} 
+              alt="Puzzle Outline"
+              className="puzzle-outline"
+              style={{ width: puzzleSize.width }}
+              onLoad={(e) => handlePuzzleSize(e.target.naturalWidth, e.target.naturalHeight)}
+            />
+            
+            {pieces.map((piece) => (
+              <PuzzlePiece
+                key={piece.id}
+                {...piece}
+                position={piece.currentPosition}
+                onPositionChange={(pos) => handlePositionChange(piece.index, pos)}
+                isPlaced={piece.isPlaced}
+              />
+            ))}
+          </PuzzleArea>
         </div>
-    );
+
+        {completed && (
+          <div className="completion-message">
+            <h2>Congratulations! Puzzle Completed!</h2>
+          </div>
+        )}
+      </div>
+    </DndProvider>
+  );
 };
 
 export default QuizMode;
