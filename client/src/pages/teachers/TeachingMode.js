@@ -35,6 +35,18 @@ const TeachingMode = () => {
     const [newGroupName, setNewGroupName] = useState('');
     const [originalWithHighlight, setOriginalWithHighlight] = useState(null);
     const cropperRef = useRef(null);
+    const [processedOutput, setProcessedOutput] = useState(null);
+    const [showOutput, setShowOutput] = useState(false);
+    const [selectedSegment, setSelectedSegment] = useState(null);
+    const [segmentNotes, setSegmentNotes] = useState('');
+    const [selectedRegions, setSelectedRegions] = useState([]);
+    const [isSelectingRegions, setIsSelectingRegions] = useState(true);
+    const [isAddingNotes, setIsAddingNotes] = useState(false);
+    const [regionNotes, setRegionNotes] = useState({});
+    const [currentRegionIndex, setCurrentRegionIndex] = useState(null);
+    const [processedRegions, setProcessedRegions] = useState([]);
+    const [currentRegionForNotes, setCurrentRegionForNotes] = useState(null);
+    const [isViewingOutput, setIsViewingOutput] = useState(false);
     const [basicContours, setBasicContours] = useState([]);
     const [basicNotes, setBasicNotes] = useState({});
     const [showNotePopup, setShowNotePopup] = useState(null);
@@ -44,7 +56,6 @@ const TeachingMode = () => {
     const [contourCanvas, setContourCanvas] = useState(null);
     const canvasRef = useRef(null);
     const imageRef = useRef(null);
-    const [processedRegions, setProcessedRegions] = useState([]);
 
     // Fetch students and groups
     useEffect(() => {
@@ -90,29 +101,34 @@ const TeachingMode = () => {
     }, [teacherId]);
 
     // Handle image upload
-    const handleImageUpload = (e) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            setImage(file); // Set the image state to the File object
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await axios.post('http://localhost:5000/upload', formData);
+                const imageUrl = response.data.image_url;
+                
+                setCurrentImageUrl(imageUrl);  // Set the current image URL
+                setImage(file);
+                setIsSelectingRegions(true);
+                setSelectedRegions([]);
+            } catch (error) {
+                setError('Failed to upload image: ' + error.message);
+            }
         }
     };
 
     // Handle region selection
     const handleSelectRegion = () => {
         if (cropperRef.current) {
-            const cropper = cropperRef.current.cropper;
-            const canvas = cropper.getCroppedCanvas();
-
-            // Convert the canvas to a Blob
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    // Create a URL for the Blob
-                    const imageUrl = URL.createObjectURL(blob);
-                    setImage(imageUrl); // Update the image state
-                } else {
-                    setError('Failed to create image blob.');
-                }
-            }, 'image/jpeg'); // Specify the image format
+            const cropData = cropperRef.current.cropper.getData();
+            setSelectedRegions([...selectedRegions, cropData]);
+            
+            // Reset cropper for next selection
+            cropperRef.current.cropper.clear();
         }
     };
 
@@ -122,13 +138,13 @@ const TeachingMode = () => {
             setIsLoading(true);
             const canvas = cropperRef.current.cropper.getCroppedCanvas();
 
-            // Convert the canvas to a Blob
             canvas.toBlob(async (blob) => {
                 if (blob) {
                     const formData = new FormData();
-                    formData.append('image', blob, 'cropped-image.jpg'); // Append the Blob to FormData
+                    formData.append('image', blob, 'cropped-image.jpg');
 
                     try {
+                        console.log('Uploading image...');
                         const uploadResponse = await axios.post('http://localhost:5000/upload', formData, {
                             headers: { 'Content-Type': 'multipart/form-data' },
                         });
@@ -136,33 +152,34 @@ const TeachingMode = () => {
                         const imageUrl = uploadResponse.data.image_url;
                         setCurrentImageUrl(imageUrl);
 
+                        console.log('Processing image with SAM...');
                         const segmentResponse = await axios.post('http://localhost:5000/segment', {
                             image_url: imageUrl,
-                            bounding_box: {
-                                left: cropperRef.current.cropper.getData().x,
-                                top: cropperRef.current.cropper.getData().y,
-                                width: cropperRef.current.cropper.getData().width,
-                                height: cropperRef.current.cropper.getData().height,
-                            },
+                            bounding_box: cropperRef.current.cropper.getData(),
                             teacher_id: teacherId,
                         });
 
-                        const segmentedUrls = segmentResponse.data.segmented_urls;
-                        const originalWithHighlightUrl = segmentResponse.data.original_with_highlight;
+                        console.log('Segment response:', segmentResponse.data);
 
-                        // Update state variables
-                        setSegmentedImages(segmentedUrls);
-                        setOriginalWithHighlight(originalWithHighlightUrl);
+                        // Update state with processed images
+                        setSegmentedImages(segmentResponse.data.segmented_urls);
+                        setOriginalWithHighlight(segmentResponse.data.original_with_highlight);
+                        setProcessedOutput({
+                            originalImage: imageUrl,
+                            maskedImage: segmentResponse.data.masked_image,
+                            cutout: segmentResponse.data.cutout,
+                            highlightedOutline: segmentResponse.data.highlighted_outline,
+                            originalSize: segmentResponse.data.originalSize
+                        });
+
                     } catch (err) {
+                        console.error('Segmentation error:', err);
                         setError('Segmentation failed: ' + err.message);
                     } finally {
                         setIsLoading(false);
                     }
-                } else {
-                    setError('Failed to create image blob.');
-                    setIsLoading(false);
                 }
-            }, 'image/jpeg'); // Specify the image format
+            }, 'image/jpeg');
         }
     };
 
@@ -330,6 +347,116 @@ const TeachingMode = () => {
         }
     };
 
+    // Add handler for viewing output
+    const handleViewOutput = () => {
+        setShowOutput(true);
+    };
+
+    // Add handler for segment click
+    const handleSegmentClick = (segment) => {
+        setSelectedSegment(segment);
+        setSegmentNotes(segment.notes || '');
+    };
+
+    // Add new function to handle completion of region selection
+    const handleDoneSelecting = async () => {
+        try {
+            if (!currentImageUrl) {
+                throw new Error('No image URL available');
+            }
+
+            setIsLoading(true);
+            console.log('Processing regions:', selectedRegions);
+
+            const processedResults = await Promise.all(
+                selectedRegions.map((region, index) => 
+                    axios.post('http://localhost:5000/segment', {
+                        image_url: currentImageUrl,
+                        bounding_box: {
+                            x: Math.round(region.x),
+                            y: Math.round(region.y),
+                            width: Math.round(region.width),
+                            height: Math.round(region.height),
+                            rotate: region.rotate || 0
+                        },
+                        teacher_id: teacherId,
+                        region_index: index
+                    })
+                )
+            );
+
+            setProcessedRegions(processedResults.map(response => response.data));
+            setIsSelectingRegions(false);
+            setIsAddingNotes(true);
+        } catch (error) {
+            console.error('Error:', error);
+            setError('Failed to process regions: ' + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Add function to handle note addition
+    const handleAddNote = (index, note) => {
+        setRegionNotes(prev => ({
+            ...prev,
+            [index]: note
+        }));
+    };
+
+    // Add function to handle completion of note addition
+    const handleDoneAddingNotes = () => {
+        setIsAddingNotes(false);
+        setIsViewingOutput(true);
+    };
+
+    // Handle clicking on a region to add/view notes
+    const handleRegionClick = (index) => {
+        if (isAddingNotes) {
+            setCurrentRegionForNotes(index);
+        } else if (isViewingOutput) {
+            // Show saved notes in a popup
+            setCurrentRegionForNotes(index);
+        }
+    };
+
+    // Handle saving notes for a specific region
+    const handleSaveNotes = async (index, notes) => {
+        try {
+            console.log('Saving notes for region:', index, notes);
+            setIsLoading(true);
+            setError(''); // Clear any previous errors
+            
+            if (!notes || notes.trim() === '') {
+                throw new Error('Please enter some notes before saving');
+            }
+
+            const response = await axios.post('http://localhost:5000/add_note', {
+                image_url: currentImageUrl,
+                segment_index: index.toString(),
+                note: notes.trim(),
+                teacher_id: teacherId
+            });
+
+            if (response.data.message) {
+                // Update local state with the new note
+                setRegionNotes(prev => ({
+                    ...prev,
+                    [index]: notes
+                }));
+                setCurrentRegionForNotes(null);
+                // Show success message
+                console.log('Note saved successfully');
+            }
+        } catch (error) {
+            console.error('Error saving notes:', error);
+            const errorMessage = error.response?.data?.error || error.message;
+            setError('Failed to save notes: ' + errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // Render content based on active tab
     const renderContent = () => {
         switch (activeTab) {
@@ -355,75 +482,120 @@ const TeachingMode = () => {
                                     />
                                     <span className="upload-button">Choose Image</span>
                                 </label>
-                                {image && (
-                                    <div className="cropper-container">
-                                        <Cropper
-                                            src={image instanceof File ? URL.createObjectURL(image) : image}
-                                            style={{ height: 400, width: '100%' }}
-                                            aspectRatio={1}
-                                            guides={true}
-                                            ref={cropperRef}
-                                        />
+                            </div>
+
+                            {/* Image Selection Area */}
+                            {image && isSelectingRegions && (
+                                <div className="cropper-container">
+                                    <Cropper
+                                        src={image instanceof File ? URL.createObjectURL(image) : image}
+                                        style={{ 
+                                            height: 600,
+                                            width: '100%',
+                                            maxWidth: 800
+                                        }}
+                                        initialAspectRatio={NaN}
+                                        aspectRatio={NaN}
+                                        guides={true}
+                                        ref={cropperRef}
+                                        zoomable={false}
+                                        scalable={false}
+                                        mouseWheelZoom={false}
+                                        dragMode="crop"
+                                        cropBoxMovable={true}
+                                        cropBoxResizable={true}
+                                        toggleDragModeOnDblclick={false}
+                                        viewMode={1}
+                                        minContainerWidth={800}
+                                        minContainerHeight={600}
+                                    />
+                                    <div className="region-selection-controls">
                                         <button onClick={handleSelectRegion} className="select-region-button">
                                             Select Region
                                         </button>
+                                        {selectedRegions.length > 0 && (
+                                            <>
+                                                <button onClick={() => cropperRef.current.cropper.clear()} className="select-another-button">
+                                                    Select Another Part
+                                                </button>
+                                                <button onClick={handleDoneSelecting} className="done-selecting-button">
+                                                    Done Selecting ({selectedRegions.length} regions)
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
-                                )}
-                                <button
-                                    onClick={handleSegmentation}
-                                    className="segment-button"
-                                    disabled={!image || isLoading}
-                                >
-                                    {isLoading ? 'Processing...' : 'Segment Image'}
-                                </button>
-                            </div>
-                        </section>
+                                </div>
+                            )}
 
-                        {segmentedImages.length > 0 && (
-                            <section className="segmented-section card-neon">
-                                <h2>Segmented Images and Notes</h2>
-                                <div className="segmented-grid">
-                                    {segmentedImages.map((segmentedImage, index) => (
-                                        <div key={index} className="segment-card">
-                                            <img
-                                                src={segmentedImage}
-                                                alt={`Segmented Part ${index}`}
-                                                className="segmented-image"
-                                            />
+                            {/* Notes Addition Area */}
+                            {isAddingNotes && processedOutput && (
+                                <div className="notes-addition-container">
+                                    <h3>Add Notes to Selected Regions</h3>
+                                    <div className="original-image-container">
+                                        <img 
+                                            src={processedOutput.originalImage} 
+                                            alt="Original" 
+                                            className="base-image"
+                                            style={{
+                                                width: '800px',
+                                                height: '600px',
+                                                objectFit: 'contain'
+                                            }}
+                                        />
+                                        {processedOutput.regions.map((region, index) => (
+                                            <div 
+                                                key={index}
+                                                className="region-note-section"
+                                                onClick={() => setCurrentRegionIndex(index)}
+                                            >
+                                                <img 
+                                                    src={region.highlightedOutline}
+                                                    alt={`Region ${index + 1}`}
+                                                    className="region-outline"
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'contain'
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {currentRegionIndex !== null && (
+                                        <div className="note-input-popup">
                                             <textarea
-                                                value={notes[index] || ''}
-                                                onChange={(e) => handleNoteChange(index, e.target.value)}
-                                                placeholder="Add notes..."
+                                                value={regionNotes[currentRegionIndex] || ''}
+                                                onChange={(e) => handleAddNote(currentRegionIndex, e.target.value)}
+                                                placeholder="Add notes for this region..."
                                                 className="notes-textarea"
                                             />
+                                            <button onClick={() => setCurrentRegionIndex(null)} className="save-note-button">
+                                                Save Note
+                                            </button>
                                         </div>
-                                    ))}
+                                    )}
+                                    <button 
+                                        onClick={handleDoneAddingNotes}
+                                        className="done-notes-button"
+                                    >
+                                        Done Adding Notes
+                                    </button>
                                 </div>
-                                <button onClick={saveNotes} className="save-notes-button">
-                                    Save Notes
-                                </button>
-                                {isNotesSaved && (
-                                    <div className="notes-saved-message">
-                                        Notes Saved!
-                                        <button onClick={handleSegmentAnotherPart} className="segment-another-button">
-                                            Segment Another Part
-                                        </button>
-                                    </div>
-                                )}
-                            </section>
-                        )}
+                            )}
 
-                        {/* Display the original image with highlighted cutout */}
-                        {originalWithHighlight && (
-                            <div className="original-with-highlight">
-                                <h2>Original Image with Highlighted Cutout</h2>
-                                <img
-                                    src={originalWithHighlight}
-                                    alt="Original with Highlight"
-                                    className="original-with-highlight-image"
-                                />
-                            </div>
-                        )}
+                            {/* Final Output View */}
+                            {showOutput && processedOutput && (
+                                <div className="final-output-container">
+                                    <h3>Final Output</h3>
+                                    <div className="original-image-container">
+                                        {/* Your existing output view code */}
+                                    </div>
+                                </div>
+                            )}
+                        </section>
                     </div>
                 );
             case 'manage':
@@ -532,145 +704,107 @@ const TeachingMode = () => {
         }
     };
 
-    // Replace the handleAddContour function
-    const handleRegionSelect = () => {
-        if (!cropperRef.current || !imageRef.current) {
-            console.error('Cropper or image reference not available');
-            return;
-        }
+    // Update the render section to include the new output view
+    const renderProcessedOutput = () => {
+        return (
+            <div className="processed-output-container">
+                <div className="original-image-container">
+                    {/* Base Image */}
+                    <img 
+                        src={currentImageUrl} 
+                        alt="Original" 
+                        className="base-image"
+                        style={{
+                            width: '800px',
+                            height: '600px',
+                            objectFit: 'contain'
+                        }}
+                    />
+                    
+                    {/* Overlay all highlighted regions */}
+                    {processedRegions.map((region, index) => (
+                        <div 
+                            key={index}
+                            className="region-overlay"
+                            onClick={() => handleRegionClick(index)}
+                        >
+                            <img 
+                                src={region.highlighted_outline}
+                                alt={`Region ${index + 1}`}
+                                className="region-outline"
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain'
+                                }}
+                            />
+                        </div>
+                    ))}
+                </div>
 
-        try {
-            const cropper = cropperRef.current.cropper;
-            const cropData = cropper.getData();
-            
-            // Ensure we have valid dimensions
-            if (cropData.width <= 0 || cropData.height <= 0) {
-                console.error('Invalid crop dimensions');
-                return;
-            }
+                {/* Notes Input Popup */}
+                {currentRegionForNotes !== null && isAddingNotes && (
+                    <div className="notes-popup">
+                        <h3>Add Notes for Region {currentRegionForNotes + 1}</h3>
+                        <textarea
+                            value={regionNotes[currentRegionForNotes] || ''}
+                            onChange={(e) => setRegionNotes(prev => ({
+                                ...prev,
+                                [currentRegionForNotes]: e.target.value
+                            }))}
+                            placeholder="Add notes for this region..."
+                            className="notes-textarea"
+                            disabled={isLoading}
+                        />
+                        <div className="notes-popup-buttons">
+                            <button 
+                                onClick={() => handleSaveNotes(currentRegionForNotes, regionNotes[currentRegionForNotes])}
+                                className="save-notes-button"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Saving...' : 'Save Notes'}
+                            </button>
+                            <button 
+                                onClick={() => setCurrentRegionForNotes(null)}
+                                className="cancel-button"
+                                disabled={isLoading}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
 
-            setSelectedRegion(cropData);
+                {/* View Notes Popup */}
+                {currentRegionForNotes !== null && isViewingOutput && (
+                    <div className="notes-popup">
+                        <h3>Notes for Region {currentRegionForNotes + 1}</h3>
+                        <div className="notes-content">
+                            {regionNotes[currentRegionForNotes] || 'No notes added for this region'}
+                        </div>
+                        <button 
+                            onClick={() => setCurrentRegionForNotes(null)}
+                            className="close-button"
+                        >
+                            Close
+                        </button>
+                    </div>
+                )}
 
-            // Create a temporary canvas
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            // Set canvas dimensions to match the cropped region
-            canvas.width = Math.round(cropData.width);
-            canvas.height = Math.round(cropData.height);
-
-            // Wait for image to load
-            const image = imageRef.current;
-            if (!image.complete) {
-                image.onload = () => processRegion(image, cropData, canvas, ctx);
-            } else {
-                processRegion(image, cropData, canvas, ctx);
-            }
-        } catch (error) {
-            console.error('Error in handleRegionSelect:', error);
-            setError('Failed to process selected region');
-        }
-    };
-
-    // Separate function to process the region
-    const processRegion = (image, cropData, canvas, ctx) => {
-        try {
-            // Draw the cropped region
-            ctx.drawImage(
-                image,
-                Math.round(cropData.x),
-                Math.round(cropData.y),
-                Math.round(cropData.width),
-                Math.round(cropData.height),
-                0,
-                0,
-                Math.round(cropData.width),
-                Math.round(cropData.height)
-            );
-
-            // Get image data and detect edges
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const edgeData = detectEdges(imageData);
-
-            // Draw edges on the contour canvas
-            if (canvasRef.current) {
-                const contourCtx = canvasRef.current.getContext('2d');
-                canvasRef.current.width = canvas.width;
-                canvasRef.current.height = canvas.height;
-                contourCtx.putImageData(edgeData, 0, 0);
-            }
-
-            setContourCanvas(canvas.toDataURL());
-        } catch (error) {
-            console.error('Error in processRegion:', error);
-            setError('Failed to process region');
-        }
-    };
-
-    const handleAddNotes = () => {
-        if (selectedRegion && currentNote) {
-            setBasicContours(prev => [...prev, selectedRegion]);
-            setBasicNotes(prev => ({
-                ...prev,
-                [basicContours.length]: currentNote
-            }));
-            // Reset states
-            setSelectedRegion(null);
-            setShowNotesInput(false);
-            setCurrentNote('');
-        }
-    };
-
-    const handleDone = () => {
-        setShowNotesInput(false);
-        setSelectedRegion(null);
-        // You can add any additional cleanup or state resets here
-    };
-
-    const detectEdges = (imageData) => {
-        const data = imageData.data;
-        const width = imageData.width;
-        const height = imageData.height;
-        const output = new Uint8ClampedArray(width * height * 4);
-
-        // Convert to grayscale and apply Sobel operator for edge detection
-        for (let y = 1; y < height - 1; y++) {
-            for (let x = 1; x < width - 1; x++) {
-                const idx = (y * width + x) * 4;
-
-                // Get surrounding pixels
-                const tl = getGrayscale(data, (y - 1) * width + (x - 1), width);
-                const t = getGrayscale(data, (y - 1) * width + x, width);
-                const tr = getGrayscale(data, (y - 1) * width + (x + 1), width);
-                const l = getGrayscale(data, y * width + (x - 1), width);
-                const r = getGrayscale(data, y * width + (x + 1), width);
-                const bl = getGrayscale(data, (y + 1) * width + (x - 1), width);
-                const b = getGrayscale(data, (y + 1) * width + x, width);
-                const br = getGrayscale(data, (y + 1) * width + (x + 1), width);
-
-                // Sobel operators
-                const gx = -tl - 2 * l - bl + tr + 2 * r + br;
-                const gy = -tl - 2 * t - tr + bl + 2 * b + br;
-
-                const g = Math.sqrt(gx * gx + gy * gy);
-
-                // Threshold for edges
-                const isEdge = g > 50 ? 255 : 0;
-
-                output[idx] = isEdge;     // R
-                output[idx + 1] = isEdge; // G
-                output[idx + 2] = isEdge; // B
-                output[idx + 3] = 255;    // A
-            }
-        }
-
-        return new ImageData(output, width, height);
-    };
-
-    const getGrayscale = (data, idx, width) => {
-        idx *= 4;
-        // Convert RGB to grayscale using luminosity method
-        return data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+                {/* Show Done Adding Notes button only when in adding notes mode */}
+                {isAddingNotes && (
+                    <button 
+                        onClick={handleDoneAddingNotes}
+                        className="done-notes-button"
+                    >
+                        Done Adding Notes
+                    </button>
+                )}
+            </div>
+        );
     };
 
     useEffect(() => {
@@ -705,10 +839,7 @@ const TeachingMode = () => {
                     <li className={activeTab === 'library' ? 'active' : ''} onClick={() => setActiveTab('library')}>
                         Library
                     </li>
-                    <li 
-                        className={activeTab === 'basicversion' ? 'active' : ''} 
-                        onClick={() => setActiveTab('basicversion')}
-                    >
+                    <li className={activeTab === 'basicversion' ? 'active' : ''} onClick={() => setActiveTab('basicversion')}>
                         Basic Version
                     </li>
                 </ul>
@@ -716,6 +847,13 @@ const TeachingMode = () => {
 
             {/* Main Content */}
             {renderContent()}
+            
+            {/* Only show SAM processing outputs in the Home tab */}
+            { activeTab === 'home' && isLoading && 
+              <div className="loading-message">Processing regions...</div> 
+            }
+            
+            { activeTab === 'home' && (isAddingNotes || isViewingOutput) && renderProcessedOutput() }
         </div>
     );
 };
