@@ -287,10 +287,11 @@ def segment_quiz():
         with open(temp_image_path, 'wb') as f:
             f.write(response.content)
 
-        # New code: call segment_quiz_image to get both segmented cutouts and puzzle outline
+        # Get segmentation results with positions
         const_output = segment_quiz_image(temp_image_path)
         segmented_cutouts = const_output[0]
         puzzle_outline = const_output[1]
+        positions = const_output[2]  # Get positions array
 
         segmented_urls = []
         for idx, cutout in enumerate(segmented_cutouts):
@@ -302,17 +303,15 @@ def segment_quiz():
             segmented_image_buffer.seek(0)
 
             upload_result = cloudinary.uploader.upload(
-                segmented_image_buffer, public_id=f'segmented_quiz_{idx}', format="png"
+                segmented_image_buffer, 
+                public_id=f'segmented_quiz_{idx}', 
+                format="png"
             )
             segmented_urls.append(upload_result['secure_url'])
 
         os.remove(temp_image_path)
 
-        # Optionally update teacher's quiz segments in the database
-        teacher_ref = db.collection('teachers').document(teacher_id)
-        teacher_data = teacher_ref.get()
-
-        # Upload the puzzle outline image
+        # Upload puzzle outline
         puzzle_outline_rgba = cv2.cvtColor(puzzle_outline, cv2.COLOR_BGRA2RGBA)
         pil_outline = Image.fromarray(puzzle_outline_rgba)
         outline_buffer = io.BytesIO()
@@ -320,31 +319,84 @@ def segment_quiz():
         outline_buffer.seek(0)
 
         upload_result_outline = cloudinary.uploader.upload(
-            outline_buffer, public_id=f'puzzle_outline', format="png"
+            outline_buffer, 
+            public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}', 
+            format="png"
         )
         puzzle_outline_url = upload_result_outline['secure_url']
 
-        # Update teacher's quiz segments in Firebase with both segmented masks and puzzle outline
-        if teacher_data.exists:
-            quiz_segments = teacher_data.to_dict().get('quiz_segments', {})
-            quiz_segments[image_url] = {
-                  'segments': segmented_urls,
-                  'puzzle_outline': puzzle_outline_url
-            }
-            teacher_ref.update({'quiz_segments': quiz_segments})
-        else:
-            teacher_ref.set({'quiz_segments': {image_url: {
-                  'segments': segmented_urls,
-                  'puzzle_outline': puzzle_outline_url
-            }}})
+        # Create quiz document in Firestore
+        quiz_ref = db.collection('quizzes').document()
+        quiz_data = {
+            'teacher_id': teacher_id,
+            'image_url': image_url,
+            'segments': segmented_urls,
+            'puzzle_outline': puzzle_outline_url,
+            'positions': positions,
+            'original_size': {
+                'width': positions[0]['original_width'] if positions else 0,
+                'height': positions[0]['original_height'] if positions else 0
+            },
+            'created_at': firestore.SERVER_TIMESTAMP
+        }
+        quiz_ref.set(quiz_data)
+
+        # Update teacher's document with quiz reference
+        teacher_ref = db.collection('teachers').document(teacher_id)
+        teacher_ref.update({
+            'quizzes': firestore.ArrayUnion([quiz_ref.id])
+        })
 
         return jsonify({
             'segmented_urls': segmented_urls,
-            'puzzle_outline_url': puzzle_outline_url
+            'puzzle_outline_url': puzzle_outline_url,
+            'positions': positions,
+            'quiz_id': quiz_ref.id  # Important for student retrieval
         }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route('/get_quiz/<quiz_id>', methods=['GET'])
+def get_quiz(quiz_id):
+    try:
+        quiz_ref = db.collection('quizzes').document(quiz_id)
+        quiz_data = quiz_ref.get().to_dict()
+        
+        if not quiz_data:
+            return jsonify({'error': 'Quiz not found'}), 404
+            
+        return jsonify({
+            'quiz_data': quiz_data.get('quiz_data', {}),
+            'teacher_id': quiz_data.get('teacher_id'),
+            'image_url': quiz_data.get('image_url')
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/validate_placement', methods=['POST'])
+def validate_placement():
+    try:
+        data = request.json
+        quiz_id = data['quiz_id']
+        segment_index = data['segment_index']
+        user_position = data['position']
+        
+        quiz_ref = db.collection('quizzes').document(quiz_id)
+        quiz_data = quiz_ref.get().to_dict()
+        original_pos = quiz_data['quiz_data']['positions'][segment_index]
+        
+        # Calculate acceptable bounds (10% tolerance)
+        tolerance = 0.1
+        is_correct = (
+            abs(user_position['x'] - original_pos['x']) < original_pos['width'] * tolerance and
+            abs(user_position['y'] - original_pos['y']) < original_pos['height'] * tolerance
+        )
+        
+        return jsonify({'correct': is_correct}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/add_note', methods=['POST'])
 def add_note():
