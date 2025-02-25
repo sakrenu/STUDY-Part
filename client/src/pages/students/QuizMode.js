@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import Confetti from 'react-confetti';
 import './QuizMode.css';
+
+// For debugging
+const DEBUG = true;
 
 const ItemTypes = {
   PUZZLE_PIECE: 'puzzlePiece'
@@ -19,7 +21,7 @@ const PuzzlePiece = ({ id, index, imageUrl, position, onPositionChange, isPlaced
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-    canDrag: !isPlaced, // Prevent dragging if already placed correctly
+    canDrag: !isPlaced,
   }));
 
   return (
@@ -47,7 +49,6 @@ const PuzzleArea = ({ children, onDrop, originalSize, currentSize }) => {
         if (puzzleContainer) {
           const rect = puzzleContainer.getBoundingClientRect();
           
-          // Calculate scale if original size is available
           const scaleX = originalSize?.width ? currentSize.width / originalSize.width : 1;
           const scaleY = originalSize?.height ? currentSize.height / originalSize.height : 1;
           
@@ -69,11 +70,13 @@ const PuzzleArea = ({ children, onDrop, originalSize, currentSize }) => {
 
 const QuizMode = () => {
   const { quizId } = useParams();
+  const navigate = useNavigate();
   const [quizData, setQuizData] = useState(null);
   const [pieces, setPieces] = useState([]);
   const [completed, setCompleted] = useState(false);
   const [puzzleSize, setPuzzleSize] = useState({ width: 0, height: 0 });
   const [error, setError] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
   const [loading, setLoading] = useState(true);
   const containerRef = useRef(null);
   const [windowSize, setWindowSize] = useState({
@@ -94,12 +97,29 @@ const QuizMode = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Fallback function to check if Firestore is properly initialized
+  const checkFirestore = useCallback(async () => {
+    try {
+      // Try to access a collection to verify Firestore connection
+      const quizzesRef = collection(db, 'quizzes');
+      const snapshot = await getDocs(quizzesRef);
+      
+      if (snapshot.empty) {
+        return { success: true, message: "Firestore connected, but 'quizzes' collection is empty" };
+      }
+      
+      return { success: true, message: `Firestore connected, found ${snapshot.size} quizzes` };
+    } catch (error) {
+      return { 
+        success: false, 
+        message: `Firestore connection failed: ${error.message}`,
+        error 
+      };
+    }
+  }, []);
+
   // Calculate original positions for puzzle pieces
   const calculatePositions = useCallback((segments, originalImage) => {
-    // This is a placeholder. In a real implementation, 
-    // you would use the segments data to determine original positions.
-    // For this example, we'll create a grid layout
-    
     const positions = [];
     const cols = Math.ceil(Math.sqrt(segments.length));
     const rows = Math.ceil(segments.length / cols);
@@ -125,31 +145,87 @@ const QuizMode = () => {
   const loadQuizData = useCallback(async () => {
     try {
       setLoading(true);
+      setDebugInfo('Starting to load quiz data...');
+      
+      // First check if Firestore is properly initialized
+      const firestoreCheck = await checkFirestore();
+      setDebugInfo(prev => `${prev}\n${firestoreCheck.message}`);
+      
+      if (!firestoreCheck.success) {
+        throw new Error(firestoreCheck.message);
+      }
+
+      // Debug: Log the quiz ID we're trying to fetch
+      setDebugInfo(prev => `${prev}\nAttempting to fetch quiz with ID: ${quizId}`);
+      
+      // Try to get the document
       const quizRef = doc(db, 'quizzes', quizId);
       const quizSnap = await getDoc(quizRef);
       
-      if (quizSnap.exists()) {
-        const data = quizSnap.data();
+      if (!quizSnap.exists()) {
+        setDebugInfo(prev => `${prev}\nQuiz with ID ${quizId} not found in Firestore`);
+        throw new Error(`Quiz with ID ${quizId} not found`);
+      }
+      
+      setDebugInfo(prev => `${prev}\nQuiz document found, extracting data...`);
+      
+      // Got the data, now process it
+      const data = quizSnap.data();
+      setDebugInfo(prev => `${prev}\nData fields: ${Object.keys(data).join(', ')}`);
+      
+      // Check for required fields
+      if (!data.segments || !Array.isArray(data.segments) || data.segments.length === 0) {
+        setDebugInfo(prev => `${prev}\nMissing or empty segments array in quiz data`);
+        throw new Error('Quiz data is missing required segments');
+      }
+      
+      // Get or calculate original image size
+      let originalSize;
+      if (data.originalSize) {
+        originalSize = data.originalSize;
+      } else if (data.original_size) {
+        originalSize = data.original_size;
+      } else {
+        // Default size if none provided
+        originalSize = { width: 800, height: 600 };
+        setDebugInfo(prev => `${prev}\nUsing default original size: 800x600`);
+      }
+      
+      // Get puzzle outline URL
+      const outlineUrl = data.puzzleOutline || data.puzzle_outline;
+      if (!outlineUrl) {
+        setDebugInfo(prev => `${prev}\nWarning: No puzzle outline URL found`);
+      }
+      
+      // Get or calculate positions
+      let positions;
+      if (data.positions && Array.isArray(data.positions)) {
+        positions = data.positions;
+        setDebugInfo(prev => `${prev}\nUsing provided positions data for ${positions.length} pieces`);
+      } else {
+        positions = calculatePositions(data.segments, originalSize);
+        setDebugInfo(prev => `${prev}\nCalculated positions for ${positions.length} pieces`);
+      }
+      
+      // Enhance the quizData with the calculated positions and size
+      const enhancedData = {
+        ...data,
+        positions,
+        original_size: originalSize,
+        puzzle_outline: outlineUrl
+      };
+      
+      setQuizData(enhancedData);
+      setDebugInfo(prev => `${prev}\nQuiz data processed successfully`);
+      
+      // Initialize pieces with random positions on the right side
+      const initialPieces = data.segments.map((url, index) => {
+        // Verify URL is valid
+        if (!url || typeof url !== 'string') {
+          setDebugInfo(prev => `${prev}\nWarning: Invalid URL for piece ${index}`);
+        }
         
-        // If we don't have original image size, we need to estimate it
-        const originalSize = data.originalSize || { width: 800, height: 600 };
-        
-        // If we don't have positions data, we need to calculate them
-        const positions = data.positions || 
-                         calculatePositions(data.segments, originalSize);
-        
-        // Enhance the quizData with the calculated positions and size
-        const enhancedData = {
-          ...data,
-          positions,
-          original_size: originalSize,
-          puzzle_outline: data.puzzleOutline || data.puzzle_outline
-        };
-        
-        setQuizData(enhancedData);
-        
-        // Initialize pieces with random positions on the right side
-        const initialPieces = data.segments.map((url, index) => ({
+        return {
           id: `piece-${index}`,
           index,
           imageUrl: url,
@@ -159,19 +235,20 @@ const QuizMode = () => {
             y: 100 + index * 120 + Math.random() * 50
           },
           isPlaced: false
-        }));
-        
-        setPieces(initialPieces);
-      } else {
-        setError('Quiz not found');
-      }
+        };
+      });
+      
+      setPieces(initialPieces);
+      setDebugInfo(prev => `${prev}\nInitialized ${initialPieces.length} puzzle pieces`);
+      
     } catch (error) {
       console.error('Error loading quiz:', error);
-      setError('Failed to load quiz data. Please try again.');
+      setError(`Failed to load quiz data: ${error.message}`);
+      setDebugInfo(prev => `${prev}\nERROR: ${error.message}\n${error.stack || ''}`);
     } finally {
       setLoading(false);
     }
-  }, [quizId, calculatePositions, windowSize]);
+  }, [quizId, calculatePositions, windowSize, checkFirestore]);
 
   useEffect(() => {
     loadQuizData();
@@ -217,8 +294,6 @@ const QuizMode = () => {
         const allPlaced = newPieces.every(p => p.isPlaced);
         if (allPlaced) {
           setCompleted(true);
-          // Record completion in database if needed
-          updateCompletionStatus();
         }
         
         return newPieces;
@@ -259,24 +334,49 @@ const QuizMode = () => {
     });
   };
 
-  const updateCompletionStatus = async () => {
-    try {
-      const quizRef = doc(db, 'quizzes', quizId);
-      await updateDoc(quizRef, {
-        completed: true, // or any other field you want to update
-        completedAt: new Date() // optional: timestamp of completion
-      });
-    } catch (error) {
-      console.error('Error updating completion status:', error);
-    }
+  const resetError = () => {
+    setError('');
+    loadQuizData();
+  };
+
+  // Return to student dashboard
+  const handleBackToDashboard = () => {
+    navigate('/student-dashboard');
   };
 
   if (error) {
-    return <div className="error-message">{error}</div>;
+    return (
+      <div className="error-container">
+        <div className="error-message">
+          <h2>Error</h2>
+          <p>{error}</p>
+          <button onClick={resetError}>Try Again</button>
+          <button onClick={handleBackToDashboard}>Back to Dashboard</button>
+          
+          {DEBUG && debugInfo && (
+            <div className="debug-info">
+              <h3>Debug Information</h3>
+              <pre>{debugInfo}</pre>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
   if (loading || !quizData) {
-    return <div className="loading">Loading Puzzle...</div>;
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <p>Loading Puzzle...</p>
+        {DEBUG && debugInfo && (
+          <div className="debug-info">
+            <h3>Debug Information</h3>
+            <pre>{debugInfo}</pre>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -291,6 +391,9 @@ const QuizMode = () => {
         
         <div className="puzzle-container">
           <div className="puzzle-toolbar">
+            <button className="back-button" onClick={handleBackToDashboard}>
+              Back to Dashboard
+            </button>
             <h2>{quizData.meta?.title || 'Puzzle Challenge'}</h2>
             <p>{quizData.meta?.description || 'Drag the pieces to complete the puzzle!'}</p>
           </div>
@@ -300,13 +403,22 @@ const QuizMode = () => {
             originalSize={quizData.original_size}
             currentSize={puzzleSize}
           >
-            <img 
-              src={quizData.puzzle_outline} 
-              alt="Puzzle Outline"
-              className="puzzle-outline"
-              style={{ width: puzzleSize.width, height: puzzleSize.height }}
-              onLoad={(e) => handlePuzzleSize(e.target.naturalWidth, e.target.naturalHeight)}
-            />
+            {quizData.puzzle_outline ? (
+              <img 
+                src={quizData.puzzle_outline} 
+                alt="Puzzle Outline"
+                className="puzzle-outline"
+                style={{ width: puzzleSize.width, height: puzzleSize.height }}
+                onLoad={(e) => handlePuzzleSize(e.target.naturalWidth, e.target.naturalHeight)}
+              />
+            ) : (
+              <div 
+                className="puzzle-outline-placeholder"
+                style={{ width: puzzleSize.width, height: puzzleSize.height }}
+              >
+                <p>No puzzle outline available</p>
+              </div>
+            )}
             
             {pieces.map((piece) => (
               <PuzzlePiece
@@ -317,12 +429,22 @@ const QuizMode = () => {
               />
             ))}
           </PuzzleArea>
+          
+          {DEBUG && (
+            <div className="debug-panel">
+              <h3>Debug Information</h3>
+              <pre>{debugInfo}</pre>
+            </div>
+          )}
         </div>
 
         {completed && (
           <div className="completion-message">
             <h2>Congratulations! Puzzle Completed!</h2>
-            <button onClick={() => setCompleted(false)}>Play Again</button>
+            <div className="completion-buttons">
+              <button onClick={() => setCompleted(false)}>Play Again</button>
+              <button onClick={handleBackToDashboard}>Back to Dashboard</button>
+            </div>
           </div>
         )}
       </div>

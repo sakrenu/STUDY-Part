@@ -1,103 +1,238 @@
 .quiz-mode-container {
-    background: #0a192f;
-    min-height: 100vh;
-    padding: 2rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .loading {
-    font-size: 2rem;
-    text-align: center;
-    color: #64ffda;
-    margin-top: 5rem;
-  }
-  
-  .puzzle-container {
-    display: flex;
-    gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  .puzzle-toolbar {
-    width: 250px;
-    padding: 1rem;
-    background: #112240;
-    border-radius: 8px;
-    border: 1px solid #64ffda55;
-  }
-  
-  .puzzle-area {
-    flex-grow: 1;
-    position: relative;
-    background: #020c1b;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 2px solid #64ffda;
-    box-shadow: 0 0 20px #64ffda33;
-  }
-  
-  .puzzle-outline {
-    display: block;
-    width: 100%;
-    height: auto;
-    opacity: 0.8;
-  }
-  
-  .puzzle-piece {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    background-size: cover;
-    background-position: center;
-    border: 2px solid #64ffda;
-    border-radius: 8px;
-    cursor: move;
-    transition: all 0.3s ease;
-    z-index: 1;
-  }
-  
-  .puzzle-piece.placed {
-    cursor: default;
-    border-color: #52d1b2;
-    box-shadow: 0 0 15px #52d1b2;
-  }
-  
-  .puzzle-piece.dragging {
-    z-index: 1000;
-    transform: scale(1.1);
-    box-shadow: 0 0 20px #64ffda;
-  }
-  
-  .shake {
-    animation: shake 0.5s ease-in-out;
-  }
-  
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    50% { transform: translateX(10px); }
-    75% { transform: translateX(-5px); }
-  }
-  
-  .completion-message {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #112240;
-    padding: 2rem;
-    border-radius: 12px;
-    text-align: center;
-    border: 2px solid #64ffda;
-    box-shadow: 0 0 30px #64ffda;
-    z-index: 1000;
-  }
-  
-  .completion-message h2 {
-    color: #64ffda;
-    margin: 0;
-    font-size: 2rem;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.puzzle-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.puzzle-toolbar {
+  margin-bottom: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.puzzle-toolbar h2 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.puzzle-area {
+  position: relative;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.puzzle-outline {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.puzzle-outline-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  font-size: 18px;
+}
+
+.puzzle-piece {
+  position: absolute;
+  cursor: grab;
+  background-size: contain;
+  background-repeat: no-repeat;
+  width: 100px;
+  height: 100px;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.puzzle-piece.dragging {
+  cursor: grabbing;
+  z-index: 100;
+}
+
+.puzzle-piece.placed {
+  cursor: default;
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+  border: 2px solid rgba(0, 255, 0, 0.5);
+  transform: scale(1.02);
+  z-index: 5;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  50% { transform: translateX(10px); }
+  75% { transform: translateX(-10px); }
+  100% { transform: translateX(0); }
+}
+
+.puzzle-piece.shake {
+  animation: shake 0.5s;
+}
+
+.completion-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  z-index: 1000;
+}
+
+.completion-message h2 {
+  color: #2ecc71;
+  margin-bottom: 20px;
+}
+
+.completion-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.completion-message button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.completion-message button:hover {
+  background-color: #2980b9;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #3498db;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-left-color: #3498db;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 0 20px;
+}
+
+.error-message {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 600px;
+}
+
+.error-message h2 {
+  color: #e74c3c;
+  margin-bottom: 10px;
+}
+
+.error-message p {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.error-message button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+  margin: 0 5px;
+}
+
+.error-message button:hover {
+  background-color: #2980b9;
+}
+
+.debug-info, .debug-panel {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  text-align: left;
+  font-size: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.debug-info h3, .debug-panel h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.debug-info pre, .debug-panel pre {
+  white-space: pre-wrap;
+  margin: 0;
+  font-family: monospace;
+}
