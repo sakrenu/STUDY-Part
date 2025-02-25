@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './QuizCreation.css';
 import { useNavigate } from 'react-router-dom';
+// Import Firebase
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 const QuizCreation = () => {
   const [imagePreview, setImagePreview] = useState(null);
@@ -10,6 +13,7 @@ const QuizCreation = () => {
   const [puzzleOutline, setPuzzleOutline] = useState(null);
   const [error, setError] = useState('');
   const [isSegmenting, setIsSegmenting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [quizMeta, setQuizMeta] = useState({
     title: '',
     description: '',
@@ -66,21 +70,35 @@ const QuizCreation = () => {
   };
 
   const handleSaveQuiz = async () => {
+    if (!quizMeta.title.trim()) {
+      setError('Please enter a quiz title');
+      return;
+    }
+    
     try {
-      const response = await axios.post('http://localhost:5000/save_quiz', {
-        teacher_id: teacherId,
-        image_url: uploadedImageUrl,
+      setIsSaving(true);
+      
+      // Create quiz object
+      const quizData = {
+        teacherId,
+        imageUrl: uploadedImageUrl,
         segments: segmentedUrls,
-        puzzle_outline: puzzleOutlineUrl,
-        meta: quizMeta
-      });
-
-      if (response.data.success) {
-        alert('Quiz saved successfully!');
-        navigate('/dashboard');
-      }
+        puzzleOutline: puzzleOutlineUrl,
+        meta: quizMeta,
+        createdAt: new Date()
+      };
+      
+      // Save to Firebase
+      const quizzesCollectionRef = collection(db, "quizzes");
+      const docRef = await addDoc(quizzesCollectionRef, quizData);
+      
+      alert('Quiz saved successfully!');
+      navigate('/dashboard');
     } catch (error) {
+      console.error("Error saving quiz: ", error);
       setError('Failed to save quiz: ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -171,9 +189,9 @@ const QuizCreation = () => {
             <button 
               className="save-button"
               onClick={handleSaveQuiz}
-              disabled={!quizMeta.title.trim()}
+              disabled={!quizMeta.title.trim() || isSaving}
             >
-              Save Quiz
+              {isSaving ? 'Saving...' : 'Save Quiz'}
             </button>
           </div>
         </section>

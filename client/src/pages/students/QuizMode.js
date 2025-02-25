@@ -66,7 +66,7 @@ const QuizMode = () => {
   const [pieces, setPieces] = useState([]);
   const [completed, setCompleted] = useState(false);
   const [puzzleSize, setPuzzleSize] = useState({ width: 0, height: 0 });
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
   const loadQuizData = useCallback(async () => {
     try {
@@ -167,7 +167,13 @@ const QuizMode = () => {
     }));
   };
 
-  if (!quizData) return <div className="loading">Loading Puzzle...</div>;
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
+
+  if (!quizData) {
+    return <div className="loading">Loading Puzzle...</div>;
+  }
 
   return (
     <DndProvider backend={HTML5Backend}>
