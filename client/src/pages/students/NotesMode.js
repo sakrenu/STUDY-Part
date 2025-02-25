@@ -278,6 +278,7 @@ const NotesMode = () => {
     }, []); // Empty dependency array since we want this to run once on mount
 
     return (
+        <div className="notes-mode"> 
         <div className="notes-mode-container">
             {/* Sidebar for Notes */}
             <div className={`notes-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
@@ -428,6 +429,7 @@ const NotesMode = () => {
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 };
