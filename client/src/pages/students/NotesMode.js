@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './NotesMode.css';
 import { storage } from '../../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import { db } from '../../firebase';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 const NotesMode = () => {
     const navigate = useNavigate();
@@ -16,6 +16,8 @@ const NotesMode = () => {
     const [showToggleText, setShowToggleText] = useState(false);
     const [note, setNote] = useState('');
     const [savedNotes, setSavedNotes] = useState([]);
+    const [noteToDelete, setNoteToDelete] = useState(null); // Track the note being deleted
+    const [selectedNote, setSelectedNote] = useState(null); // Track the selected note
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -149,6 +151,79 @@ const NotesMode = () => {
         }
     };
 
+    const handleDeleteNote = async (noteId, imageUrl) => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert('Please sign in to delete notes');
+            return;
+        }
+
+        try {
+            // Delete the note from Firestore
+            await deleteDoc(doc(db, 'notes', noteId));
+
+            // Delete the image from Firebase Storage
+            const imageRef = ref(storage, imageUrl);
+            await deleteObject(imageRef);
+
+            // Remove the note from the state
+            setSavedNotes(savedNotes.filter(note => note.id !== noteId));
+
+            alert('Note deleted successfully!');
+        } catch (error) {
+            console.error("Error deleting note:", error);
+            alert('Error deleting note: ' + error.message);
+        } finally {
+            setNoteToDelete(null); // Reset the note to delete
+        }
+    };
+
+    const confirmDelete = (noteId, imageUrl) => {
+        setNoteToDelete({ noteId, imageUrl }); // Set the note to delete
+    };
+
+    const cancelDelete = () => {
+        setNoteToDelete(null); // Cancel the deletion
+    };
+
+    const handleNoteClick = (note) => {
+        setSelectedNote(note); // Set the selected note
+        setImage(note.imageUrl); // Display the selected image
+        setNote(note.note); // Display the selected note text
+    };
+
+    const handleUpdateNote = async () => {
+        if (!selectedNote) return;
+
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert('Please sign in to update notes');
+            return;
+        }
+
+        try {
+            // Update the note in Firestore
+            await updateDoc(doc(db, 'notes', selectedNote.id), {
+                note: note,
+            });
+
+            // Update the note in the state
+            const updatedNotes = savedNotes.map((n) =>
+                n.id === selectedNote.id ? { ...n, note: note } : n
+            );
+            setSavedNotes(updatedNotes);
+
+            alert('Note updated successfully!');
+        } catch (error) {
+            console.error("Error updating note:", error);
+            alert('Error updating note: ' + error.message);
+        }
+    };
+
     useEffect(() => {
         fetchNotes();
     }, []);
@@ -163,7 +238,7 @@ const NotesMode = () => {
                         <p className="no-notes">No notes yet.</p>
                     ) : (
                         savedNotes.map((note, index) => (
-                            <div key={note.id || index} className="sidebar-note-item">
+                            <div key={note.id || index} className="sidebar-note-item" onClick={() => handleNoteClick(note)}>
                                 <img 
                                     src={note.imageUrl} 
                                     alt="Note thumbnail" 
@@ -173,6 +248,30 @@ const NotesMode = () => {
                                 <p className="note-date">
                                     {new Date(note.createdAt).toLocaleDateString()}
                                 </p>
+                                {noteToDelete?.noteId === note.id ? (
+                                    <div className="delete-confirmation">
+                                        <p>Are you sure?</p>
+                                        <button 
+                                            className="confirm-delete-button"
+                                            onClick={() => handleDeleteNote(note.id, note.imageUrl)}
+                                        >
+                                            Yes, Delete
+                                        </button>
+                                        <button 
+                                            className="cancel-delete-button"
+                                            onClick={cancelDelete}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button 
+                                        className="delete-note-button"
+                                        onClick={() => confirmDelete(note.id, note.imageUrl)}
+                                    >
+                                        Delete
+                                    </button>
+                                )}
                             </div>
                         ))
                     )}
@@ -233,7 +332,7 @@ const NotesMode = () => {
                     )}
                 </div>
 
-                {/* Add Notes Section */}
+                {/* Add/Edit Notes Section */}
                 {(image || imagePreview) && (
                     <div className="notes-input">
                         <textarea
@@ -242,13 +341,23 @@ const NotesMode = () => {
                             placeholder="Add your notes here..."
                             rows="4"
                         />
-                        <button 
-                            onClick={handleSaveNote}
-                            className="save-note-button"
-                            disabled={!note.trim() || !image}
-                        >
-                            Save Note
-                        </button>
+                        {selectedNote ? (
+                            <button 
+                                onClick={handleUpdateNote}
+                                className="save-note-button"
+                                disabled={!note.trim()}
+                            >
+                                Update Note
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={handleSaveNote}
+                                className="save-note-button"
+                                disabled={!note.trim() || !image}
+                            >
+                                Save Note
+                            </button>
+                        )}
                     </div>
                 )}
 

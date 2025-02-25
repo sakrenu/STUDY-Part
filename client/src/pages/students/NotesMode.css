@@ -387,3 +387,36 @@ h2 {
     background: #ccc;
     cursor: not-allowed;
 }
+.delete-confirmation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.confirm-delete-button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.cancel-delete-button {
+    background-color: #ccc;
+    color: black;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.sidebar-note-item {
+    cursor: pointer;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.sidebar-note-item:hover {
+    background-color: #f0f0f0;
+}
