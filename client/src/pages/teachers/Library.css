@@ -1,7 +1,7 @@
-/* LearningMode.css */
+/* Library.css */
 
 /* General Container Styles */
-.learning-mode-container {
+.library-container {
     background: #0a192f; /* Dark black background */
     min-height: 100vh;
     color: #ffffff; /* White text for contrast */
@@ -10,65 +10,88 @@
     box-sizing: border-box;
   }
   
-  .learning-mode-container h1 {
+  .library-container h1 {
     font-size: 2rem;
     color: #6f42c1; /* Glowing purple for header */
     text-shadow: 0 0 8px #6f42c1; /* Purple glow */
     margin-bottom: 1.5rem;
   }
   
-  /* Shared Note Styles */
-  .shared-note {
+  /* Library Grid Styles */
+  .library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  /* Library Card Styles */
+  .library-card {
     background: #112240; /* Slightly lighter dark black */
     border: 2px solid #6f42c1; /* Purple border */
     box-shadow: 0 0 12px #6f42c1; /* Purple glow */
     border-radius: 12px;
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    text-align: center;
     transition: box-shadow 0.3s ease;
   }
   
-  .shared-note:hover {
+  .library-card:hover {
     box-shadow: 0 0 15px #5a329b; /* Enhanced purple glow on hover */
   }
   
-  .shared-note h2 {
-    color: #6f42c1; /* Glowing purple for subheadings */
-    text-shadow: 0 0 8px #6f42c1; /* Purple glow */
-    margin-bottom: 1rem;
-  }
-  
-  /* Shared Image Styles */
-  .shared-image {
+  /* Library Image Styles */
+  .library-image {
     max-width: 100%;
     border-radius: 8px;
     margin-bottom: 1rem;
     border: 2px solid #6f42c1; /* Purple border */
   }
   
-  /* Shared Notes Styles */
-  .shared-notes {
+  /* Library Notes Styles */
+  .library-notes {
     color: #ccd6f6; /* Light purple-gray */
     font-size: 1rem;
   }
   
-  .note-region {
-    position: relative;
+  .segment-note {
     margin: 0.5rem 0;
-    cursor: pointer;
-  }
-  
-  .region-outline {
-    max-width: 100%;
-    border-radius: 8px;
-    border: 2px solid #6f42c1; /* Purple border */
-  }
-  
-  .note-region p {
-    margin-top: 0.5rem;
     padding: 0.5rem;
     background: rgba(111, 66, 193, 0.1); /* Semi-transparent purple */
     border-radius: 4px;
+  }
+  
+  /* Select Item Checkbox */
+  .select-item {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+  }
+  
+  .select-item input[type="checkbox"] {
+    margin-right: 0.5rem;
+    transform: scale(1.2);
+    accent-color: #6f42c1; /* Purple checkbox */
+  }
+  
+  /* Share Button */
+  .share-library-button {
+    background: #6f42c1; /* Glowing purple for button */
+    color: #ffffff; /* White text */
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    box-shadow: 0 0 12px #6f42c1; /* Purple glow */
+    margin-top: 1rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .share-library-button:hover {
+    background: #5a329b; /* Darker purple on hover */
+    box-shadow: 0 0 15px #5a329b; /* Enhanced glow on hover */
   }
   
   /* Loading and Error Messages */
