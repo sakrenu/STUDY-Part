@@ -159,7 +159,7 @@ const ManageStudents = ({ teacherId }) => {
     };
 
     const filteredStudents = students.filter(student => 
-        student.name && student.name.toLowerCase().includes(searchTerm.toLowerCase())
+        student.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
