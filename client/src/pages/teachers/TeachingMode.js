@@ -15,6 +15,7 @@ import './TeachingMode.css';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import BasicVersion from './BasicVersion';
+import ManageStudents from './ManageStudents';
 
 const TeachingMode = () => {
     const [image, setImage] = useState(null);
@@ -599,75 +600,7 @@ const TeachingMode = () => {
                     </div>
                 );
             case 'manage':
-                return (
-                    <div className="manage-students">
-                        <h2>Manage Students</h2>
-                        {error && <div className="error-message">{error}</div>}
-
-                        {/* Create Group Section */}
-                        <section className="create-group-section">
-                            <h3>Create New Group</h3>
-                            <input
-                                type="text"
-                                placeholder="Enter group name"
-                                value={newGroupName}
-                                onChange={(e) => setNewGroupName(e.target.value)}
-                            />
-                            <button onClick={handleCreateGroup}>Create Group</button>
-                        </section>
-
-                        {/* Add Students to Group Section */}
-                        <section className="add-students-section">
-                            <h3>Add Students to Group</h3>
-                            <select
-                                value={selectedGroup}
-                                onChange={(e) => setSelectedGroup(e.target.value)}
-                            >
-                                <option value="">Select a group</option>
-                                {groups.map(group => (
-                                    <option key={group.id} value={group.id}>
-                                        {group.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="student-list">
-                                {students.map(student => (
-                                    <div key={student.id} className="student-item">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedStudents.includes(student.id)}
-                                            onChange={(e) =>
-                                                setSelectedStudents(
-                                                    e.target.checked
-                                                        ? [...selectedStudents, student.id]
-                                                        : selectedStudents.filter(id => id !== student.id)
-                                                )
-                                            }
-                                        />
-                                        <span>{student.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <button onClick={handleAddStudentsToGroup}>Add Selected Students to Group</button>
-                        </section>
-
-                        {/* Share Notes Section */}
-                        <section className="share-notes-section">
-                            <h3>Share Notes</h3>
-                            <button onClick={() => handleShareNotes()}>Share Notes with All Students</button>
-                            <div className="group-list">
-                                {groups.map(group => (
-                                    <div key={group.id} className="group-card">
-                                        <h4>{group.name}</h4>
-                                        <button onClick={() => handleShareNotes(group.id)}>
-                                            Share Notes with {group.name}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
-                );
+                return <ManageStudents />;
             case 'library':
                 return (
                     <div className="library-content">
