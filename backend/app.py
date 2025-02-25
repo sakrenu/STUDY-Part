@@ -313,7 +313,6 @@ def segment_quiz():
     """
     Endpoint to process images for quiz creation without saving to Firestore.
     """
-    breakpoint()
     data = request.json
     image_url = data.get('image_url')
     teacher_id = data.get('teacher_id')
@@ -371,20 +370,80 @@ def segment_quiz():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/get_all_quizzes', methods=['GET'])
+def get_all_quizzes():
+    """
+    Endpoint to get all available quizzes for students.
+    """
+    try:
+        # Query Firestore to get all quizzes
+        quizzes_ref = db.collection('quizzes')
+        quizzes = []
+        
+        for doc in quizzes_ref.stream():
+            quiz_data = doc.to_dict()
+            quizzes.append({
+                'id': doc.id,
+                'meta': quiz_data.get('meta', {}),
+                'created_at': quiz_data.get('created_at')
+            })
+        
+        # Sort quizzes by creation date (newest first)
+        quizzes.sort(key=lambda x: x.get('created_at', 0), reverse=True)
+        
+        return jsonify({'quizzes': quizzes}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/get_quiz/<quiz_id>', methods=['GET'])
 def get_quiz(quiz_id):
+    """
+    Endpoint to get a specific quiz by ID.
+    """
     try:
         quiz_ref = db.collection('quizzes').document(quiz_id)
-        quiz_data = quiz_ref.get().to_dict()
+        quiz_data = quiz_ref.get()
         
-        if not quiz_data:
+        if not quiz_data.exists:
             return jsonify({'error': 'Quiz not found'}), 404
             
+        quiz_dict = quiz_data.to_dict()
+        
+        # Return only the necessary fields
         return jsonify({
-            'quiz_data': quiz_data.get('quiz_data', {}),
-            'teacher_id': quiz_data.get('teacher_id'),
-            'image_url': quiz_data.get('image_url')
+            'meta': quiz_dict.get('meta', {}),
+            'image_url': quiz_dict.get('image_url', ''),
+            'segments': quiz_dict.get('segments', []),
+            'puzzle_outline': quiz_dict.get('puzzle_outline', ''),
+            'positions': quiz_dict.get('positions', []),
+            'original_size': quiz_dict.get('original_size', {'width': 800, 'height': 600})
         }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/track_completion', methods=['POST'])
+def track_completion():
+    """
+    Endpoint to track when a student completes a quiz.
+    """
+    try:
+        data = request.json
+        quiz_id = data.get('quiz_id')
+        student_id = data.get('student_id', 'anonymous')
+        completion_time = data.get('completion_time')
+        
+        # Save completion record to Firestore
+        completion_ref = db.collection('quiz_completions').document()
+        completion_data = {
+            'quiz_id': quiz_id,
+            'student_id': student_id,
+            'completion_time': completion_time,
+            'completed_at': firestore.SERVER_TIMESTAMP
+        }
+        completion_ref.set(completion_data)
+        
+        return jsonify({'success': True}), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
