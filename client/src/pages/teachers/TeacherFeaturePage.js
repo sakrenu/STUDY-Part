@@ -34,7 +34,7 @@ const TeacherFeaturePage = () => {
       <aside className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
         <nav className="menu">
           <button onClick={() => navigate('/dashboard/teaching')}>Teaching Mode</button>
-          <button onClick={() => alert('Quiz Mode coming soon!')}>Quiz Mode</button>
+          <button onClick={() => navigate('/dashboard/quiz-creation')}>Quiz Mode</button>
           <button onClick={() => alert('Manage Students coming soon!')}>Manage Students</button>
         </nav>
         <div className="logout">
@@ -81,7 +81,7 @@ const TeacherFeaturePage = () => {
         {/* Quiz Mode Box */}
         <div
           className="image-box"
-          onClick={() => alert('Quiz Mode coming soon!')}
+          onClick={() => navigate('/dashboard/quiz-creation')}
         >
           <div className="text-content">
             <h2>Quiz Mode</h2>
