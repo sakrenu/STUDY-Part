@@ -10,10 +10,11 @@ const ItemTypes = {
   PUZZLE_PIECE: 'puzzlePiece',
 };
 
-const PuzzlePiece = ({ id, index, imageUrl, isPlaced }) => {
+// PuzzlePiece component: Represents a draggable piece
+const PuzzlePiece = ({ id, index, imageUrl, isPlaced, position }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.PUZZLE_PIECE,
-    item: { id, index },
+    item: { id, index, position },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -21,24 +22,26 @@ const PuzzlePiece = ({ id, index, imageUrl, isPlaced }) => {
   }));
 
   return (
-    !isPlaced && (
-      <div
-        ref={drag}
-        className="puzzle-piece"
-        style={{
-          backgroundImage: `url(${imageUrl})`,
-          backgroundSize: 'cover',
-          width: '100px',
-          height: '100px',
-          opacity: isDragging ? 0.5 : 1,
-          cursor: 'grab',
-        }}
-      />
-    )
+    <div
+      ref={drag}
+      className="puzzle-piece"
+      style={{
+        backgroundImage: `url(${imageUrl})`,
+        backgroundSize: 'cover',
+        width: position.width,
+        height: position.height,
+        opacity: isDragging ? 0.5 : 1,
+        cursor: isPlaced ? 'default' : 'grab',
+        position: isPlaced ? 'absolute' : 'relative',
+        left: isPlaced ? position.x : 0,
+        top: isPlaced ? position.y : 0,
+      }}
+    />
   );
 };
 
-const DropZone = ({ id, index, imageUrl, onDrop, isFilled }) => {
+// DropZone component: Defines the exact position where a piece should snap
+const DropZone = ({ index, position, onDrop, isFilled, imageUrl }) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.PUZZLE_PIECE,
     drop: (item) => onDrop(item.index, index),
@@ -52,10 +55,13 @@ const DropZone = ({ id, index, imageUrl, onDrop, isFilled }) => {
       ref={drop}
       className="drop-zone"
       style={{
-        width: '100px',
-        height: '100px',
-        border: isOver ? '2px solid green' : '2px dashed #ccc',
-        backgroundColor: isFilled ? 'transparent' : '#2C2C54',
+        position: 'absolute',
+        left: position.x,
+        top: position.y,
+        width: position.width,
+        height: position.height,
+        border: isOver ? '2px solid green' : 'none',
+        backgroundColor: isFilled ? 'transparent' : 'rgba(0,0,0,0.1)',
         backgroundImage: isFilled ? `url(${imageUrl})` : 'none',
         backgroundSize: 'cover',
       }}
@@ -76,6 +82,7 @@ const QuizMode = () => {
     height: window.innerHeight,
   });
 
+  // Handle window resize for confetti
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -84,6 +91,7 @@ const QuizMode = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Load quiz data from the server
   const loadQuizData = useCallback(async () => {
     if (!quizId) {
       setError('Quiz ID is missing. Please select a valid quiz.');
@@ -99,30 +107,23 @@ const QuizMode = () => {
       if (!data.segments || !Array.isArray(data.segments) || data.segments.length === 0) {
         throw new Error('Missing or invalid segments in quiz data');
       }
+      if (!data.positions || !Array.isArray(data.positions)) {
+        throw new Error('Missing positions data');
+      }
 
-      const originalSize = data.original_size || { width: 800, height: 600 };
-      const gridSize = Math.ceil(Math.sqrt(data.segments.length));
-      const pieceWidth = originalSize.width / gridSize;
-      const pieceHeight = originalSize.height / gridSize;
+      const originalSize = data.original_size || { width: 1024, height: 768 }; // Default from your data
 
       const initialPieces = data.segments.map((url, index) => ({
         id: `piece-${index}`,
         index,
         imageUrl: url,
-        targetIndex: index,
+        position: data.positions[index], // { x, y, height, width, original_height, original_width }
         isPlaced: false,
       }));
 
-      setQuizData({
-        ...data,
-        originalSize,
-        gridSize,
-        pieceWidth,
-        pieceHeight,
-      });
+      setQuizData({ ...data, originalSize });
       setPieces(initialPieces);
     } catch (error) {
-      console.error('Error loading quiz:', error);
       setError(`Failed to load quiz: ${error.message}`);
     } finally {
       setLoading(false);
@@ -133,26 +134,22 @@ const QuizMode = () => {
     loadQuizData();
   }, [loadQuizData]);
 
+  // Handle dropping a piece into its correct position
   const handleDrop = (draggedIndex, targetIndex) => {
-    setPieces((prev) => {
-      const newPieces = prev.map((piece) => {
-        if (piece.index === draggedIndex && piece.targetIndex === targetIndex) {
-          return { ...piece, isPlaced: true };
+    if (draggedIndex === targetIndex) {
+      setPieces((prev) => {
+        const newPieces = prev.map((piece) =>
+          piece.index === draggedIndex ? { ...piece, isPlaced: true } : piece
+        );
+        if (newPieces.every((p) => p.isPlaced)) {
+          setCompleted(true);
         }
-        return piece;
+        return newPieces;
       });
-
-      if (newPieces.every((p) => p.isPlaced)) {
-        setCompleted(true);
-      }
-      return newPieces;
-    });
+    }
   };
 
-  const handleBackToDashboard = () => {
-    navigate('/student-dashboard');
-  };
-
+  const handleBackToDashboard = () => navigate('/student-dashboard');
   const handlePlayAgain = () => {
     setCompleted(false);
     loadQuizData();
@@ -195,39 +192,41 @@ const QuizMode = () => {
         </div>
         <div className="puzzle-container">
           <div className="pieces-area">
-            {pieces.map((piece) => (
-              <PuzzlePiece key={piece.id} {...piece} />
-            ))}
-          </div>
-          <div className="puzzle-area">
-            {quizData.puzzle_outline && (
-              <img
-                src={quizData.puzzle_outline}
-                alt="Puzzle Outline"
-                className="puzzle-outline"
-                style={{ width: quizData.originalSize.width, height: quizData.originalSize.height }}
-              />
-            )}
-            <div
-              className="drop-zones-grid"
-              style={{
-                width: quizData.originalSize.width,
-                height: quizData.originalSize.height,
-                gridTemplateColumns: `repeat(${quizData.gridSize}, ${quizData.pieceWidth}px)`,
-                gridTemplateRows: `repeat(${quizData.gridSize}, ${quizData.pieceHeight}px)`,
-              }}
-            >
-              {pieces.map((piece) => (
-                <DropZone
-                  key={piece.index}
-                  id={piece.id}
-                  index={piece.targetIndex}
-                  imageUrl={piece.imageUrl}
-                  onDrop={handleDrop}
-                  isFilled={piece.isPlaced}
-                />
+            {pieces
+              .filter((piece) => !piece.isPlaced)
+              .map((piece) => (
+                <PuzzlePiece key={piece.id} {...piece} />
               ))}
-            </div>
+          </div>
+          <div
+            className="puzzle-area"
+            style={{
+              position: 'relative',
+              width: quizData.originalSize.width,
+              height: quizData.originalSize.height,
+            }}
+          >
+            <img
+              src={quizData.puzzle_outline}
+              alt="Puzzle Outline"
+              style={{ width: '100%', height: '100%' }}
+              onLoad={(e) => console.log('Natural size:', e.target.naturalWidth, e.target.naturalHeight)}
+            />
+            {pieces.map((piece) => (
+              <DropZone
+                key={piece.index}
+                index={piece.index}
+                position={piece.position}
+                onDrop={handleDrop}
+                isFilled={piece.isPlaced}
+                imageUrl={piece.imageUrl}
+              />
+            ))}
+            {pieces
+              .filter((piece) => piece.isPlaced)
+              .map((piece) => (
+                <PuzzlePiece key={piece.id} {...piece} />
+              ))}
           </div>
         </div>
         {completed && (
