@@ -28,7 +28,7 @@
 
 .toggle-button-container {
     position: fixed;
-    top: 80px;
+    top: 100px;
     left: 300px;
     z-index: 1000;
     transition: left 0.3s ease;
@@ -49,8 +49,8 @@
 }
 
 .toggle-icon {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     filter: invert(100%);
 }
 
@@ -135,14 +135,71 @@
     width: 100%;
 }
 
-.notes-input textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
+.notes-input .quill {
+    background: white;
     border-radius: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.notes-input .ql-container {
+    min-height: 200px;
+    font-size: 16px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.notes-input .ql-toolbar {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    background: #f8f9fa;
+}
+
+.note-content-preview {
+    max-height: 100px;
+    overflow: hidden;
     font-size: 14px;
-    resize: vertical;
+    color: #e0e0e0;
+    margin: 8px 0;
+}
+
+.note-content-preview img {
+    max-width: 100%;
+    height: auto;
+}
+
+.note-content-preview p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Style for the toolbar buttons */
+.ql-toolbar button {
+    color: #333;
+}
+
+.ql-toolbar button:hover {
+    color: #000;
+}
+
+.ql-toolbar .ql-stroke {
+    stroke: #333;
+}
+
+.ql-toolbar .ql-fill {
+    fill: #333;
+}
+
+.ql-toolbar .ql-picker {
+    color: #333;
+}
+
+/* Dark theme adjustments for the sidebar preview */
+.sidebar-note-item .note-content-preview {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.sidebar-note-item .note-content-preview * {
+    color: inherit;
 }
 
 .delete-button {
@@ -168,6 +225,18 @@
 
 .back-button {
     margin-bottom: 20px;
+    background-color: #7fffd4;
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #6fe6bf;
 }
 
 .add-note-button {
@@ -419,4 +488,21 @@ h2 {
 
 .sidebar-note-item:hover {
     background-color: #f0f0f0;
+}
+
+.new-note-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #7fffd4;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.new-note-button:hover {
+    background-color: #6fe6bf;
 }

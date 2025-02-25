@@ -6,6 +6,8 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { getAuth } from 'firebase/auth';
 import { db } from '../../firebase';
 import { collection, addDoc, getDocs, query, where, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const NotesMode = () => {
     const navigate = useNavigate();
@@ -18,6 +20,26 @@ const NotesMode = () => {
     const [savedNotes, setSavedNotes] = useState([]);
     const [noteToDelete, setNoteToDelete] = useState(null); // Track the note being deleted
     const [selectedNote, setSelectedNote] = useState(null); // Track the selected note
+
+    // Quill editor modules configuration
+    const modules = {
+        toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['blockquote', 'code-block'],
+            ['link'],
+            [{ 'header': [1, 2, 3, false] }],
+            ['clean']
+        ],
+    };
+
+    const formats = [
+        'bold', 'italic', 'underline', 'strike',
+        'list', 'bullet',
+        'blockquote', 'code-block',
+        'link',
+        'header'
+    ];
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -83,8 +105,8 @@ const NotesMode = () => {
         setShowToggleText(false);
     };
 
-    const handleNoteChange = (e) => {
-        setNote(e.target.value);
+    const handleNoteChange = (content) => {
+        setNote(content);
     };
 
     const handleSaveNote = async () => {
@@ -225,14 +247,52 @@ const NotesMode = () => {
     };
 
     useEffect(() => {
-        fetchNotes();
-    }, []);
+        const auth = getAuth();
+        
+        // Set up auth state listener
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                console.log('User is authenticated, fetching notes...');
+                try {
+                    const q = query(
+                        collection(db, 'notes'),
+                        where('userId', '==', user.uid)
+                    );
+                    const querySnapshot = await getDocs(q);
+                    const notes = [];
+                    querySnapshot.forEach((doc) => {
+                        notes.push({ id: doc.id, ...doc.data() });
+                    });
+                    setSavedNotes(notes);
+                } catch (error) {
+                    console.error("Error fetching notes:", error);
+                }
+            } else {
+                console.log('User is not authenticated');
+                setSavedNotes([]); // Clear notes when user is not authenticated
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, []); // Empty dependency array since we want this to run once on mount
 
     return (
         <div className="notes-mode-container">
             {/* Sidebar for Notes */}
             <div className={`notes-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                 <h2>Notes List</h2>
+                <button 
+                    className="new-note-button"
+                    onClick={() => {
+                        setSelectedNote(null);
+                        setNote('');
+                        setImage(null);
+                        setImagePreview(null);
+                    }}
+                >
+                    New Note
+                </button>
                 <div className="sidebar-notes">
                     {savedNotes.length === 0 ? (
                         <p className="no-notes">No notes yet.</p>
@@ -244,7 +304,10 @@ const NotesMode = () => {
                                     alt="Note thumbnail" 
                                     className="note-thumbnail"
                                 />
-                                <p>{note.note}</p>
+                                <div 
+                                    className="note-content-preview"
+                                    dangerouslySetInnerHTML={{ __html: note.note }}
+                                />
                                 <p className="note-date">
                                     {new Date(note.createdAt).toLocaleDateString()}
                                 </p>
@@ -253,7 +316,10 @@ const NotesMode = () => {
                                         <p>Are you sure?</p>
                                         <button 
                                             className="confirm-delete-button"
-                                            onClick={() => handleDeleteNote(note.id, note.imageUrl)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteNote(note.id, note.imageUrl);
+                                            }}
                                         >
                                             Yes, Delete
                                         </button>
@@ -267,7 +333,10 @@ const NotesMode = () => {
                                 ) : (
                                     <button 
                                         className="delete-note-button"
-                                        onClick={() => confirmDelete(note.id, note.imageUrl)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            confirmDelete(note.id, note.imageUrl);
+                                        }}
                                     >
                                         Delete
                                     </button>
@@ -335,29 +404,21 @@ const NotesMode = () => {
                 {/* Add/Edit Notes Section */}
                 {(image || imagePreview) && (
                     <div className="notes-input">
-                        <textarea
+                        <ReactQuill 
                             value={note}
                             onChange={handleNoteChange}
+                            modules={modules}
+                            formats={formats}
                             placeholder="Add your notes here..."
-                            rows="4"
+                            theme="snow"
                         />
-                        {selectedNote ? (
-                            <button 
-                                onClick={handleUpdateNote}
-                                className="save-note-button"
-                                disabled={!note.trim()}
-                            >
-                                Update Note
-                            </button>
-                        ) : (
-                            <button 
-                                onClick={handleSaveNote}
-                                className="save-note-button"
-                                disabled={!note.trim() || !image}
-                            >
-                                Save Note
-                            </button>
-                        )}
+                        <button 
+                            onClick={selectedNote ? handleUpdateNote : handleSaveNote}
+                            className="save-note-button"
+                            disabled={!note.trim() || (!image && !selectedNote)}
+                        >
+                            {selectedNote ? 'Update Note' : 'Save Note'}
+                        </button>
                     </div>
                 )}
 
