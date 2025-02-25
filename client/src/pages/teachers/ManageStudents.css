@@ -1,8 +1,62 @@
 .manage-students {
-    background: #042b52; /* Light background for better contrast */
-    color: #e0cece; /* Dark text for readability */
+    background: #0a192f; /* Dark blue background */
+    color: #ffffff;
     padding: 2rem;
-    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Helvetica Neue', sans-serif;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #64ffda; /* Teal accent */
+}
+
+.actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    padding: 0.5rem;
+    border: 1px solid #64ffda; /* Teal border */
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.add-user-button {
+    background: #64ffda; /* Teal for buttons */
+    color: #0a192f; /* Dark blue text */
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.add-user-button:hover {
+    background: #52d1b2; /* Darker teal on hover */
+}
+
+.students-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.students-table th, .students-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #64ffda; /* Teal border */
+}
+
+.students-table th {
+    background: #112240; /* Slightly lighter dark blue */
+}
+
+.students-table tr:hover {
+    background: rgba(100, 255, 218, 0.1); /* Light teal on hover */
 }
 
 .error-message {

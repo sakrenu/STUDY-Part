@@ -7,13 +7,11 @@ from ultralytics import FastSAM
 from ultralytics.models.fastsam import FastSAM
 from segment_anything import sam_model_registry, SamPredictor
 
+# Initialize SAM model globally
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = FastSAM('FastSAM-x.pt').to(device)
 
-def initialize_sam():
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = FastSAM('FastSAM-x.pt')
-    return model.to(device)
-
-def generate_mask(model, image_path, bounding_box, device='cpu'):
+def generate_mask(bounding_box, image_path):
     """
     Generate mask using FastSAM model
     """
@@ -77,15 +75,12 @@ def process_image(image_path, bounding_box):
     """
     Process image using SAM and create all necessary outputs
     """
-    # Initialize SAM
-    model = initialize_sam()
-    
     # Read and process image
     image = cv2.imread(image_path)
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
     # Generate mask
-    mask = generate_mask(model, image_path, bounding_box)
+    mask = generate_mask(bounding_box, image_path)
     
     # Create outputs
     cutout = create_cutout(image, mask)
@@ -98,13 +93,6 @@ def process_image(image_path, bounding_box):
     }
 
 def segment_image(image_path, bounding_box):
-    # Check if GPU is available
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-    # Load the FastSAM model
-    model = FastSAM("FastSAM-s.pt").to(device)
-
-
     # Convert bounding box to correct format
     bounding_box = [
         int(bounding_box[0]),  # x_min
@@ -135,18 +123,7 @@ def segment_image(image_path, bounding_box):
         cutout_rgba[:, :, :3] = original_image  # Copy RGB channels
         cutout_rgba[:, :, 3] = mask_resized  # Set alpha channel
         
-        # Crop to bounding box
-        x_min, y_min, x_max, y_max = bounding_box
-        cutout_cropped = cutout_rgba[y_min:y_max, x_min:x_max]
-
-        # Add a visible outline to the cutout
-        contours, _ = cv2.findContours(mask_resized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        outline_color = (0, 255, 0, 255)  # Green outline (RGBA)
-        outline_thickness = 3
-        for contour in contours:
-            cv2.drawContours(cutout_cropped, [contour], -1, outline_color, outline_thickness)
-
-        cutouts.append(cutout_cropped)
+        cutouts.append(cutout_rgba)
 
     return cutouts
 

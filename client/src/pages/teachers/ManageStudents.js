@@ -12,6 +12,7 @@ const ManageStudents = ({ teacherId }) => {
     const [newGroupName, setNewGroupName] = useState('');
     const [error, setError] = useState(null);
     const [showExistingStudents, setShowExistingStudents] = useState(false); // New state for toggling existing students
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Fetch all students
     useEffect(() => {
@@ -147,10 +148,35 @@ const ManageStudents = ({ teacherId }) => {
         }
     };
 
+    const handleSelectStudent = (id) => {
+        setSelectedStudents(prev => 
+            prev.includes(id) ? prev.filter(studentId => studentId !== id) : [...prev, id]
+        );
+    };
+
+    const handleAddUser = () => {
+        // Logic to add a new user
+    };
+
+    const filteredStudents = students.filter(student => 
+        student.name && student.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="manage-students">
             <h1>Manage Students</h1>
             {error && <div className="error-message">{error}</div>}
+
+            <div className="actions">
+                <input 
+                    type="text" 
+                    placeholder="Search by name..." 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                    className="search-input"
+                />
+                <button onClick={handleAddUser} className="add-user-button">Add User</button>
+            </div>
 
             {/* Create Group Section */}
             <section className="create-group-section">
@@ -198,18 +224,12 @@ const ManageStudents = ({ teacherId }) => {
                     ))}
                 </select>
                 <div className="student-list">
-                    {students.map(student => (
+                    {filteredStudents.map(student => (
                         <div key={student.id} className="student-item">
                             <input
                                 type="checkbox"
                                 checked={selectedStudents.includes(student.id)}
-                                onChange={(e) =>
-                                    setSelectedStudents(
-                                        e.target.checked
-                                            ? [...selectedStudents, student.id]
-                                            : selectedStudents.filter(id => id !== student.id)
-                                    )
-                                }
+                                onChange={() => handleSelectStudent(student.id)}
                             />
                             <span>{student.name}</span>
                         </div>
