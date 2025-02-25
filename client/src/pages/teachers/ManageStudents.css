@@ -1,115 +1,197 @@
-.manage-students {
-    background: #042b52; /* Light background for better contrast */
-    color: #e0cece; /* Dark text for readability */
+/* ManageStudents.css */
+
+/* General Container Styles */
+.manage-students-container {
+    background: #f5f7fa; /* Light gray background */
+    min-height: 100vh;
+    color: #333;
+    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     padding: 2rem;
-    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Helvetica Neue', sans-serif;
-}
-
-.error-message {
-    background: #ff6b6b; /* Coral red for errors */
+    box-sizing: border-box;
+  }
+  
+  /* Header Styles */
+  .dashboard-header {
+    text-align: left;
+    margin-bottom: 1.5rem;
+    color: #2c3e50; /* Dark blue for header */
+  }
+  
+  .dashboard-header h1 {
+    font-size: 2rem;
+    margin: 0;
+  }
+  
+  /* Actions Bar */
+  .manage-students-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+  }
+  
+  .add-user-button,
+  .create-group-button,
+  .add-students-button,
+  .share-all-button,
+  .share-group-button {
+    background: #2ecc71; /* Green for buttons */
     color: white;
-    padding: 1rem;
-    border-radius: 8px;
-    margin: 1rem 0;
-    text-align: center;
-}
-
-.create-group-section,
-.add-students-section,
-.share-notes-section {
-    margin-bottom: 2rem;
-}
-
-input[type="text"],
-select {
-    padding: 0.75rem;
-    border: 1px solid #64ffda; /* Teal border */
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
-    color: #1a1a1a; /* Dark text */
-    font-size: 1rem;
-    margin-right: 1rem;
-}
-
-button {
     padding: 0.75rem 1.5rem;
-    background: #64ffda; /* Teal for buttons */
-    color: #0a192f; /* Dark blue text */
     border: none;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
     transition: background 0.3s ease;
-    margin-right: 0.5rem;
-}
-
-button:hover {
-    background: #52d1b2; /* Darker teal on hover */
-}
-
-.student-list {
+  }
+  
+  .add-user-button:hover,
+  .create-group-button:hover,
+  .add-students-button:hover,
+  .share-all-button:hover,
+  .share-group-button:hover {
+    background: #27ae60; /* Darker green on hover */
+  }
+  
+  .actions-dropdown,
+  .filter-options,
+  .list-options {
+    background: #3498db; /* Blue for dropdowns */
+    color: white;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .actions-dropdown:hover,
+  .filter-options:hover,
+  .list-options:hover {
+    background: #2980b9; /* Darker blue on hover */
+  }
+  
+  .search-input {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    flex-grow: 1;
+    max-width: 200px;
+  }
+  
+  /* Table Styles */
+  .students-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+  }
+  
+  .students-table th,
+  .students-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .students-table th {
+    background: #3498db; /* Blue header */
+    color: white;
+    font-weight: bold;
+  }
+  
+  .students-table tr:nth-child(even) {
+    background: #f9f9f9; /* Light gray for even rows */
+  }
+  
+  .students-table tr:hover {
+    background: #f0f0f0; /* Light gray on hover */
+  }
+  
+  /* Checkbox Styles */
+  .students-table input[type="checkbox"] {
+    margin: 0;
+    transform: scale(1.2);
+  }
+  
+  /* Pagination Styles */
+  .pagination {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
     margin-top: 1rem;
-}
-
-.student-item {
+  }
+  
+  .pagination button {
+    background: #3498db; /* Blue for pagination */
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .pagination button:disabled {
+    background: #ddd;
+    cursor: not-allowed;
+  }
+  
+  .pagination button.active,
+  .pagination button:hover:not(:disabled) {
+    background: #2980b9; /* Darker blue for active/hover */
+  }
+  
+  /* Group Management Styles */
+  .group-management {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .group-management h2,
+  .group-management h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+  }
+  
+  .group-actions,
+  .group-selection,
+  .share-notes {
+    margin-bottom: 1.5rem;
+  }
+  
+  .group-input,
+  .group-select {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 1rem;
+    width: 200px;
+  }
+  
+  .student-checkboxes {
+    margin: 1rem 0;
+  }
+  
+  .student-checkbox {
     display: flex;
     align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-.student-item input {
-    margin-right: 0.5rem;
-}
-
-.group-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-top: 1rem;
-}
-
-.group-card {
-    background: #ffffff; /* White background for cards */
-    border: 1px solid #64ffda; /* Teal border */
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-}
-
-.group-card h3 {
-    margin-top: 0;
-    color: #0a192f; /* Dark blue text */
-}
-
-.existing-students-list {
-    margin-top: 1rem;
-    background: #ffffff; /* White background */
-    border: 1px solid #64ffda; /* Teal border */
-    border-radius: 8px;
-    padding: 1rem;
-}
-
-.existing-students-list h3 {
-    margin-top: 0;
-    color: #0a192f; /* Dark blue text */
-}
-
-.group-students {
-    margin-bottom: 1rem;
-}
-
-.group-students h4 {
     margin: 0.5rem 0;
-    color: #0a192f; /* Dark blue text */
-}
-
-.group-students ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-}
-
-.group-students li {
-    padding: 0.25rem 0;
-    color: #1a1a1a; /* Dark text */
-}
+  }
+  
+  .student-checkbox input[type="checkbox"] {
+    margin-right: 0.5rem;
+    transform: scale(1.2);
+  }
+  
+  /* Error Message */
+  .error-message {
+    background: #e74c3c; /* Red for errors */
+    color: white;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
