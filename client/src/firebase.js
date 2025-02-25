@@ -2,7 +2,8 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'; // Import Firestore
-import { getStorage } from 'firebase/storage';
+import { getStorage } from 'firebase/storage'; // Add this import
+
 const firebaseConfig = {
   apiKey: "AIzaSyD5VgYKSost4MSmvyKfBwSCWm4SrgPo6F0",
   authDomain: "study-part.firebaseapp.com",
@@ -23,6 +24,3 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 console.log(app);
 export{db ,auth  , googleProvider};
-
-
-

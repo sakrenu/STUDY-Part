@@ -1,6 +1,6 @@
-// client/src/App.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
@@ -10,6 +10,8 @@ import QuizMode from './pages/students/QuizMode';
 import LandingPage from './components/LandingPage'; 
 import ManageStudents from './pages/teachers/ManageStudents';
 import LearningMode from './pages/students/LearningMode';
+import NotesMode from './pages/students/NotesMode';
+
 import QuizCreation from './pages/teachers/QuizCreation';
 
 const App = () => {
@@ -33,6 +35,7 @@ const App = () => {
           {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/learning-mode" element={<LearningMode />} />
+          <Route path="/notes-mode" element={<NotesMode />} />
           <Route path="/students/quiz-mode" element={<QuizMode />} />
 
           {/* Redirect Unknown Paths to Login */}
