@@ -315,8 +315,107 @@ const ManageStudents = ({ teacherId }) => {
     fetchGroups();
   }, [teacherId]);
 
-  // ... (rest of the code remains unchanged: handleCreateGroup, handleAddStudentsToGroup, handleShareNotes, pagination logic, and return)
+  // Create a new group
+  const handleCreateGroup = async () => {
+    if (!newGroupName) {
+      setError('Group name cannot be empty.');
+      return;
+    }
 
+    const groupId = `group_${Date.now()}`;
+    const newGroup = {
+      id: groupId,
+      name: newGroupName,
+      students: [],
+    };
+
+    try {
+      const teacherRef = doc(db, 'teachers', teacherId);
+      await updateDoc(teacherRef, {
+        groups: arrayUnion(newGroup),
+      });
+
+      setGroups([...groups, newGroup]);
+      setNewGroupName('');
+    } catch (err) {
+      setError('Failed to create group: ' + err.message);
+    }
+  };
+
+  // Add selected students to a group
+  const handleAddStudentsToGroup = async () => {
+    if (!selectedGroup || selectedStudents.length === 0) {
+      setError('Please select a group and at least one student.');
+      return;
+    }
+
+    try {
+      const teacherRef = doc(db, 'teachers', teacherId);
+      const updatedGroups = groups.map((group) => {
+        if (group.id === selectedGroup) {
+          return {
+            ...group,
+            students: [...group.students, ...selectedStudents],
+          };
+        }
+        return group;
+      });
+
+      await updateDoc(teacherRef, {
+        groups: updatedGroups,
+      });
+
+      setGroups(updatedGroups);
+      setSelectedStudents([]);
+    } catch (err) {
+      setError('Failed to add students to group: ' + err.message);
+    }
+  };
+
+  // Share notes with a group or all students
+  const handleShareNotes = async (groupId = null) => {
+    try {
+      const teacherRef = doc(db, 'teachers', teacherId);
+      const teacherData = (await getDoc(teacherRef)).data();
+
+      if (!teacherData || !teacherData.notes) {
+        setError('No notes found to share.');
+        return;
+      }
+
+      const notes = teacherData.notes;
+
+      if (groupId) {
+        // Share notes with a specific group
+        const group = groups.find((g) => g.id === groupId);
+        if (!group) {
+          setError('Group not found.');
+          return;
+        }
+
+        for (const studentId of group.students) {
+          const studentRef = doc(db, 'users', studentId);
+          await updateDoc(studentRef, {
+            sharedNotes: arrayUnion(...notes),
+          });
+        }
+      } else {
+        // Share notes with all students
+        for (const student of students) {
+          const studentRef = doc(db, 'users', student.id);
+          await updateDoc(studentRef, {
+            sharedNotes: arrayUnion(...notes),
+          });
+        }
+      }
+
+      alert('Notes shared successfully!');
+    } catch (err) {
+      setError('Failed to share notes: ' + err.message);
+    }
+  };
+
+  // Pagination logic
   const indexOfLastStudent = currentPage * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
   const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
@@ -394,30 +493,30 @@ const ManageStudents = ({ teacherId }) => {
       </table>
 
       <div className="pagination">
-  <button
-    onClick={() => paginate(currentPage - 1)}
-    disabled={currentPage === 1}
-    aria-label="Previous Page"
-  >
-    Previous
-  </button>
-  {Array.from({ length: totalPages }, (_, i) => (
-    <button
-      key={i + 1}
-      onClick={() => paginate(i + 1)}
-      className={currentPage === i + 1 ? 'active' : ''}
-    >
-      {i + 1}
-    </button>
-  ))}
-  <button
-    onClick={() => paginate(currentPage + 1)}
-    disabled={currentPage === totalPages}
-    aria-label="Next Page"
-  >
-    Next
-  </button>
-</div>
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          aria-label="Previous Page"
+        >
+          Previous
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => paginate(i + 1)}
+            className={currentPage === i + 1 ? 'active' : ''}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          aria-label="Next Page"
+        >
+          Next
+        </button>
+      </div>
 
       <section className="group-management">
         <h2>Group Management</h2>

@@ -1,146 +1,89 @@
-
+// Students/LearningMode.js
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import './StudentDashboard.css';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '../../firebase';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import './LearningMode.css';
 
-const LearningMode = ({ studentId }) => {
-    const [originalImage, setOriginalImage] = useState(null);
-    const [segmentedParts, setSegmentedParts] = useState([]);
-    const [selectedNotes, setSelectedNotes] = useState('');
-    const [activeTab, setActiveTab] = useState('dashboard'); // Track active tab
-    const [notifications, setNotifications] = useState([]); // State for notifications
+const LearningMode = () => {
+  const [user, loadingAuth] = useAuthState(auth);
+  const [sharedNotes, setSharedNotes] = useState([]);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    // Fetch student data
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const studentRef = doc(db, 'students_notes', studentId);
-                const studentData = (await getDoc(studentRef)).data();
+  useEffect(() => {
+    if (loadingAuth) return; // Wait for auth state
+    if (!user) {
+      setError('Please sign in as a student to access this page.');
+      setIsLoading(false);
+      return;
+    }
 
-                if (studentData) {
-                    setOriginalImage(studentData.originalImage);
-                    setSegmentedParts(studentData.segmentedImages);
-                    setNotifications(studentData.notifications || []); // Fetch notifications
-                }
-            } catch (err) {
-                console.error('Failed to fetch data:', err);
-            }
-        };
-
-        fetchData();
-    }, [studentId]);
-
-    // Handle segment click
-    const handlePartClick = (notes) => {
-        setSelectedNotes(notes);
-    };
-
-    // Render content based on active tab
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'dashboard':
-                return (
-                    <>
-                        {originalImage && (
-                            <div className="image-container">
-                                <img src={originalImage} alt="Original" className="original-image" />
-                                {segmentedParts.map((part, index) => (
-                                    <div
-                                        key={index}
-                                        className="segment-highlight"
-                                        style={{ top: part.top, left: part.left, width: part.width, height: part.height }}
-                                        onClick={() => handlePartClick(part.notes)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {selectedNotes && (
-                            <div className="notes-section card-neon">
-                                <h2>Notes</h2>
-                                <p>{selectedNotes}</p>
-                            </div>
-                        )}
-                    </>
-                );
-            case 'view-notes':
-                return (
-                    <div className="view-notes-section card-neon">
-                        <h2>View Notes</h2>
-                        {segmentedParts.length > 0 ? (
-                            <div className="notes-grid">
-                                {segmentedParts.map((part, index) => (
-                                    <div key={index} className="note-card">
-                                        <p>{part.notes}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p>No notes available.</p>
-                        )}
-                    </div>
-                );
-            case 'notifications':
-                return (
-                    <div className="notifications-section card-neon">
-                        <h2>Notifications</h2>
-                        {notifications.length > 0 ? (
-                            <ul>
-                                {notifications.map((notification, index) => (
-                                    <li key={index} className="notification-item">
-                                        <p>{notification}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p>No new notifications.</p>
-                        )}
-                    </div>
-                );
-            default:
-                return null;
+    const checkStudentRole = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || userDoc.data().role !== 'student') {
+          setError('Only students can access this page.');
         }
+      } catch (err) {
+        setError('Error verifying user role: ' + err.message);
+      }
     };
+    checkStudentRole();
 
-    return (
-        <div className="student-dashboard">
-            {/* Navbar */}
-            <nav className="navbar">
-                <ul>
-                    <li
-                        className={activeTab === 'dashboard' ? 'active' : ''}
-                        onClick={() => setActiveTab('dashboard')}
-                    >
-                        Dashboard
-                    </li>
-                    <li
-                        className={activeTab === 'view-notes' ? 'active' : ''}
-                        onClick={() => setActiveTab('view-notes')}
-                    >
-                        View Notes
-                    </li>
-                    <li
-                        className={activeTab === 'notifications' ? 'active' : ''}
-                        onClick={() => setActiveTab('notifications')}
-                    >
-                        Notifications
-                    </li>
-                </ul>
-            </nav>
+    const studentRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(studentRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const studentData = docSnapshot.data();
+        setSharedNotes(studentData.sharedNotes || []);
+      } else {
+        setSharedNotes([]);
+        setError(`No student document found for ID: ${user.uid}`);
+      }
+      setIsLoading(false);
+    }, (err) => {
+      setError('Failed to fetch shared notes: ' + err.message);
+      setIsLoading(false);
+    });
 
-            {/* Header */}
-            <header className="dashboard-header">
-                <h1 className="dashboard-title">Learning Mode</h1>
-                <p className="dashboard-subtitle">Explore and learn from your teacher's notes.</p>
-            </header>
+    return () => unsubscribe(); // Cleanup subscription
+  }, [user, loadingAuth]);
 
-            {/* Main Content */}
-            <div className="main-content">
-                {renderContent()}
+  if (loadingAuth) return <div className="loading-message">Loading...</div>;
+  if (error) return <div className="error-message">{error}</div>;
+  if (!user || user.role !== 'student') return <div className="error-message">Access denied. Please sign in as a student.</div>;
+
+  return (
+    <div className="learning-mode-container">
+      <h1>Learning Mode</h1>
+      {sharedNotes.length === 0 ? (
+        <p>No shared notes from teachers yet.</p>
+      ) : (
+        sharedNotes.map((note, index) => (
+          <div key={index} className="shared-note">
+            <h2>Shared Material {index + 1}</h2>
+            <img src={note.imageUrl} alt={`Shared Material ${index + 1}`} className="shared-image" />
+            <div className="shared-notes">
+              {note.notes.map((segment, segIndex) => (
+                <div
+                  key={segIndex}
+                  className="note-region"
+                  onClick={() => alert(`Notes for Region ${segIndex + 1}: ${segment.notes || 'No notes'}`)}
+                >
+                  <img
+                    src={segment.highlighted_outline}
+                    alt={`Region ${segIndex + 1}`}
+                    className="region-outline"
+                  />
+                  <p>{segment.notes || 'Click to view notes'}</p>
+                </div>
+              ))}
             </div>
-        </div>
-    );
+          </div>
+        ))
+      )}
+    </div>
+  );
 };
 
 export default LearningMode;
