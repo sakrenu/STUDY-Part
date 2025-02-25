@@ -12,6 +12,7 @@ const QuizCreation = () => {
   const [segmentedImages, setSegmentedImages] = useState([]);
   const [puzzleOutline, setPuzzleOutline] = useState(null);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSegmenting, setIsSegmenting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [quizMeta, setQuizMeta] = useState({
@@ -36,6 +37,7 @@ const QuizCreation = () => {
       setSegmentedImages([]);
       setPuzzleOutline(null);
       setError('');
+      setSuccessMessage('');
     }
   };
 
@@ -47,21 +49,26 @@ const QuizCreation = () => {
     }
     try {
       setIsSegmenting(true);
+      setError('');
+      setSuccessMessage('');
+      
       const uploadForm = new FormData();
       uploadForm.append('image', selectedFile);
       const uploadResponse = await axios.post('http://localhost:5000/upload', uploadForm, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const imageUrl = uploadResponse.data.image_url;
-      setUploadedImageUrl(imageUrl); // Add this line
+      setUploadedImageUrl(imageUrl);
     
       const payload = { image_url: imageUrl, teacher_id: teacherId };
       const segmentResponse = await axios.post('http://localhost:5000/segment_quiz', payload);
     
       setSegmentedImages(segmentResponse.data.segmented_urls);
       setPuzzleOutline(segmentResponse.data.puzzle_outline_url);
-      setSegmentedUrls(segmentResponse.data.segmented_urls); // Add this
-      setPuzzleOutlineUrl(segmentResponse.data.puzzle_outline_url); // Add this
+      setSegmentedUrls(segmentResponse.data.segmented_urls);
+      setPuzzleOutlineUrl(segmentResponse.data.puzzle_outline_url);
+      
+      setSuccessMessage('Puzzle created successfully! Please fill in the quiz details below.');
     } catch (err) {
       setError('Segmentation failed: ' + err.message);
     } finally {
@@ -77,6 +84,8 @@ const QuizCreation = () => {
     
     try {
       setIsSaving(true);
+      setError('');
+      setSuccessMessage('');
       
       // Create quiz object
       const quizData = {
@@ -92,24 +101,18 @@ const QuizCreation = () => {
       const quizzesCollectionRef = collection(db, "quizzes");
       const docRef = await addDoc(quizzesCollectionRef, quizData);
       
-      alert('Quiz saved successfully!');
-      navigate('/dashboard');
+      setSuccessMessage('Quiz saved successfully!');
+      
+      // Optional: Delay navigation to show the success message
+      setTimeout(() => {
+        navigate('/student-dashboard');
+      }, 2000);
     } catch (error) {
       console.error("Error saving quiz: ", error);
       setError('Failed to save quiz: ' + error.message);
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // Function to handle segmented URLs
-  const handleSegmentedUrls = (urls) => {
-    setSegmentedUrls(urls);
-  };
-
-  // Function to handle puzzle outline URL
-  const handlePuzzleOutlineUrl = (url) => {
-    setPuzzleOutlineUrl(url);
   };
 
   return (
@@ -122,6 +125,7 @@ const QuizCreation = () => {
       </header>
 
       {error && <div className="error-message">{error}</div>}
+      {successMessage && <div className="success-message">{successMessage}</div>}
 
       <section className="upload-section card-neon">
         <h2>Upload your Image</h2>
@@ -156,42 +160,94 @@ const QuizCreation = () => {
                 className={`segment-button ${isSegmenting ? 'disabled' : ''}`}
                 disabled={isSegmenting}
               >
-                {isSegmenting ? 'Processing segmentation and puzzle outline...' : 'Segment Image & Create Puzzle'}
+                {isSegmenting ? 'Processing...' : 'Segment Image & Create Puzzle'}
               </button>
             </div>
           )}
         </div>
       </section>
 
-      {(segmentedImages.length > 0 || puzzleOutline) && (
-        <section className="metadata-section">
+      {segmentedImages.length > 0 && (
+        <section className="segmented-preview-section card-neon">
+          <h2>Puzzle Preview</h2>
+          <div className="segments-container">
+            {puzzleOutline && (
+              <div className="puzzle-outline">
+                <h3>Puzzle Outline</h3>
+                <img src={puzzleOutline} alt="Puzzle Outline" className="puzzle-outline-image" />
+              </div>
+            )}
+            <div className="segments-grid">
+              <h3>Puzzle Pieces ({segmentedImages.length})</h3>
+              <div className="segments-gallery">
+                {segmentedImages.map((segment, index) => (
+                  <div key={index} className="segment-item">
+                    <img src={segment} alt={`Segment ${index + 1}`} className="segment-image" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {segmentedImages.length > 0 && (
+        <section className="metadata-section card-neon">
           <h2>Quiz Details</h2>
           <div className="metadata-form">
-            <input
-              type="text"
-              placeholder="Quiz Title"
-              value={quizMeta.title}
-              onChange={(e) => setQuizMeta({...quizMeta, title: e.target.value})}
-            />
-            <textarea
-              placeholder="Description"
-              value={quizMeta.description}
-              onChange={(e) => setQuizMeta({...quizMeta, description: e.target.value})}
-            />
-            <select
-              value={quizMeta.difficulty}
-              onChange={(e) => setQuizMeta({...quizMeta, difficulty: e.target.value})}
-            >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
+            <div className="form-group">
+              <label htmlFor="quiz-title">Quiz Title</label>
+              <input
+                id="quiz-title"
+                type="text"
+                placeholder="Enter a title for your quiz"
+                value={quizMeta.title}
+                onChange={(e) => setQuizMeta({...quizMeta, title: e.target.value})}
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="quiz-description">Description</label>
+              <textarea
+                id="quiz-description"
+                placeholder="Describe what this quiz is about"
+                value={quizMeta.description}
+                onChange={(e) => setQuizMeta({...quizMeta, description: e.target.value})}
+                rows="4"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="quiz-subject">Subject (Optional)</label>
+              <input
+                id="quiz-subject"
+                type="text"
+                placeholder="E.g., Science, History, Math"
+                value={quizMeta.subject}
+                onChange={(e) => setQuizMeta({...quizMeta, subject: e.target.value})}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="quiz-difficulty">Difficulty Level</label>
+              <select
+                id="quiz-difficulty"
+                value={quizMeta.difficulty}
+                onChange={(e) => setQuizMeta({...quizMeta, difficulty: e.target.value})}
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            
             <button 
               className="save-button"
               onClick={handleSaveQuiz}
               disabled={!quizMeta.title.trim() || isSaving}
             >
-              {isSaving ? 'Saving...' : 'Save Quiz'}
+              {isSaving ? 'Saving Quiz...' : 'Save Quiz'}
             </button>
           </div>
         </section>
