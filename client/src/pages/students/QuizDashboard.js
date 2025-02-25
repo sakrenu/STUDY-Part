@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './QuizDashboard.css';
@@ -9,22 +9,27 @@ const QuizDashboard = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchQuizzes = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('http://localhost:5000/get_all_quizzes');
-        setQuizzes(response.data.quizzes);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching quizzes:', err);
-        setError('Failed to load quizzes. Please try again later.');
-        setLoading(false);
-      }
-    };
-
-    fetchQuizzes();
+  // Refactored fetchQuizzes to be reusable for initial load and error recovery.
+  const fetchQuizzes = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      // Optionally pass pagination params; here we get page 1 with 10 quizzes.
+      const response = await axios.get('http://localhost:5000/get_all_quizzes', {
+        params: { page: 1, limit: 10 }
+      });
+      setQuizzes(response.data.quizzes);
+    } catch (err) {
+      console.error('Error fetching quizzes:', err);
+      setError('Failed to load quizzes. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, [fetchQuizzes]);
 
   const handleQuizSelect = (quizId) => {
     navigate(`/student-dashboard/quiz-mode/${quizId}`);
@@ -44,7 +49,7 @@ const QuizDashboard = () => {
       <div className="quiz-dashboard error">
         <h2>Error</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Try Again</button>
+        <button onClick={fetchQuizzes}>Try Again</button>
       </div>
     );
   }
@@ -72,7 +77,9 @@ const QuizDashboard = () => {
               <p>{quiz.meta.description || 'No description provided'}</p>
               <div className="quiz-info">
                 <span className="difficulty">
-                  {quiz.meta.difficulty ? `Difficulty: ${quiz.meta.difficulty.charAt(0).toUpperCase() + quiz.meta.difficulty.slice(1)}` : ''}
+                  {quiz.meta.difficulty
+                    ? `Difficulty: ${quiz.meta.difficulty.charAt(0).toUpperCase() + quiz.meta.difficulty.slice(1)}`
+                    : ''}
                 </span>
                 {quiz.meta.subject && <span className="subject">Subject: {quiz.meta.subject}</span>}
               </div>
