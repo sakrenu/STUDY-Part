@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './QuizCreation.css';
 import { useNavigate } from 'react-router-dom';
-// Import Firebase
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
 
 const QuizCreation = () => {
   const [imagePreview, setImagePreview] = useState(null);
@@ -24,6 +21,7 @@ const QuizCreation = () => {
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   const [segmentedUrls, setSegmentedUrls] = useState([]);
   const [puzzleOutlineUrl, setPuzzleOutlineUrl] = useState('');
+  const [positions, setPositions] = useState([]); // New state for positions
   const navigate = useNavigate();
 
   const teacherId = "teacher_demo";
@@ -36,6 +34,7 @@ const QuizCreation = () => {
       setImagePreview(URL.createObjectURL(file));
       setSegmentedImages([]);
       setPuzzleOutline(null);
+      setPositions([]); // Reset positions
       setError('');
       setSuccessMessage('');
     }
@@ -67,6 +66,7 @@ const QuizCreation = () => {
       setPuzzleOutline(segmentResponse.data.puzzle_outline_url);
       setSegmentedUrls(segmentResponse.data.segmented_urls);
       setPuzzleOutlineUrl(segmentResponse.data.puzzle_outline_url);
+      setPositions(segmentResponse.data.positions); // Store positions in state
       
       setSuccessMessage('Puzzle created successfully! Please fill in the quiz details below.');
     } catch (err) {
@@ -76,6 +76,7 @@ const QuizCreation = () => {
     }
   };
 
+  // Handle saving the quiz
   const handleSaveQuiz = async () => {
     if (!quizMeta.title.trim()) {
       setError('Please enter a quiz title');
@@ -87,23 +88,21 @@ const QuizCreation = () => {
       setError('');
       setSuccessMessage('');
       
-      // Create quiz object
+      // Create quiz data object
       const quizData = {
-        teacherId,
-        imageUrl: uploadedImageUrl,
-        segments: segmentedUrls,
-        puzzleOutline: puzzleOutlineUrl,
-        meta: quizMeta,
-        createdAt: new Date()
+        teacher_id: teacherId,
+        image_url: uploadedImageUrl,
+        segmented_urls: segmentedUrls,
+        puzzle_outline_url: puzzleOutlineUrl,
+        positions: positions, // Include positions
+        meta: quizMeta
       };
       
-      // Save to Firebase
-      const quizzesCollectionRef = collection(db, "quizzes");
-      const docRef = await addDoc(quizzesCollectionRef, quizData);
+      // Send to the new /save_quiz endpoint
+      const response = await axios.post('http://localhost:5000/save_quiz', quizData);
       
       setSuccessMessage('Quiz saved successfully!');
       
-      // Optional: Delay navigation to show the success message
       setTimeout(() => {
         navigate('/student-dashboard');
       }, 2000);

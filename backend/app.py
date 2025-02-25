@@ -273,37 +273,47 @@ def segment_image():
 
 @app.route('/save_quiz', methods=['POST'])
 def save_quiz():
-    try:
-        data = request.json
-        teacher_id = data['teacher_id']
-        
-        # Create quiz document
-        quiz_ref = db.collection('quizzes').document()
-        quiz_ref.set({
-            'teacher_id': teacher_id,
-            'image_url': data['image_url'],
-            'segments': data['segments'],
-            'puzzle_outline': data['puzzle_outline'],
-            'meta': data.get('meta', {}),
-            'created_at': firestore.SERVER_TIMESTAMP
-        })
+    """
+    Endpoint to save quiz data to Firestore after metadata is provided.
+    """
+    data = request.json
+    teacher_id = data.get('teacher_id')
+    image_url = data.get('image_url')
+    segmented_urls = data.get('segmented_urls')
+    puzzle_outline_url = data.get('puzzle_outline_url')
+    positions = data.get('positions')
+    meta = data.get('meta')
 
-        # Update teacher's document
+    try:
+        # Create quiz document in Firestore
+        quiz_ref = db.collection('quizzes').document()
+        quiz_data = {
+            'teacher_id': teacher_id,
+            'image_url': image_url,
+            'segments': segmented_urls,
+            'puzzle_outline': puzzle_outline_url,
+            'positions': positions,
+            'meta': meta,
+            'created_at': firestore.SERVER_TIMESTAMP
+        }
+        quiz_ref.set(quiz_data)
+
+        # Update teacher's document with quiz reference
         teacher_ref = db.collection('teachers').document(teacher_id)
         teacher_ref.update({
             'quizzes': firestore.ArrayUnion([quiz_ref.id])
         })
 
-        return jsonify({'success': True, 'quiz_id': quiz_ref.id}), 200
-
+        return jsonify({'quiz_id': quiz_ref.id}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/segment_quiz', methods=['POST'])
 def segment_quiz():
     """
-    Endpoint to process images for quiz creation.
+    Endpoint to process images for quiz creation without saving to Firestore.
     """
+    breakpoint()
     data = request.json
     image_url = data.get('image_url')
     teacher_id = data.get('teacher_id')
@@ -324,8 +334,6 @@ def segment_quiz():
         segmented_urls = []
         for idx, cutout in enumerate(segmented_cutouts):
             cutout_image = Image.fromarray(cutout.astype(np.uint8))
-
-            # Save as PNG to preserve transparency
             segmented_image_buffer = io.BytesIO()
             cutout_image.save(segmented_image_buffer, format='PNG')
             segmented_image_buffer.seek(0)
@@ -353,37 +361,16 @@ def segment_quiz():
         )
         puzzle_outline_url = upload_result_outline['secure_url']
 
-        # Create quiz document in Firestore
-        quiz_ref = db.collection('quizzes').document()
-        quiz_data = {
-            'teacher_id': teacher_id,
-            'image_url': image_url,
-            'segments': segmented_urls,
-            'puzzle_outline': puzzle_outline_url,
-            'positions': positions,
-            'original_size': {
-                'width': positions[0]['original_width'] if positions else 0,
-                'height': positions[0]['original_height'] if positions else 0
-            },
-            'created_at': firestore.SERVER_TIMESTAMP
-        }
-        quiz_ref.set(quiz_data)
-
-        # Update teacher's document with quiz reference
-        teacher_ref = db.collection('teachers').document(teacher_id)
-        teacher_ref.update({
-            'quizzes': firestore.ArrayUnion([quiz_ref.id])
-        })
-
+        # Return segmentation results without saving to Firestore
         return jsonify({
             'segmented_urls': segmented_urls,
             'puzzle_outline_url': puzzle_outline_url,
-            'positions': positions,
-            'quiz_id': quiz_ref.id  # Important for student retrieval
+            'positions': positions
         }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 @app.route('/get_quiz/<quiz_id>', methods=['GET'])
 def get_quiz(quiz_id):
     try:
