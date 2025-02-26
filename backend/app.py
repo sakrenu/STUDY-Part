@@ -480,46 +480,30 @@ def add_note():
         segment_index = data.get('segment_index')
         note = data.get('note')
         teacher_id = data.get('teacher_id')
+        lesson_id = data.get('lesson_id')  # New parameter
 
-        if not all([image_url, note, teacher_id]):
+        if not all([image_url, segment_index is not None, note, teacher_id, lesson_id]):
             return jsonify({'error': 'Missing required parameters'}), 400
 
-        # Create a safe key from the image URL using a hash function
-        safe_image_key = hashlib.sha256(image_url.encode()).hexdigest()
+        # Reference to the specific segment document
+        segment_ref = db.collection('Teachers').document(teacher_id) \
+                       .collection('Lessons').document(lesson_id) \
+                       .collection('Segments').document(f'segment_{segment_index}')
 
-        # Initialize the document reference
-        teacher_ref = db.collection('teachers').document(teacher_id)
-
-        # First check if document exists
-        doc = teacher_ref.get()
-        
-        if not doc.exists:
-            # Create new document if it doesn't exist
-            teacher_ref.set({
-                'segments': {
-                    safe_image_key: {
-                        'url': image_url,
-                        'notes': {
-                            segment_index: note
-                        }
-                    }
-                }
+        # Check if the segment exists
+        segment_doc = segment_ref.get()
+        if not segment_doc.exists:
+            # If segment doesn't exist, create it with minimal data (ideally this should already exist)
+            segment_ref.set({
+                'boundingBox': {},  # Placeholder, should be set earlier
+                'segmentCoordinates': [],  # Placeholder
+                'notes': note,
+                'highlightedOutlineUrl': ''  # Placeholder
             })
         else:
-            # Update existing document
-            current_data = doc.to_dict()
-            segments = current_data.get('segments', {})
-            
-            if safe_image_key not in segments:
-                segments[safe_image_key] = {
-                    'url': image_url,
-                    'notes': {}
-                }
-            
-            # Update the specific note
-            teacher_ref.update({
-                f'segments.{safe_image_key}.url': image_url,
-                f'segments.{safe_image_key}.notes.{segment_index}': note
+            # Update only the notes field
+            segment_ref.update({
+                'notes': note
             })
 
         return jsonify({"message": "Note added successfully!"}), 200
@@ -527,6 +511,47 @@ def add_note():
     except Exception as e:
         print(f"Error in add_note: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/get_lessons', methods=['GET'])
+def get_lessons():
+    try:
+        teacher_id = request.args.get('teacher_id')
+        if not teacher_id:
+            return jsonify({'error': 'Missing teacher_id parameter'}), 400
+
+        # Fetch all lessons for the teacher
+        lessons_ref = db.collection('Teachers').document(teacher_id).collection('Lessons')
+        lessons_docs = lessons_ref.stream()
+
+        lessons_list = []
+        for lesson_doc in lessons_docs:
+            lesson_data = lesson_doc.to_dict()
+            lesson_id = lesson_doc.id
+
+            # Fetch segments for this lesson
+            segments_ref = lessons_ref.document(lesson_id).collection('Segments')
+            segments_docs = segments_ref.stream()
+            segments = [
+                {
+                    'id': seg_doc.id,
+                    **seg_doc.to_dict()
+                }
+                for seg_doc in segments_docs
+            ]
+
+            lessons_list.append({
+                'id': lesson_id,
+                'originalImageUrl': lesson_data.get('originalImageUrl', ''),
+                'title': lesson_data.get('title', f"Lesson {lesson_data.get('createdAt', '')}"),
+                'createdAt': lesson_data.get('createdAt', ''),
+                'segments': segments
+            })
+
+        return jsonify({'lessons': lessons_list}), 200
+
+    except Exception as e:
+        print(f"Error in get_lessons: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
