@@ -7,6 +7,7 @@ import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
 import TeachingMode from './pages/teachers/TeachingMode';
 import StudentDashboard from './pages/students/StudentDashboard';
 import QuizMode from './pages/students/QuizMode';
+import QuizDashboard from './pages/students/QuizDashboard';
 import LandingPage from './components/LandingPage'; 
 import ManageStudents from './pages/teachers/ManageStudents';
 import LearningMode from './pages/students/LearningMode';
@@ -33,10 +34,13 @@ const App = () => {
           {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/learning-mode" element={<LearningMode />} />
-          <Route path="/students/quiz-mode" element={<QuizMode />} />
+
+          {/* Student Quiz Routes */}
+          <Route path="/student-dashboard/quiz-mode" element={<QuizDashboard />} />
+          <Route path="/student-dashboard/quiz-mode/:quizId" element={<QuizMode />} />
 
           {/* Redirect Unknown Paths to Login */}
-          <Route path="*" element={<Navigate to="/login" />} /> {/* Redirect unknown paths to login */}
+          <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>

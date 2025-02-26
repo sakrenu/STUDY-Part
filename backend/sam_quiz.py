@@ -85,6 +85,7 @@ def segment_quiz_image(image_path):
     filtered_masks = filter_top_masks_by_area(masks_bool, top_n=10, iou_threshold=0.5)
     
     cutouts = []
+    positions = []
     for i, mask in enumerate(filtered_masks):
         # Convert the boolean mask to an 8-bit mask (0 or 255)
         mask_uint8 = mask.astype(np.uint8) * 255
@@ -102,13 +103,22 @@ def segment_quiz_image(image_path):
         # Convert the cropped RGB image to RGBA and use the mask as the alpha channel
         img_crop_rgba = cv2.cvtColor(img_crop, cv2.COLOR_RGB2RGBA)
         img_crop_rgba[:, :, 3] = mask_crop
+
+        positions.append({
+            'x': x,
+            'y': y,
+            'width': w,
+            'height': h,
+            'original_width': img.shape[1],
+            'original_height': img.shape[0]
+        })
         
         cutouts.append(img_crop_rgba)
     
     # Also get the puzzle outline by removing masks using the same SAM results.
     puzzle_outline = get_image_without_masks(image_path, sam_results=results)
     
-    return cutouts, puzzle_outline
+    return cutouts, puzzle_outline, positions
 
 def get_image_without_masks(image_path, sam_results=None):
     """
