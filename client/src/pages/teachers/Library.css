@@ -1,113 +1,90 @@
-/* Library.css */
-
-/* General Container Styles */
 .library-container {
-    background: #0a192f; /* Dark black background */
-    min-height: 100vh;
-    color: #ffffff; /* White text for contrast */
-    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Helvetica Neue', sans-serif;
-    padding: 2rem;
-    box-sizing: border-box;
-  }
-  
-  .library-container h1 {
-    font-size: 2rem;
-    color: #6f42c1; /* Glowing purple for header */
-    text-shadow: 0 0 8px #6f42c1; /* Purple glow */
-    margin-bottom: 1.5rem;
-  }
-  
-  /* Library Grid Styles */
-  .library-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-  }
-  
-  /* Library Card Styles */
-  .library-card {
-    background: #112240; /* Slightly lighter dark black */
-    border: 2px solid #6f42c1; /* Purple border */
-    box-shadow: 0 0 12px #6f42c1; /* Purple glow */
-    border-radius: 12px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: box-shadow 0.3s ease;
-  }
-  
-  .library-card:hover {
-    box-shadow: 0 0 15px #5a329b; /* Enhanced purple glow on hover */
-  }
-  
-  /* Library Image Styles */
-  .library-image {
-    max-width: 100%;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    border: 2px solid #6f42c1; /* Purple border */
-  }
-  
-  /* Library Notes Styles */
-  .library-notes {
-    color: #ccd6f6; /* Light purple-gray */
-    font-size: 1rem;
-  }
-  
-  .segment-note {
-    margin: 0.5rem 0;
-    padding: 0.5rem;
-    background: rgba(111, 66, 193, 0.1); /* Semi-transparent purple */
-    border-radius: 4px;
-  }
-  
-  /* Select Item Checkbox */
-  .select-item {
-    display: flex;
-    align-items: center;
-    margin-top: 1rem;
-  }
-  
-  .select-item input[type="checkbox"] {
-    margin-right: 0.5rem;
-    transform: scale(1.2);
-    accent-color: #6f42c1; /* Purple checkbox */
-  }
-  
-  /* Share Button */
-  .share-library-button {
-    background: #6f42c1; /* Glowing purple for button */
-    color: #ffffff; /* White text */
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    box-shadow: 0 0 12px #6f42c1; /* Purple glow */
-    margin-top: 1rem;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  
-  .share-library-button:hover {
-    background: #5a329b; /* Darker purple on hover */
-    box-shadow: 0 0 15px #5a329b; /* Enhanced glow on hover */
-  }
-  
-  /* Loading and Error Messages */
-  .loading-message {
-    color: #6f42c1; /* Glowing purple */
-    text-align: center;
-    font-size: 1.2rem;
-    padding: 1rem;
-  }
-  
-  .error-message {
-    background: #ff6b6b; /* Coral red for errors */
-    color: white;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    text-align: center;
-    box-shadow: 0 0 12px #ff6b6b; /* Red glow for errors */
-  }
+  padding: 20px;
+}
+
+.lesson-item {
+  margin-bottom: 40px;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.image-container {
+  position: relative;
+  margin-top: 10px;
+}
+
+.original-image,
+.highlighted-outline {
+  width: 100%;
+  height: 100%;
+}
+
+.segment-overlay {
+  cursor: pointer;
+}
+
+.notes-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-width: 500px;
+  width: 90%;
+}
+
+.notes-textarea {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 10px;
+  padding: 5px;
+}
+
+.notes-content {
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.save-button,
+.edit-button,
+.close-button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.save-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.edit-button {
+  background-color: #2196f3;
+  color: white;
+}
+
+.close-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+.loading-message {
+  font-style: italic;
+  color: #666;
+}
