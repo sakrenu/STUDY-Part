@@ -23,22 +23,28 @@
 }
 
 .notes-mode .notes-sidebar.closed {
-    transform: translateX(-300px);
+    transform: translateX(-100%);
 }
 
 .notes-mode .toggle-button-container {
     position: fixed;
-    top: 100px;
-    left: 300px;
+    top: 0px;
+    left: 320px;
     z-index: 1000;
+    background-color: transparent;
     transition: left 0.3s ease;
     display: flex;
     align-items: center;
     width: 40px;
+    
+    padding: 10px; /* Add padding for better appearance */
+    border-bottom-right-radius: 8px; /* Optional: Add rounded corners */
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 .notes-mode .toggle-button-container.closed {
-    left: 0;
+    left: 10px;
 }
 
 .notes-mode .toggle-button {
@@ -51,7 +57,7 @@
 .notes-mode .toggle-icon {
     width: 32px;
     height: 32px;
-    filter: invert(100%);
+    filter: invert(0%);
 }
 
 .notes-mode .toggle-text {
@@ -505,4 +511,119 @@
 
 .notes-mode .new-note-button:hover {
     background-color: #6fe6bf;
+}
+
+.notes-mode .notes-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    resize: vertical;
+    color: black;
+    background-color: white;
+}
+
+.notes-mode .segmented-region textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 14px;
+    resize: vertical;
+    color: black;
+    background-color: white;
+}
+
+.notes-mode .segmented-regions-container {
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.notes-mode .segmented-region {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.notes-mode .segment-image {
+    max-width: 100%;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.notes-mode .save-note-button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px;
+}
+
+.notes-mode .sidebar-note-item.selected {
+    background-color: rgba(127, 255, 212, 0.2);
+    border: 2px solid #7fffd4;
+}
+
+.notes-mode .delete-note-button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.notes-mode .delete-note-button:hover {
+    background-color: #ff3333;
+}
+
+.notes-mode .confirm-delete-button,
+.notes-mode .cancel-delete-button {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin: 0 5px;
+}
+
+.notes-mode .confirm-delete-button {
+    background-color: #ff4d4d;
+    color: white;
+}
+
+.notes-mode .cancel-delete-button {
+    background-color: #ccc;
+    color: black;
+}
+
+.notes-mode .cancel-edit-button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 12px;
+    background-color: #ccc;
+    color: black;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.notes-mode .cancel-edit-button:hover {
+    background-color: #bbb;
+}
+
+.notes-mode .sidebar-note-item {
+    cursor: pointer;
+    position: relative;
+}
+
+.notes-mode .sidebar-note-item.selected {
+    background-color: rgba(127, 255, 212, 0.2);
+    border: 2px solid #7fffd4;
 }

@@ -402,5 +402,26 @@ def add_note():
         print(f"Error in add_note: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/delete-image', methods=['DELETE'])
+def delete_image():
+    try:
+        data = request.json
+        public_id = data.get('public_id')  # Public ID of the image to delete
+
+        if not public_id:
+            return jsonify({'error': 'Missing public_id parameter'}), 400
+
+        # Delete the image from Cloudinary
+        result = cloudinary.uploader.destroy(public_id)
+        
+        if result.get('result') == 'ok':
+            return jsonify({'message': 'Image deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to delete image from Cloudinary'}), 500
+
+    except Exception as e:
+        print(f"Error in delete_image: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+        
 if __name__ == '__main__':
     app.run(debug=True)

@@ -63,8 +63,6 @@ const StudentDashboard = () => {
                 <nav className="menu">
                     <button onClick={() =>navigate('/learning-mode')}>Learning Mode</button>
                     <button onClick={() => navigate('/students/quiz-mode')}>Quiz Mode</button> {/* Updated */}
-                    <button onClick={() => alert('Nodes Mode coming soon!')}>Notes Mode</button>
-                    <button onClick={() => navigate('/students/quiz-mode')}>Quiz Mode</button>
                     <button onClick={() => navigate('/notes-mode')}>Notes Mode</button>
 
                 </nav>
