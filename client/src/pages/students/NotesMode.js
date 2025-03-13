@@ -26,10 +26,43 @@ const NotesMode = () => {
     const [isLoading, setIsLoading] = useState(false);
     const cropperRef = useRef(null);
     const [currentImageUrl, setCurrentImageUrl] = useState(null);
-
+    const [isNotesPopupVisible, setIsNotesPopupVisible] = useState(false);
+    // Add a new state variable at the top of the component:
+    const [combinedSegmentImage, setCombinedSegmentImage] = useState(null);
+    const [regionData, setRegionData] = useState([]);
     const auth = getAuth();
     const user = auth.currentUser;
 
+    const NotesPopup = ({ regionIndex, regionNotes, setRegionNotes, onSave, onClose }) => {
+        const [noteText, setNoteText] = useState(regionNotes[regionIndex] || '');
+    
+        const handleSave = () => {
+            onSave(regionIndex, noteText);
+            onClose();
+        };
+    
+        return (
+            <div className="notes-popup-overlay">
+                <div className="notes-popup">
+                    <h3>Add Notes for Region {regionIndex + 1}</h3>
+                    <textarea
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="Add notes..."
+                        className="notes-textarea"
+                    />
+                    <div className="notes-popup-buttons">
+                        <button onClick={handleSave} className="save-note-button">
+                            Save
+                        </button>
+                        <button onClick={onClose} className="cancel-note-button">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
     // Fetch notes from Firestore
     const fetchNotes = async () => {
         if (!user) return;
@@ -99,37 +132,27 @@ const NotesMode = () => {
             if (!currentImageUrl) {
                 throw new Error('No image URL available');
             }
-
+    
             setIsLoading(true);
             console.log('Processing regions:', selectedRegions);
-
-            const processedResults = await Promise.all(
-                selectedRegions.map((region, index) => 
-                    axios.post('http://localhost:5000/segment', {
-                        image_url: currentImageUrl,
-                        bounding_box: region,
-                        teacher_id: 'student_mode', // or use actual user ID
-                        region_index: index
-                    })
-                )
-            );
-
-            const processedData = processedResults.map(response => ({
-                cutout: response.data.cutout,
-                highlighted_outline: response.data.highlighted_outline,
-                position: response.data.position,
-                originalSize: response.data.originalSize
-            }));
-
-            setProcessedRegions(processedData);
+    
+            const response = await axios.post('http://localhost:5000/segment-all', {
+                image_url: currentImageUrl,
+                bounding_boxes: selectedRegions
+            });
+    
+            setCombinedSegmentImage(response.data.combined_image);
+            setRegionData(response.data.regions || []); // Ensure regionData is at least an empty array
             setIsSelectingRegions(false);
+    
         } catch (error) {
             console.error('Error:', error);
-            alert('Error processing image: ' + error.message);
+            alert('Error processing image: ' + (error.response?.data?.error || error.message));
         } finally {
             setIsLoading(false);
         }
     };
+    
 
     // Add this function to check if any region has notes
     const hasAnyNotes = () => {
@@ -158,17 +181,19 @@ const NotesMode = () => {
 
         try {
             setIsLoading(true);
+            // Create region data array from regionData and regionNotes
+            const regions = regionData.map(region => ({
+                index: region.index,
+                bbox: region.bbox,
+                notes: regionNotes[region.index] || ''  // Use region.index to get correct notes
+            }));
+
             const noteData = {
                 userId: user.uid,
                 imageUrl: currentImageUrl,
-                note: note, // This can be empty now
                 createdAt: new Date().toISOString(),
-                regions: processedRegions.map((region, index) => ({
-                    cutout: region.cutout,
-                    highlighted_outline: region.highlighted_outline,
-                    position: region.position,
-                    notes: regionNotes[index] || '',
-                }))
+                regions: regions,
+                combinedImage: combinedSegmentImage
             };
 
             await addDoc(collection(db, 'notes'), noteData);
@@ -182,8 +207,10 @@ const NotesMode = () => {
             setRegionNotes({});
             setSelectedRegions([]);
             setIsSelectingRegions(true);
+            setCombinedSegmentImage(null);
+            setRegionData([]);
             
-            alert('Note saved successfully!');
+            alert('Notes saved successfully!');
             fetchNotes();
         } catch (error) {
             console.error("Error saving note:", error);
@@ -221,16 +248,25 @@ const NotesMode = () => {
         setNoteToDelete(null);
     };
 
-    // Handle note selection
+    // Update handleNoteSelection function
     const handleNoteSelection = (note) => {
         setSelectedNote(note);
-        setNote(note.note);
         setCurrentImageUrl(note.imageUrl);
-        setProcessedRegions(note.regions || []);
-        setRegionNotes(note.regions.reduce((acc, region, index) => {
-            acc[index] = region.notes;
+        setCombinedSegmentImage(note.combinedImage);
+        setIsSelectingRegions(false);
+        
+        // Set region data and notes
+        setRegionData(note.regions.map(region => ({
+            index: region.index,
+            bbox: region.bbox
+        })));
+        
+        // Convert regions array to regionNotes object
+        const notesObj = note.regions.reduce((acc, region) => {
+            acc[region.index] = region.notes;
             return acc;
-        }, {}));
+        }, {});
+        setRegionNotes(notesObj);
     };
 
     // Handle note update
@@ -259,7 +295,57 @@ const NotesMode = () => {
         }
     };
 
-    // Render the component
+    // Handle region click
+    const handleRegionClick = (event) => {
+        if (!regionData || regionData.length === 0) {
+            console.warn('No region data available');
+            return;
+        }
+    
+        const rect = event.target.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        // Calculate the actual coordinates in the image
+        const scaleX = event.target.naturalWidth / rect.width;
+        const scaleY = event.target.naturalHeight / rect.height;
+        const clickX = x * scaleX;
+        const clickY = y * scaleY;
+    
+        console.log('Click coordinates:', { clickX, clickY });
+        console.log('Available regions:', regionData);
+    
+        // Find which region was clicked
+        const clickedRegion = regionData.find(region => {
+            const [x1, y1, x2, y2] = region.bbox;
+            return (
+                clickX >= x1 && 
+                clickX <= x2 && 
+                clickY >= y1 && 
+                clickY <= y2
+            );
+        });
+    
+        if (clickedRegion) {
+            console.log('Clicked region:', clickedRegion);
+            setCurrentRegionForNotes(clickedRegion.index); // Use the region's actual index
+            setIsNotesPopupVisible(true);
+        } else {
+            console.log('No region found at click location');
+        }
+    };
+
+    // Handle save notes
+    const handleSaveNotes = (index, note) => {
+        setRegionNotes({ ...regionNotes, [index]: note });
+    };
+
+    // Handle close popup
+    const handleClosePopup = () => {
+        setIsNotesPopupVisible(false);
+        setCurrentRegionForNotes(null);
+    };
+
     return (
         <div className="notes-mode">
             <div className="notes-mode-container">
@@ -407,32 +493,37 @@ const NotesMode = () => {
                     )}
 
                     {/* Display Segmented Regions */}
-                    {processedRegions.length > 0 && (
-                        <div className="segmented-regions-container">
-                            <h3>Segmented Regions</h3>
-                            {processedRegions.map((region, index) => (
-                                <div key={index} className="segmented-region">
-                                    <img 
-                                        src={region.highlighted_outline} 
-                                        alt={`Segment ${index + 1}`} 
-                                        className="segment-image"
-                                    />
-                                    <textarea
-                                        value={regionNotes[index] || ''}
-                                        onChange={(e) => setRegionNotes({...regionNotes, [index]: e.target.value})}
-                                        placeholder={`Add notes for region ${index + 1}...`}
-                                        className="notes-textarea"
-                                    />
-                                </div>
-                            ))}
+                    {!isSelectingRegions && combinedSegmentImage && (
+                        <div className="combined-segments-container">
+                            <h3>Click on a region to add notes</h3>
+                            <div className="interactive-image-container">
+                                <img 
+                                    src={combinedSegmentImage} 
+                                    alt="All segments" 
+                                    className="combined-segments-image" 
+                                    onClick={handleRegionClick}
+                                    style={{ cursor: 'pointer' }}
+                                />
+                            </div>
                             <button 
-                                onClick={selectedNote ? handleUpdateNote : handleSaveNote}
-                                className="save-note-button"
-                                disabled={!currentImageUrl || isLoading}
+                                onClick={handleSaveNote} 
+                                className="save-all-notes-button"
+                                disabled={!hasAnyNotes()}
                             >
-                                {selectedNote ? 'Update Note' : 'Save Notes'}
+                                Save All Notes
                             </button>
                         </div>
+                    )}
+
+                    {/* Notes Popup */}
+                    {isNotesPopupVisible && (
+                        <NotesPopup
+                            regionIndex={currentRegionForNotes}
+                            regionNotes={regionNotes}
+                            setRegionNotes={setRegionNotes}
+                            onSave={handleSaveNotes}
+                            onClose={handleClosePopup}
+                        />
                     )}
 
                     {!currentImageUrl && !isLoading && (

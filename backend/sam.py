@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 import cv2
-# from fastsam import FastSAM
 from PIL import Image
 from ultralytics import FastSAM
 from ultralytics.models.fastsam import FastSAM
@@ -127,5 +126,77 @@ def segment_image(image_path, bounding_box):
 
     return cutouts
 
-
-
+def segment_all_regions(image_path, bounding_boxes):
+    """
+    Process multiple regions in an image and return the combined result
+    """
+    try:
+        # Read the original image
+        original_image = cv2.imread(image_path)
+        if original_image is None:
+            raise ValueError(f'Failed to load image from path: {image_path}')
+        
+        # Create a copy for drawing all segments
+        combined_image = original_image.copy()
+        
+        # Define colors for different regions
+        colors = [
+            (0, 255, 0),    # Green
+            (255, 0, 0),    # Blue
+            (0, 0, 255),    # Red
+            (255, 255, 0),  # Cyan
+            (255, 0, 255),  # Magenta
+            (0, 255, 255),  # Yellow
+            (128, 0, 128),  # Purple
+            (0, 128, 128),  # Teal
+            (128, 128, 0),  # Olive
+            (255, 165, 0)   # Orange
+        ]
+        
+        if not bounding_boxes:
+            raise ValueError('No bounding boxes provided')
+            
+        for i, bbox in enumerate(bounding_boxes):
+            try:
+                # Convert the bbox format
+                bbox_array = [
+                    int(float(bbox['x'])),
+                    int(float(bbox['y'])),
+                    int(float(bbox['x']) + float(bbox['width'])),
+                    int(float(bbox['y']) + float(bbox['height']))
+                ]
+                
+                # Use the model to generate a mask
+                results = model(image_path, device=device, retina_masks=True, imgsz=1024, conf=0.4, iou=0.9,
+                              bboxes=[bbox_array])
+                
+                if len(results[0].masks.data) > 0:
+                    # Get the mask
+                    mask = results[0].masks.data[0].cpu().numpy()
+                    
+                    # Resize mask to match image size if needed
+                    if mask.shape[:2] != original_image.shape[:2]:
+                        mask = cv2.resize(mask, 
+                                        (original_image.shape[1], original_image.shape[0]), 
+                                        interpolation=cv2.INTER_NEAREST)
+                    
+                    mask = (mask > 0).astype(np.uint8)  # Convert to binary mask
+                    
+                    # Get contours
+                    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    
+                    if contours:  # Only process if contours were found
+                        # Draw contours with different colors for each region
+                        color = colors[i % len(colors)]
+                        cv2.drawContours(combined_image, contours, -1, color, 2)
+            
+            except Exception as e:
+                print(f"Warning: Failed to process region {i+1}: {str(e)}")
+                continue
+        
+        return combined_image
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise ValueError(f'Failed to process image: {str(e)}')

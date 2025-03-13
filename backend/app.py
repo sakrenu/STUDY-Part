@@ -11,7 +11,7 @@ from PIL import Image
 import numpy as np
 import torch
 import cv2
-from sam import segment_image
+from sam import segment_image, segment_all_regions
 from sam_quiz import segment_quiz_image, get_image_without_masks
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
@@ -422,6 +422,62 @@ def delete_image():
     except Exception as e:
         print(f"Error in delete_image: {str(e)}")
         return jsonify({'error': str(e)}), 500
-        
+
+@app.route('/segment-all', methods=['POST'])
+def segment_all():
+    data = request.json
+    image_url = data.get('image_url')
+    bounding_boxes = data.get('bounding_boxes')
+    
+    if not image_url or not bounding_boxes:
+        return jsonify({'error': 'Missing required parameters'}), 400
+    
+    try:
+        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
+        try:
+            response = requests.get(image_url)
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(response.content)
+            
+            # Process the image and get region data
+            combined_image = segment_all_regions(temp_path, bounding_boxes)
+            
+            # Convert the combined image to base64
+            _, buffer = cv2.imencode('.png', combined_image)
+            combined_image_b64 = base64.b64encode(buffer).decode('utf-8')
+            combined_image_url = f"data:image/png;base64,{combined_image_b64}"
+            
+            # Create region data for frontend
+            regions = [
+                {
+                    'index': i,
+                    'bbox': [
+                        int(float(bbox['x'])),
+                        int(float(bbox['y'])),
+                        int(float(bbox['x'] + bbox['width'])),
+                        int(float(bbox['y'] + bbox['height']))
+                    ]
+                }
+                for i, bbox in enumerate(bounding_boxes)
+            ]
+            
+            return jsonify({
+                'combined_image': combined_image_url,
+                'regions': regions,
+                'num_regions': len(bounding_boxes)
+            })
+            
+        except requests.exceptions.RequestException as e:
+            return jsonify({'error': f'Failed to download image: {str(e)}'}), 500
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+                
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
