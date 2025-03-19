@@ -38,7 +38,7 @@
 .notes-mode .toggle-button-container {
     position: fixed;
     top: 0px;
-    left: 320px;
+    left: 340px;  /* Increased from 320px to move it more to the right */
     z-index: 1000;
     background-color: transparent;
     transition: left 0.3s ease;
@@ -53,7 +53,7 @@
 }
 
 .notes-mode .toggle-button-container.closed {
-    left: 10px;
+    left: 20px;  /* Increased from 10px to maintain consistent spacing */
 }
 
 .notes-mode .toggle-button {
@@ -66,7 +66,7 @@
 .notes-mode .toggle-icon {
     width: 32px;
     height: 32px;
-    filter: invert(0%);
+    filter: invert(87%) sepia(51%) saturate(454%) hue-rotate(140deg) brightness(92%) contrast(90%);  /* This creates a cyan color */
 }
 
 .notes-mode .toggle-text {
