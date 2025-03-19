@@ -720,12 +720,17 @@ async def segment_label(data: SegmentRequest):
                 raise ValueError("Failed to read downloaded image")
 
             # Call the segment_image_for_label function from sam_label.py
-            mask_urls, position = segment_image_for_label(temp_path, [
-                data.bounding_box['x'],
-                data.bounding_box['y'],
-                data.bounding_box['width'],
-                data.bounding_box['height']
-            ], model)  # Pass the model
+            mask_urls, position = segment_image_for_label(
+                temp_path,
+                [
+                    data.bounding_box['x'],
+                    data.bounding_box['y'],
+                    data.bounding_box['width'],
+                    data.bounding_box['height']
+                ],
+                model,
+                region_index=data.region_index  # Pass the region_index
+            )
 
             # Upload the mask to Cloudinary
             mask_url = None
