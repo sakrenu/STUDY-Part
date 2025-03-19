@@ -729,7 +729,7 @@ const Home = () => {
       try {
         const formData = new FormData();
         formData.append('image', file);
-        const response = await axios.post('http://localhost:5000/upload', formData);
+        const response = await axios.post('http://127.0.0.1:8000/upload', formData);
         const imageUrl = response.data.image_url;
         setCurrentImageUrl(imageUrl);
         setImage(file);
@@ -759,7 +759,7 @@ const Home = () => {
       setIsLoading(true);
       const processedResults = await Promise.all(
         selectedRegions.map((region, index) =>
-          axios.post('http://localhost:5000/segment', {
+          axios.post('http://127.0.0.1:8000/segment', {
             image_url: currentImageUrl,
             bounding_box: {
               x: Math.round(region.x),
@@ -840,7 +840,7 @@ const Home = () => {
     }
     try {
       const note = regionNotes[index] || '';
-      await axios.post('http://localhost:5000/add_note', {
+      await axios.post('http://127.0.0.1:8000/add_note', {
         image_url: currentImageUrl,
         segment_index: index,
         note: note,

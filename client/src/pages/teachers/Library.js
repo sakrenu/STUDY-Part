@@ -30,7 +30,7 @@ const Library = () => {
     const fetchLessons = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('http://localhost:5000/get_lessons', {
+        const response = await axios.get('http://127.0.0.1:8000/get_lessons', {
           params: { teacher_id: teacherEmail },
         });
         setLessons(response.data.lessons);
