@@ -139,6 +139,9 @@ def segment_all_regions(image_path, bounding_boxes):
         # Create a copy for drawing all segments
         combined_image = original_image.copy()
         
+        # Create a mask to track overlapping regions
+        overlap_mask = np.zeros(original_image.shape[:2], dtype=np.int32)
+        
         # Define colors for different regions
         colors = [
             (0, 255, 0),    # Green
@@ -180,12 +183,15 @@ def segment_all_regions(image_path, bounding_boxes):
                                         (original_image.shape[1], original_image.shape[0]), 
                                         interpolation=cv2.INTER_NEAREST)
                     
-                    mask = (mask > 0).astype(np.uint8)  # Convert to binary mask
+                    mask = (mask > 0).astype(np.uint8)
+                    
+                    # Update overlap mask
+                    overlap_mask[mask > 0] = i + 1
                     
                     # Get contours
                     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                     
-                    if contours:  # Only process if contours were found
+                    if contours:
                         # Draw contours with different colors for each region
                         color = colors[i % len(colors)]
                         cv2.drawContours(combined_image, contours, -1, color, 2)

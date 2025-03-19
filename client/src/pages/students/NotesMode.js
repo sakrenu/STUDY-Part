@@ -306,29 +306,33 @@ const NotesMode = () => {
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
         
-        // Calculate the actual coordinates in the image
         const scaleX = event.target.naturalWidth / rect.width;
         const scaleY = event.target.naturalHeight / rect.height;
         const clickX = x * scaleX;
         const clickY = y * scaleY;
     
-        console.log('Click coordinates:', { clickX, clickY });
-        console.log('Available regions:', regionData);
-    
-        // Find which region was clicked
-        const clickedRegion = regionData.find(region => {
+        // Find which region was clicked by checking if the click point is inside any bounding box
+        let clickedRegion = null;
+        let minArea = Infinity;
+
+        regionData.forEach(region => {
             const [x1, y1, x2, y2] = region.bbox;
-            return (
-                clickX >= x1 && 
-                clickX <= x2 && 
-                clickY >= y1 && 
-                clickY <= y2
-            );
+            
+            // Check if click is inside this region
+            if (clickX >= x1 && clickX <= x2 && clickY >= y1 && clickY <= y2) {
+                // Calculate area of this region
+                const area = (x2 - x1) * (y2 - y1);
+                // If this is the smallest region containing the click point, use it
+                if (area < minArea) {
+                    minArea = area;
+                    clickedRegion = region;
+                }
+            }
         });
     
         if (clickedRegion) {
             console.log('Clicked region:', clickedRegion);
-            setCurrentRegionForNotes(clickedRegion.index); // Use the region's actual index
+            setCurrentRegionForNotes(clickedRegion.index);
             setIsNotesPopupVisible(true);
         } else {
             console.log('No region found at click location');
