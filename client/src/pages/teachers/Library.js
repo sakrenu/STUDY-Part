@@ -64,7 +64,7 @@ const Library = () => {
     }
     setIsLoading(true);
     try {
-      await axios.post('http://localhost:5000/add_note', {
+      await axios.post('http://127.0.0.1:8000/add_note', {
         image_url: lessons.find((l) => l.id === currentLessonForNotes).originalImageUrl,
         segment_index: parseInt(currentSegmentForNotes.split('_')[1]),
         note: editNote,
