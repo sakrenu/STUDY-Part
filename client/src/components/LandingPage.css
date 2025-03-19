@@ -9,7 +9,7 @@ html, body {
 /* Base layout */
 .landing-container {
   min-height: 100vh;
-  background-color: #05071C;
+  background-color: #000000;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
@@ -17,7 +17,7 @@ html, body {
 
 /* Dynamic dark gradient background */
 .bg-gradient-shift {
-  background: linear-gradient(45deg, #b40c7c, #06296b, #073e3a, #4d0896);
+  background: linear-gradient(45deg, #e982c8, #000000, #082520, #4f2879);
   background-size: 400% 400%; /* Allows the animation to shift the gradient */
   animation: gradientShift 8s ease infinite; /* Smooth infinite animation */
 }
@@ -37,7 +37,7 @@ html, body {
 
 /* Navigation */
 .nav-container {
-  background-color: #193d66;
+  background-color: #010a14;
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -100,7 +100,7 @@ html, body {
 }
 
 .register-btn {
-  background: linear-gradient(90deg, #4A90E2, #D774E4);
+  background: linear-gradient(90deg, #0d3869, #9c1dac);
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   color: #FFFFFF;
@@ -109,7 +109,7 @@ html, body {
 }
 
 .register-btn:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 10px #4A90E2, 0 0 10px #4A90E2;
+  box-shadow: 0 0 10px #6887ab, 0 0 10px #0b57af, 0 0 10px #043165;
 }
 
 .hero-section {
@@ -153,7 +153,7 @@ html, body {
 }
 
 .primary-btn {
-  background: linear-gradient(90deg, #816ced, #D774E4);
+  background: linear-gradient(90deg, #0d3869, #9c1dac, #D774E4);
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
   color: #FFFFFF;
@@ -165,8 +165,8 @@ html, body {
 }
 
 .secondary-btn {
-  background: linear-gradient(90deg, #FFD700, #338570);
-  border: 2px solid #FFD700;
+  background: linear-gradient(90deg, #947f0a, #0d5d49);
+  border: 2px solid #947f0b;
   color: #000000;
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
@@ -174,7 +174,7 @@ html, body {
 }
 
 .secondary-btn:hover {
-  box-shadow: 0 0 10px #6039d6, 0 0 15px #7b3ee3, 0 0 15px #6a40c0;
+  box-shadow: 0 0 10px #0d0329, 0 0 15px #7b3ee3, 0 0 15px #6a40c0;
 }
 
 .hero-image {
@@ -201,14 +201,14 @@ html, body {
 }
 
 .feature-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
+  background: linear-gradient(135deg, #16022c, #0d2a61, #075757);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .feature-card:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 20px #4A90E2, 0 0 30px #4A90E2;
+  box-shadow: 0 0 10px #4f3f67, 0 0 20px #412396, 0 0 30px #08c8cf;
 }
 
 .feature-title {
@@ -236,14 +236,14 @@ html, body {
 }
 
 .product-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
+  background: linear-gradient(135deg, #16022c, #0d2a61, #075757);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .product-card:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 20px #4A90E2, 0 0 30px #4A90E2;
+  box-shadow: 0 0 10px #4f3f67, 0 0 20px #412396, 0 0 30px #08c8cf;
 }
 
 .product-title {
