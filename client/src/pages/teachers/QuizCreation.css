@@ -1,4 +1,4 @@
-/* src/pages/teachers/QuizCreation.css */
+/* Using the same theme as TeachingMode.css for visual consistency */
 
 /* Base container styles */
 .teachers-dashboard {
@@ -230,30 +230,4 @@
   width: 100%;
   height: auto;
   display: block;
-}
-
-.point-segmentation-interface {
-  margin-top: 20px;
-}
-
-.controls {
-  margin-top: 10px;
-}
-
-.controls button {
-  margin-right: 10px;
-  padding: 5px 10px;
-}
-
-.masks-gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.mask-image {
-  width: 100px;
-  height: auto;
-  border: 1px solid #ccc;
 }
