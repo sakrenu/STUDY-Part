@@ -1,3 +1,5 @@
+// src/pages/teachers/PointSegmentation.js
+
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './PointSegmentation.css'; // You'll need to create this CSS file
