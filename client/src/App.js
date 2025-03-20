@@ -39,9 +39,7 @@ const App = () => {
 
           {/* Student Quiz Routes */}
           <Route path="/student-dashboard/quiz-mode" element={<QuizDashboard />} />
-          <Route path="/student-dashboard/quiz-mode/:quizId" element={<QuizMode />} />
-
-          {/* Redirect Unknown Paths to Login */}
+          <Route path="/student-dashboard/quiz-mode/:quizId" element={<QuizDashboard />} />
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </div>

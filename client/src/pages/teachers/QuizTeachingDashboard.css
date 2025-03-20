@@ -1,0 +1,41 @@
+.quiz-mode {
+    padding: 2rem;
+    background: #0a192f; /* Dark background */
+    min-height: 100vh;
+    color: #ffffff; /* Light text */
+  }
+  
+  .tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  
+  .tabs button {
+    padding: 0.75rem 1.5rem;
+    margin: 0 0.5rem;
+    border: none;
+    background: #112240; /* Slightly lighter dark shade */
+    color: #ccd6f6; /* Light gray text */
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    font-size: 1.1rem;
+  }
+  
+  .tabs button.active {
+    background: #64ffda; /* Teal accent for active tab */
+    color: #0a192f; /* Dark text on active tab */
+  }
+  
+  .tabs button:hover {
+    background: #52d1b2; /* Lighter teal on hover */
+  }
+  
+  .content {
+    background: #112240;
+    border: 2px solid #64ffda; /* Teal border */
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 0 12px #64ffda; /* Subtle glow effect */
+  }
