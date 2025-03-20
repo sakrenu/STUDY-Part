@@ -9,7 +9,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # Initialize ultralytics SAM model with GPU support
-ultra_model = SAM("sam2.1_b.pt")
+ultra_model = SAM("sam2.1_s.pt")
 ultra_model.to(device)  # Move model to GPU if available
 ultra_model.info()
 
