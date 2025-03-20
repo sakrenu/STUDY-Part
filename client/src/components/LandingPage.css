@@ -201,14 +201,14 @@ html, body {
 }
 
 .feature-card {
-  background: linear-gradient(135deg, #16022c, #0d2a61, #075757);
+  background: linear-gradient(135deg, #000000, #031027, #000000);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .feature-card:hover {
-  box-shadow: 0 0 10px #4f3f67, 0 0 20px #412396, 0 0 30px #08c8cf;
+  box-shadow: 0 0 10px #c4be0e, 0 0 20px #83730c, 0 0 30px #ac970e;
 }
 
 .feature-title {
@@ -236,14 +236,14 @@ html, body {
 }
 
 .product-card {
-  background: linear-gradient(135deg, #16022c, #0d2a61, #075757);
+  background: linear-gradient(135deg, #000000, #031027, #000000);
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .product-card:hover {
-  box-shadow: 0 0 10px #4f3f67, 0 0 20px #412396, 0 0 30px #08c8cf;
+  box-shadow: 0 0 10px #c4be0e, 0 0 20px #83730c, 0 0 30px #ac970e;
 }
 
 .product-title {
