@@ -7,22 +7,26 @@ import torch
 from segment_anything import SamPredictor, sam_model_registry
 
 # Path to the ONNX model
-ONNX_MODEL_PATH = r"D:\\abhin\\Comding\\ML\\Major Project\\StudyPart\\STUDY-Part\\backend\\onnx_models\\onnx_model.onnx"
+ONNX_MODEL_PATH = r"D:\abhin\Comding\ML\Major Project\StudyPart\STUDY-Part\backend\onnx_models\sam_onnx_quantized.onnx"
 
 # Initialize ONNX Runtime session
 ort_session = ort.InferenceSession(ONNX_MODEL_PATH)
 
 # Load SAM model for image embedding
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cpu'
 print(device)
-sam = sam_model_registry["vit_l"](checkpoint=r"backend\sam_vit_l_0b3195.pth").to(device)
+sam = sam_model_registry["vit_h"](checkpoint=r"D:\abhin\Comding\ML\Major Project\StudyPart\STUDY-Part\backend\sam_vit_h_4b8939.pth").to(device)
 predictor = SamPredictor(sam)
+
+# Function to get image embeddings
 
 def get_image_embeddings(image_path):
     """
     Extract image embeddings using the SAM model's image encoder.
     """
     # Check if file exists
+    start_time = time.time()
     import os
     if not os.path.isfile(image_path):
         raise FileNotFoundError(f"Image not found: {image_path}")
@@ -37,6 +41,10 @@ def get_image_embeddings(image_path):
     # Set the image in the predictor and get embeddings
     predictor.set_image(image)
     image_embedding = predictor.get_image_embedding().cpu().numpy()
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Embedding time: {execution_time} seconds")
+
     return image_embedding
 
 def generate_mask(image_embedding, points, labels, original_size):
