@@ -12,6 +12,7 @@ import LandingPage from './components/LandingPage';
 import ManageStudents from './pages/teachers/ManageStudents';
 import LearningMode from './pages/students/LearningMode';
 import QuizCreation from './pages/teachers/QuizCreation';
+import PointSegmentation from './pages/teachers/PointSegmentation';
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
           <Route path="/dashboard/teaching" element={<TeachingMode />} />
           <Route path="/dashboard/manage-students" element={<ManageStudents />} />
           <Route path="/dashboard/quiz-creation" element={<QuizCreation />} />
+          <Route path="/point-segmentation" element={<PointSegmentation />} />
 
           {/* Student Routes */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
