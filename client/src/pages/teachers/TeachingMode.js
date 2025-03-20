@@ -5,7 +5,8 @@ import './TeachingMode.css';
 import BasicVersion from './BasicVersion';
 import ManageStudents from './ManageStudents';
 import Home from './home';
-import Library from './Library'; // Import the Library component
+import Library from './Library';
+import Label from './Label'; // Import the new Label component
 
 const TeachingMode = () => {
   const [teacherEmail, setTeacherEmail] = useState(null);
@@ -61,7 +62,7 @@ const TeachingMode = () => {
         })
       );
       setUploadedLessons(lessonsList);
-      console.log('Fetched lessons:', lessonsList); // Add debug log
+      console.log('Fetched lessons:', lessonsList);
     };
 
     const fetchGroups = async () => {
@@ -96,9 +97,11 @@ const TeachingMode = () => {
       case 'manage':
         return <ManageStudents />;
       case 'library':
-        return <Library teacherEmail={teacherEmail} />; // Render Library component with teacherEmail
+        return <Library teacherEmail={teacherEmail} />;
       case 'basicversion':
         return <BasicVersion />;
+      case 'label':
+        return <Label teacherEmail={teacherEmail} />;
       default:
         return null;
     }
@@ -122,6 +125,9 @@ const TeachingMode = () => {
           </li>
           <li className={activeTab === 'basicversion' ? 'active' : ''} onClick={() => setActiveTab('basicversion')}>
             Basic Version
+          </li>
+          <li className={activeTab === 'label' ? 'active' : ''} onClick={() => setActiveTab('label')}>
+            Label
           </li>
         </ul>
       </nav>
