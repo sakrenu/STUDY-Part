@@ -32,6 +32,7 @@ const NotesMode = () => {
     const [regionData, setRegionData] = useState([]);
     const auth = getAuth();
     const user = auth.currentUser;
+    const [isEditing, setIsEditing] = useState(false);
 
     const NotesPopup = ({ regionIndex, regionNotes, setRegionNotes, onSave, onClose }) => {
         const [noteText, setNoteText] = useState(regionNotes[regionIndex] || '');
@@ -196,9 +197,20 @@ const NotesMode = () => {
                 combinedImage: combinedSegmentImage
             };
 
-            await addDoc(collection(db, 'notes'), noteData);
-            setSavedNotes([...savedNotes, noteData]);
-            
+            if (isEditing && selectedNote) {
+                // Update existing note
+                await updateDoc(doc(db, 'notes', selectedNote.id), noteData);
+                setSavedNotes(savedNotes.map(note => 
+                    note.id === selectedNote.id ? {...noteData, id: selectedNote.id} : note
+                ));
+                alert('Note updated successfully!');
+            } else {
+                // Create new note
+                const docRef = await addDoc(collection(db, 'notes'), noteData);
+                setSavedNotes([...savedNotes, { ...noteData, id: docRef.id }]);
+                alert('Note saved successfully!');
+            }
+
             // Reset states
             setNote('');
             setImage(null);
@@ -209,8 +221,9 @@ const NotesMode = () => {
             setIsSelectingRegions(true);
             setCombinedSegmentImage(null);
             setRegionData([]);
+            setSelectedNote(null);
+            setIsEditing(false);
             
-            alert('Notes saved successfully!');
             fetchNotes();
         } catch (error) {
             console.error("Error saving note:", error);
@@ -254,6 +267,7 @@ const NotesMode = () => {
         setCurrentImageUrl(note.imageUrl);
         setCombinedSegmentImage(note.combinedImage);
         setIsSelectingRegions(false);
+        setIsEditing(true); // Set editing mode when note is selected
         
         // Set region data and notes
         setRegionData(note.regions.map(region => ({
@@ -406,12 +420,17 @@ const NotesMode = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <button 
-                                            className="delete-note-button"
-                                            onClick={() => setNoteToDelete({ noteId: note.id, imageUrl: note.imageUrl })}
-                                        >
-                                            Delete
-                                        </button>
+                                        <div className="note-actions">
+                                            <button 
+                                                className="delete-note-button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setNoteToDelete({ noteId: note.id, imageUrl: note.imageUrl });
+                                                }}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             ))

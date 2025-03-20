@@ -855,3 +855,22 @@
     align-items: center;
     gap: 20px;
 }
+
+.note-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.save-note-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.save-note-button:hover {
+    background-color: #45a049;
+}
