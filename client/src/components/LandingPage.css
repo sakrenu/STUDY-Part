@@ -83,7 +83,7 @@ html, body {
 }
 
 .logo .part {
-  color: #ffd700;
+  color: pink;
 }
 
 .nav-links {
@@ -104,7 +104,7 @@ html, body {
 }
 
 .register-btn {
-  background: linear-gradient(90deg, #0d3869, #9c1dac);
+  background: linear-gradient(90deg, #573688, #520c5b);
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   color: #FFFFFF;
@@ -113,7 +113,7 @@ html, body {
 }
 
 .register-btn:hover {
-  box-shadow: 0 0 10px #6887ab, 0 0 10px #0b57af, 0 0 10px #043165;
+  box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
 .hero-section {
@@ -142,7 +142,7 @@ html, body {
   font-size: 4.5rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
-  /* text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4; */
+  text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
 }
 
 .hero-subtitle {
@@ -157,7 +157,7 @@ html, body {
 }
 
 .primary-btn {
-  background: linear-gradient(90deg, #070012, #9c1dac, #6a088a);
+  background: linear-gradient(90deg, #3e2663, #520c5b);
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
   color: #FFFFFF;
@@ -165,20 +165,19 @@ html, body {
 }
 
 .primary-btn:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 15px #4A90E2, 0 0 15px #4A90E2;
+  box-shadow: 0 0 10px #9b4ae2, 0 0 15px #7f4ae2, 0 0 15px #9b4ae2;
 }
 
 .secondary-btn {
-  background: linear-gradient(90deg, #947f0a, #0d5d49);
-  border: 2px solid #947f0b;
-  color: #000000;
+  background: linear-gradient(90deg, #3e2663, #520c5b);
+  color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
   transition: box-shadow 0.3s ease;
 }
 
 .secondary-btn:hover {
-  box-shadow: 0 0 10px #0d0329, 0 0 15px #7b3ee3, 0 0 15px #6a40c0;
+  box-shadow: 0 0 10px #9b4ae2, 0 0 15px #7f4ae2, 0 0 15px #9b4ae2;
 }
 
 .hero-image {
