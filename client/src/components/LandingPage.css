@@ -1,9 +1,13 @@
+/* Import Poppins font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 /* Reset default margins and padding */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   overflow-x: hidden;
+  font-family: 'Poppins', sans-serif;
 }
 
 /* Base layout */
@@ -17,7 +21,7 @@ html, body {
 
 /* Dynamic dark gradient background */
 .bg-gradient-shift {
-  background: linear-gradient(45deg, #e982c8, #000000, #082520, #4f2879);
+  background: linear-gradient(45deg, #e982c8, #000000, #0f0221, #4f2879);
   background-size: 400% 400%; /* Allows the animation to shift the gradient */
   animation: gradientShift 8s ease infinite; /* Smooth infinite animation */
 }
@@ -37,7 +41,7 @@ html, body {
 
 /* Navigation */
 .nav-container {
-  background-color: #010a14;
+  background-color: #3c2468;
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -67,7 +71,7 @@ html, body {
   display: inline-block;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   text-decoration: none;
-  font-family: 'Arial', 'Helvetica', sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .logo span {
@@ -138,7 +142,7 @@ html, body {
   font-size: 4.5rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
-  text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+  /* text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4; */
 }
 
 .hero-subtitle {
@@ -153,7 +157,7 @@ html, body {
 }
 
 .primary-btn {
-  background: linear-gradient(90deg, #0d3869, #9c1dac, #D774E4);
+  background: linear-gradient(90deg, #070012, #9c1dac, #6a088a);
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
   color: #FFFFFF;
@@ -201,18 +205,18 @@ html, body {
 }
 
 .feature-card {
-  background: linear-gradient(135deg, #000000, #031027, #000000);
+  background: linear-gradient(135deg, #000000, #30074d, hsl(0, 0%, 0%));
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .feature-card:hover {
-  box-shadow: 0 0 10px #c4be0e, 0 0 20px #83730c, 0 0 30px #ac970e;
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
 }
 
 .feature-title {
-  color: #FFD700;
+  color: #f1b5fe;
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
@@ -236,18 +240,18 @@ html, body {
 }
 
 .product-card {
-  background: linear-gradient(135deg, #000000, #031027, #000000);
+  background: linear-gradient(135deg,  #000000, #30074d, hsl(0, 0%, 0%));
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .product-card:hover {
-  box-shadow: 0 0 10px #c4be0e, 0 0 20px #83730c, 0 0 30px #ac970e;
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
 }
 
 .product-title {
-  color: #FFD700;
+  color: #f1b5fe;
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
@@ -348,7 +352,7 @@ html, body {
   }
 
   .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
 
   .cta-container {
