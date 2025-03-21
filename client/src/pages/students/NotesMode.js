@@ -86,6 +86,22 @@ const NotesMode = () => {
         fetchNotes();
     }, [user]); // Dependency on `user` ensures notes are fetched when user logs in
 
+    // Add this useEffect after other useEffects
+    useEffect(() => {
+        // Reset all states when component mounts
+        setSelectedNote(null);
+        setNote('');
+        setImage(null);
+        setCurrentImageUrl(null);
+        setSelectedRegions([]);
+        setProcessedRegions([]);
+        setRegionNotes({});
+        setIsSelectingRegions(true);
+        setCombinedSegmentImage(null);
+        setRegionData([]);
+        setIsEditing(false);
+    }, []); // Empty dependency array means this runs once on mount
+
     // Handle image upload
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
