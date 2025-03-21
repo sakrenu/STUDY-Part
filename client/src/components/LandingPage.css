@@ -11,7 +11,7 @@ html, body {
 }
 
 /* Base layout */
-.landing-container {
+.landing-page .landing-container {
   min-height: 100vh;
   background-color: #000000;
   color: #FFFFFF;
@@ -156,7 +156,7 @@ html, body {
   gap: 1rem;
 }
 
-.primary-btn {
+.landing-page .primary-btn {
   background: linear-gradient(90deg, #3e2663, #520c5b);
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
@@ -164,11 +164,11 @@ html, body {
   transition: box-shadow 0.3s ease;
 }
 
-.primary-btn:hover {
+.landing-page .primary-btn:hover {
   box-shadow: 0 0 10px #9b4ae2, 0 0 15px #7f4ae2, 0 0 15px #9b4ae2;
 }
 
-.secondary-btn {
+.landing-page .secondary-btn {
   background: linear-gradient(90deg, #3e2663, #520c5b);
   color: white;
   padding: 0.75rem 1.5rem;
@@ -176,7 +176,7 @@ html, body {
   transition: box-shadow 0.3s ease;
 }
 
-.secondary-btn:hover {
+.landing-page .secondary-btn:hover {
   box-shadow: 0 0 10px #9b4ae2, 0 0 15px #7f4ae2, 0 0 15px #9b4ae2;
 }
 
