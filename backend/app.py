@@ -14,7 +14,11 @@ from PIL import Image
 import numpy as np
 import torch
 import cv2
-from sam_label import segment_image,segment_image_for_label  # Use the updated sam_label.py
+import time
+from typing import List, Dict, Optional, Tuple
+from pydantic import Field
+from sam_label import segment_image,segment_image_for_label
+from sam_point_segmentation import get_image_embeddings, generate_mask
 from sam_quiz import segment_quiz_image, get_image_without_masks
 from dotenv import load_dotenv
 import uuid
@@ -196,6 +200,26 @@ class AddNoteRequest(BaseModel):
     note: str
     teacher_id: str
     lesson_id: str
+
+# New Pydantic models for request validation
+class PointPrompt(BaseModel):
+    x: float
+    y: float
+
+class GetEmbeddingRequest(BaseModel):
+    image_url: str
+    teacher_id: str
+
+class PointSegmentationRequest(BaseModel):
+    image_embedding_id: str  # ID to retrieve stored embedding
+    points: List[PointPrompt]
+    labels: List[int]  # 1 for foreground, 0 for background
+    original_size: Tuple[int, int] = Field(..., description="Original image dimensions as (width, height)")
+
+# In-memory storage for embeddings (consider a more persistent solution for production)
+image_embeddings_store = {}
+
+# Routes
 
 @app.get('/')
 async def home():
@@ -504,6 +528,122 @@ async def get_lessons(teacher_id: str):
     except Exception as e:
         print(f"Error in get_lessons: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post('/get_image_embedding')
+async def get_embedding(data: GetEmbeddingRequest):
+    try:
+        # Download the image from URL
+        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
+        try:
+            response = requests.get(data.image_url)
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(response.content)
+
+            if not os.path.exists(temp_path):
+                raise ValueError("Failed to save downloaded image")
+
+            # Get image embeddings
+            embedding = get_image_embeddings(temp_path)
+            
+            # Generate a unique ID for this embedding
+            embedding_id = str(uuid.uuid4())
+            
+            # Store the embedding with the ID
+            image_embeddings_store[embedding_id] = {
+                'embedding': embedding,
+                'teacher_id': data.teacher_id,
+                'created_at': time.time()
+            }
+            
+            # Add expiry logic - perhaps a background task to clean up old embeddings
+            
+            return {
+                'embedding_id': embedding_id,
+                'success': True,
+                'message': 'Image embedding created successfully'
+            }
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=500, detail=f"Failed to download image: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/segment_with_points')
+async def segment_with_points_route(data: PointSegmentationRequest):
+    try:
+        # Retrieve the stored embedding
+        if data.image_embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found. It may have expired. Please generate a new embedding.")
+        
+        embedding_data = image_embeddings_store[data.image_embedding_id]
+        image_embedding = embedding_data['embedding']
+        
+        # Convert points to format expected by generate_mask
+        points = [[point.x, point.y] for point in data.points]
+        
+        # Generate mask
+        mask = generate_mask(
+            image_embedding=image_embedding,
+            points=points,
+            labels=data.labels,
+            original_size=data.original_size
+        )
+        
+        # Convert mask to image and upload to Cloudinary
+        mask_image = Image.fromarray(mask)
+        
+        # Save to a temporary buffer
+        buffer = io.BytesIO()
+        mask_image.save(buffer, format="PNG")
+        buffer.seek(0)
+        
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            buffer,
+            resource_type="image",
+            allowed_cors_origins=["http://localhost:3000"],
+            access_mode="anonymous"
+        )
+        
+        mask_url = upload_result['secure_url']
+        
+        return {
+            'mask_url': mask_url,
+            'success': True
+        }
+    except Exception as e:
+        print(f"Debug - Error in segment_with_points: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Optional route to handle cleanup of embeddings
+@app.delete('/image_embedding/{embedding_id}')
+async def delete_embedding(embedding_id: str):
+    if embedding_id in image_embeddings_store:
+        del image_embeddings_store[embedding_id]
+        return {"message": "Embedding deleted successfully"}
+    raise HTTPException(status_code=404, detail="Embedding not found")
+
+# Maintenance endpoint to cleanup old embeddings (could also be a background task)
+@app.post('/cleanup_embeddings')
+async def cleanup_embeddings(max_age_seconds: int = 3600):  # Default: clean embeddings older than 1 hour
+    current_time = time.time()
+    expired_ids = [
+        embedding_id 
+        for embedding_id, data in image_embeddings_store.items() 
+        if current_time - data['created_at'] > max_age_seconds
+    ]
+    
+    for embedding_id in expired_ids:
+        del image_embeddings_store[embedding_id]
+    
+    return {"message": f"Cleaned up {len(expired_ids)} expired embeddings"}
 
 if __name__ == "__main__":
     import uvicorn
