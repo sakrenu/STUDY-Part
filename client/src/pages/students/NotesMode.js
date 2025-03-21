@@ -121,7 +121,7 @@ const NotesMode = () => {
                 const formData = new FormData();
                 formData.append('image', file);
                 
-                const response = await axios.post('http://localhost:5000/upload', formData);
+                const response = await axios.post('http://127.0.0.1:8000/upload', formData);
                 const imageUrl = response.data.image_url;
                 
                 setCurrentImageUrl(imageUrl);
@@ -162,7 +162,7 @@ const NotesMode = () => {
             setIsLoading(true);
             console.log('Processing regions:', selectedRegions);
     
-            const response = await axios.post('http://localhost:5000/segment-all', {
+            const response = await axios.post('http://127.0.0.1:8000/segment-all', {
                 image_url: currentImageUrl,
                 bounding_boxes: selectedRegions
             });
@@ -479,7 +479,10 @@ const NotesMode = () => {
                 <div className={`main-content ${isSidebarOpen ? '' : 'closed'}`}>
                     <h1>Notes Mode</h1>
 
-                    <button onClick={() => navigate('/student-dashboard')} className="back-button">
+                    <button 
+                        onClick={() => navigate('/student-dashboard')} 
+                        className="back-button"
+                    >
                         ← Back to Dashboard
                     </button>
 

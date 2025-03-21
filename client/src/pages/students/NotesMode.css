@@ -21,13 +21,14 @@
     background-color: #112240;
     padding: 20px;
     border-right: 2px solid #64ffda;
-    height: 100vh;
+    height: calc(100vh - 100px); /* Reduced height to account for button */
     position: fixed;
     overflow-y: auto;
     transition: transform 0.3s ease;
     color: white;
     z-index: 100;
     left: 0;
+    top: 100px; /* Added top position to move sidebar down */
     box-shadow: 0 0 12px rgba(100, 255, 218, 0.2);
 }
 
@@ -37,7 +38,7 @@
 
 .notes-mode .toggle-button-container {
     position: fixed;
-    top: 0px;
+    top: 100px; /* Adjusted to align with sidebar */
     left: 340px;  /* Increased from 320px to move it more to the right */
     z-index: 1000;
     background-color: transparent;
@@ -873,4 +874,23 @@
 
 .save-note-button:hover {
     background-color: #45a049;
+}
+
+.back-button {
+    background-color: #00CED1;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin: 20px 0;
+    display: block;
+    width: fit-content;
+}
+
+.back-button:hover {
+    background-color: #00B4B4;
 }

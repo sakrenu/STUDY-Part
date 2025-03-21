@@ -1,0 +1,90 @@
+.library-container {
+  padding: 20px;
+}
+
+.lesson-item {
+  margin-bottom: 40px;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.image-container {
+  position: relative;
+  margin-top: 10px;
+}
+
+.original-image,
+.highlighted-outline {
+  width: 100%;
+  height: 100%;
+}
+
+.segment-overlay {
+  cursor: pointer;
+}
+
+.notes-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-width: 500px;
+  width: 90%;
+}
+
+.notes-textarea {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 10px;
+  padding: 5px;
+}
+
+.notes-content {
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.save-button,
+.edit-button,
+.close-button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.save-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.edit-button {
+  background-color: #2196f3;
+  color: white;
+}
+
+.close-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+.loading-message {
+  font-style: italic;
+  color: #666;
+}
