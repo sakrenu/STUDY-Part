@@ -108,6 +108,16 @@ const NotesMode = () => {
         if (file) {
             try {
                 setIsLoading(true);
+                // Reset all relevant states when new image is uploaded
+                setNote('');
+                setSelectedRegions([]);
+                setProcessedRegions([]);
+                setRegionNotes({});
+                setRegionData([]);
+                setCombinedSegmentImage(null);
+                setSelectedNote(null);
+                setIsEditing(false);
+                
                 const formData = new FormData();
                 formData.append('image', file);
                 
@@ -117,7 +127,6 @@ const NotesMode = () => {
                 setCurrentImageUrl(imageUrl);
                 setImage(file);
                 setIsSelectingRegions(true);
-                setSelectedRegions([]);
             } catch (error) {
                 console.error('Failed to upload image:', error);
                 alert('Error uploading image: ' + error.message);
