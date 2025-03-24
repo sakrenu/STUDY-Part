@@ -300,7 +300,7 @@ html, body {
   white-space: nowrap; /* Keeps text on a single line within each span */
   overflow: hidden; /* Hides text until it’s “typed” */
   max-width: 0; /* Starts with no width */
-  animation: typing 3s steps(30, end) forwards, blink 0.9s step-end 2s; /* Typing and cursor animations */
+  animation: typing 3s steps(30, end) forwards, blink 1s step-end 2s; /* Typing and cursor animations */
 }
 
 /* Animation delays for each line */
