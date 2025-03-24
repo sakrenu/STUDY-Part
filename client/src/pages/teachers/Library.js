@@ -30,7 +30,7 @@ const Library = () => {
     const fetchLessons = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('http://localhost:5000/get_lessons', {
+        const response = await axios.get('http://127.0.0.1:8000/get_lessons', {
           params: { teacher_id: teacherEmail },
         });
         setLessons(response.data.lessons);
@@ -64,7 +64,7 @@ const Library = () => {
     }
     setIsLoading(true);
     try {
-      await axios.post('http://localhost:5000/add_note', {
+      await axios.post('http://127.0.0.1:8000/add_note', {
         image_url: lessons.find((l) => l.id === currentLessonForNotes).originalImageUrl,
         segment_index: parseInt(currentSegmentForNotes.split('_')[1]),
         note: editNote,

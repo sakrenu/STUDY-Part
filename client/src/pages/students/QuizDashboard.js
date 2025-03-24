@@ -15,7 +15,7 @@ const QuizDashboard = () => {
       setLoading(true);
       setError('');
       // Optionally pass pagination params; here we get page 1 with 10 quizzes.
-      const response = await axios.get('http://localhost:5000/get_all_quizzes', {
+      const response = await axios.get('http://127.0.0.1:8000/get_all_quizzes', {
         params: { page: 1, limit: 10 }
       });
       setQuizzes(response.data.quizzes);
