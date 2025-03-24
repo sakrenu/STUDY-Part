@@ -1,0 +1,10 @@
+FastSAM-x.pt
+onnx_models/
+output_mask.png
+sam2.1_b.pt
+sam2.1_l.pt
+sam2.1_s.pt
+sam_vit_b_01ec64.pth
+sam_vit_h_4b8939.pth
+sam_vit_l_0b3195.pth
+static/
