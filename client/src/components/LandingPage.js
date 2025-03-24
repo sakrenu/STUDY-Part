@@ -87,7 +87,9 @@ const LandingPage = () => {
                 <span className="block"> AI-Powered Interactivity</span>
               </h1>
               <h2 className="hero-subtitle">
-                Create engaging learning experiences with AI-enhanced image analysis and interactive content generation for both teachers and students.
+                <span className="typed-line line1">Create engaging learning experiences with AI</span>
+                <span className="typed-line line2"> enhanced image analysis and </span>
+                <span className="typed-line line3"> content generation for both teachers and students.</span>
               </h2>
               <div className="cta-container">
                 <button className="primary-btn" onClick={() => navigateToSignup('student')}>

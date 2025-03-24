@@ -294,6 +294,48 @@ html, body {
   text-shadow: 0 0 2px #FFFFFF, 0 0 10px #D774E4;
 }
 
+/* Style for each line */
+.typed-line {
+  display: block; /* Forces each span to a new line */
+  white-space: nowrap; /* Keeps text on a single line within each span */
+  overflow: hidden; /* Hides text until it’s “typed” */
+  max-width: 0; /* Starts with no width */
+  animation: typing 3s steps(30, end) forwards, blink 0.9s step-end 2s; /* Typing and cursor animations */
+}
+
+/* Animation delays for each line */
+.line1 {
+  animation-delay: 0s; /* Starts immediately */
+}
+
+.line2 {
+  animation-delay: 2.5s; /* Starts after line1 finishes */
+}
+
+.line3 {
+  animation-delay: 4.5s; /* Starts after line2 finishes */
+}
+
+/* Typing animation */
+@keyframes typing {
+  from {
+    max-width: 0; /* Text is hidden */
+  }
+  to {
+    max-width: 100%; /* Text fully appears */
+  }
+}
+
+/* Blinking cursor animation */
+@keyframes blink {
+  from, to {
+    border-color: transparent; /* Cursor invisible */
+  }
+  50% {
+    border-color: #FFFFFF; /* Cursor visible */
+  }
+}
+
 /* Media Queries for screens below 600px */
 @media (max-width: 600px) {
   /* Navigation Bar */
