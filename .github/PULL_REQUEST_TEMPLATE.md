@@ -5,7 +5,9 @@
 - Updates the following file with bug fix <!-- Example -->
 
 ### Notion ID
-<!-- Attach the notion ID here -->
+<!-- Attach the notion ID here
+Also put it in the name of the PR for uniformity as we have been doing so far -->
+
 
 ### ✅ Checklist
 - [ ] Tested changes locally
