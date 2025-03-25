@@ -13,13 +13,16 @@ const Label = ({ teacherEmail }) => {
   const [currentImageUrl, setCurrentImageUrl] = useState(null);
   const [processedRegions, setProcessedRegions] = useState([]);
   const [isLabeling, setIsLabeling] = useState(false);
-  const [labels, setLabels] = useState([]); // Store labels with click positions
-  const [currentLabel, setCurrentLabel] = useState(null); // For the label being added
+  const [labels, setLabels] = useState([]);
+  const [currentLabel, setCurrentLabel] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStudyByPart, setIsStudyByPart] = useState(false);
+  const [currentPartIndex, setCurrentPartIndex] = useState(-1);
   const cropperRef = useRef(null);
   const imageRef = useRef(null);
 
+  // Handle authentication
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -28,6 +31,22 @@ const Label = ({ teacherEmail }) => {
     });
     return () => unsubscribe();
   }, []);
+
+  // Handle Study-by-Part animation
+  useEffect(() => {
+    if (isStudyByPart && currentPartIndex >= 0 && processedOutput) {
+      const parts = processedOutput.regions.map((region, index) => ({
+        ...region,
+        label: labels.find((l) => l.regionIndex === region.regionIndex)?.text || `Part ${index + 1}`,
+      }));
+      if (currentPartIndex < parts.length) {
+        const timer = setTimeout(() => {
+          setCurrentPartIndex((prev) => prev + 1);
+        }, 15000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isStudyByPart, currentPartIndex, processedOutput, labels]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -106,7 +125,6 @@ const Label = ({ teacherEmail }) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Normalize click coordinates to the image's original dimensions
     const imageWidth = imageRef.current.naturalWidth;
     const imageHeight = imageRef.current.naturalHeight;
     const displayWidth = rect.width;
@@ -114,7 +132,6 @@ const Label = ({ teacherEmail }) => {
     const normalizedX = (x / displayWidth) * imageWidth;
     const normalizedY = (y / displayHeight) * imageHeight;
 
-    // Find the region that was clicked
     const clickedRegion = processedOutput.regions.find((region) => {
       const { x: regionX, y: regionY, width, height } = region.position;
       return (
@@ -126,10 +143,8 @@ const Label = ({ teacherEmail }) => {
     });
 
     if (clickedRegion) {
-      // Check if this region already has a label
       const existingLabel = labels.find((label) => label.regionIndex === clickedRegion.regionIndex);
       if (existingLabel) {
-        // If the region already has a label, update its click position
         setLabels((prev) =>
           prev.map((label) =>
             label.regionIndex === clickedRegion.regionIndex
@@ -138,7 +153,6 @@ const Label = ({ teacherEmail }) => {
           )
         );
       } else {
-        // Set the current label being added
         setCurrentLabel({
           clickX: x,
           clickY: y,
@@ -165,6 +179,108 @@ const Label = ({ teacherEmail }) => {
     setCurrentLabel(null);
   };
 
+  const handleStudyByPart = () => {
+    setIsStudyByPart(true);
+    setCurrentPartIndex(0);
+  };
+
+  const renderStudyByPart = () => {
+    if (!processedOutput) return null;
+
+    const parts = processedOutput.regions.map((region, index) => ({
+      ...region,
+      label: labels.find((l) => l.regionIndex === region.regionIndex)?.text || `Part ${index + 1}`,
+    }));
+
+    return (
+      <div className="study-by-part-container" style={{ display: 'flex', gap: '20px' }}>
+        <div className="original-image-study" style={{ position: 'relative', width: '800px', height: '600px' }}>
+          <img
+            src={currentImageUrl}
+            alt="Original with empty parts"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
+          {parts.map((part, index) => (
+            <div
+              key={index}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+              }}
+            >
+              {index > currentPartIndex && (
+                <img
+                  src={part.maskUrl}
+                  alt={`Mask ${index}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    opacity: 0.5,
+                    filter: 'grayscale(100%)',
+                  }}
+                />
+              )}
+              {index <= currentPartIndex && (
+                <img
+                  src={part.maskUrl}
+                  alt={`Part ${index}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    opacity: 1,
+                    transition: 'opacity 0.5s ease-in',
+                  }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="parts-list" style={{ width: '300px' }}>
+          <h3>Parts</h3>
+          {parts.map((part, index) => (
+            <div
+              key={index}
+              style={{
+                marginBottom: '10px',
+                opacity: index > currentPartIndex ? 0.5 : 1,
+                transition: 'opacity 0.5s ease',
+              }}
+            >
+              <img
+                src={part.maskUrl}
+                alt={`Part ${index}`}
+                style={{
+                  width: '100px',
+                  height: 'auto',
+                  display: index <= currentPartIndex ? 'none' : 'block',
+                }}
+              />
+              <p
+                style={{
+                  fontWeight: index === currentPartIndex ? 'bold' : 'normal',
+                  color: index === currentPartIndex ? '#ffffff' : '#cccccc',
+                }}
+              >
+                {part.label}
+              </p>
+            </div>
+          ))}
+          {currentPartIndex >= parts.length && (
+            <button onClick={() => setIsStudyByPart(false)} className="exit-study-button">
+              Exit Study-by-Part
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderProcessedOutput = () => {
     return (
       <div className="processed-output-container">
@@ -176,7 +292,6 @@ const Label = ({ teacherEmail }) => {
             className="base-image"
             style={{ width: '800px', height: '600px', objectFit: 'contain', cursor: isLabeling ? 'crosshair' : 'default' }}
           />
-          {/* Reintroduce the colored masks */}
           {processedOutput.regions.map((region, index) => (
             <div key={index} className="region-overlay">
               <img
@@ -190,20 +305,17 @@ const Label = ({ teacherEmail }) => {
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
-                  opacity: 0.5, // Translucent mask
-                  pointerEvents: 'none', // Allow clicks to pass through
+                  opacity: 0.5,
+                  pointerEvents: 'none',
                 }}
               />
             </div>
           ))}
-          {/* Render the lines and labels */}
           {labels.map((label, index) => {
-            // Calculate label position (offset from the clicked point)
-            const labelX = label.clickX + 100; // Offset to the right
-            const labelY = label.clickY - 20; // Slightly above the click point
+            const labelX = label.clickX + 100;
+            const labelY = label.clickY - 20;
             return (
               <div key={index} className="label-wrapper">
-                {/* Draw a line from the clicked point to the label */}
                 <svg
                   style={{
                     position: 'absolute',
@@ -223,7 +335,6 @@ const Label = ({ teacherEmail }) => {
                     strokeWidth="2"
                   />
                 </svg>
-                {/* Display the label text */}
                 <div
                   className="label-text"
                   style={{
@@ -271,12 +382,17 @@ const Label = ({ teacherEmail }) => {
             </div>
           )}
         </div>
-
         {isLabeling && (
           <button onClick={handleDoneLabeling} className="done-labeling-button">
             Done Labeling
           </button>
         )}
+        {!isLabeling && !isStudyByPart && (
+          <button onClick={handleStudyByPart} className="study-by-part-button">
+            Study-by-Part
+          </button>
+        )}
+        {isStudyByPart && renderStudyByPart()}
       </div>
     );
   };
