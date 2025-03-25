@@ -160,38 +160,86 @@
   }
 
   .study-by-part-container {
-    margin-top: 20px;
+  margin-top: 20px;
+}
+
+.original-image-study {
+  background: #1a1a1a;
+  border: 1px solid #00ffcc;
+}
+
+.parts-list {
+  background: #2a2a2a;
+  padding: 10px;
+  border-radius: 5px;
+  color: #ffffff;
+}
+
+.parts-list h3 {
+  margin-top: 0;
+  color: #00ffcc;
+}
+
+.study-by-part-button,
+.exit-study-button {
+  background-color: #00ffcc;
+  color: #1a1a1a;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.study-by-part-button:hover,
+.exit-study-button:hover {
+  background-color: #00ccaa;
+}
+
+/* Existing styles remain unchanged, add or update this */
+@keyframes slideIn {
+  from {
+    left: calc(100% + 320px); /* Start from right side (image width + parts list width + gap) */
   }
-  
-  .original-image-study {
-    background: #1a1a1a;
-    border: 1px solid #00ffcc;
+  to {
+    left: 0; /* End at original position */
   }
-  
-  .parts-list {
-    background: #2a2a2a;
-    padding: 10px;
-    border-radius: 5px;
-    color: #ffffff;
-  }
-  
-  .parts-list h3 {
-    margin-top: 0;
-    color: #00ffcc;
-  }
-  
-  .study-by-part-button,
-  .exit-study-button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-  }
-  
-  .study-by-part-button:hover,
-  .exit-study-button:hover {
-    background-color: #00ccaa;
-  }
+}
+
+.study-by-part-container {
+  margin-top: 20px;
+  position: relative;
+}
+
+.original-image-study {
+  background: #1a1a1a;
+  border: 1px solid #00ffcc;
+}
+
+.parts-list {
+  background: #2a2a2a;
+  padding: 10px;
+  border-radius: 5px;
+  color: #ffffff;
+}
+
+.parts-list h3 {
+  margin-top: 0;
+  color: #00ffcc;
+}
+
+.study-by-part-button,
+.exit-study-button {
+  background-color: #00ffcc;
+  color: #1a1a1a;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.study-by-part-button:hover,
+.exit-study-button:hover {
+  background-color: #00ccaa;
+}

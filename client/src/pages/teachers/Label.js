@@ -22,7 +22,6 @@ const Label = ({ teacherEmail }) => {
   const cropperRef = useRef(null);
   const imageRef = useRef(null);
 
-  // Handle authentication
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -32,7 +31,6 @@ const Label = ({ teacherEmail }) => {
     return () => unsubscribe();
   }, []);
 
-  // Handle Study-by-Part animation
   useEffect(() => {
     if (isStudyByPart && currentPartIndex >= 0 && processedOutput) {
       const parts = processedOutput.regions.map((region, index) => ({
@@ -42,7 +40,7 @@ const Label = ({ teacherEmail }) => {
       if (currentPartIndex < parts.length) {
         const timer = setTimeout(() => {
           setCurrentPartIndex((prev) => prev + 1);
-        }, 15000);
+        }, 4000); // 4 seconds as requested earlier
         return () => clearTimeout(timer);
       }
     }
@@ -230,11 +228,15 @@ const Label = ({ teacherEmail }) => {
                   src={part.maskUrl}
                   alt={`Part ${index}`}
                   style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: index === currentPartIndex ? 'calc(100% + 320px)' : 0,
                     width: '100%',
                     height: '100%',
                     objectFit: 'contain',
                     opacity: 1,
-                    transition: 'opacity 0.5s ease-in',
+                    transition: index === currentPartIndex ? 'left 1s ease-in-out' : 'none',
+                    animation: index === currentPartIndex ? 'slideIn 1s ease-in-out forwards' : 'none',
                   }}
                 />
               )}
@@ -248,7 +250,7 @@ const Label = ({ teacherEmail }) => {
               key={index}
               style={{
                 marginBottom: '10px',
-                opacity: index > currentPartIndex ? 0.5 : 1,
+                opacity: index > currentPartIndex ? 1 : 0,
                 transition: 'opacity 0.5s ease',
               }}
             >
@@ -258,7 +260,7 @@ const Label = ({ teacherEmail }) => {
                 style={{
                   width: '100px',
                   height: 'auto',
-                  display: index <= currentPartIndex ? 'none' : 'block',
+                  display: index > currentPartIndex ? 'block' : 'none',
                 }}
               />
               <p
