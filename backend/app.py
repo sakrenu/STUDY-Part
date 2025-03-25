@@ -1,4 +1,3 @@
-
 import os
 import io
 import requests
@@ -549,14 +548,13 @@ async def get_embedding(data: GetEmbeddingRequest):
             # Generate a unique ID for this embedding
             embedding_id = str(uuid.uuid4())
             
-            # Store the embedding with the ID
+            # Store the embedding with the ID and original image URL
             image_embeddings_store[embedding_id] = {
                 'embedding': embedding,
                 'teacher_id': data.teacher_id,
-                'created_at': time.time()
+                'created_at': time.time(),
+                'image_url': data.image_url   # new field for original image URL
             }
-            
-            # Add expiry logic - perhaps a background task to clean up old embeddings
             
             return {
                 'embedding_id': embedding_id,
@@ -583,10 +581,8 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         embedding_data = image_embeddings_store[data.image_embedding_id]
         image_embedding = embedding_data['embedding']
         
-        # Convert points to format expected by generate_mask
+        # Generate binary mask
         points = [[point.x, point.y] for point in data.points]
-        
-        # Generate mask
         mask = generate_mask(
             image_embedding=image_embedding,
             points=points,
@@ -594,26 +590,53 @@ async def segment_with_points_route(data: PointSegmentationRequest):
             original_size=data.original_size
         )
         
-        # Convert mask to image and upload to Cloudinary
-        mask_image = Image.fromarray(mask)
+        # Retrieve the original image via stored URL
+        original_url = embedding_data.get('image_url')
+        if not original_url:
+            raise HTTPException(status_code=500, detail="Original image URL is missing from the embedding data.")
+            
+        temp_orig = f"temp_orig_{str(uuid.uuid4())[:8]}.jpg"
+        try:
+            response = requests.get(original_url)
+            response.raise_for_status()
+            with open(temp_orig, 'wb') as f:
+                f.write(response.content)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to download original image: {str(e)}")
         
-        # Save to a temporary buffer
+        # Load the original image using cv2 in color mode
+        original_image = cv2.imread(temp_orig, cv2.IMREAD_COLOR)
+        os.remove(temp_orig)
+        if original_image is None:
+            raise HTTPException(status_code=500, detail="Failed to read the downloaded original image.")
+        
+        # Resize the mask to match the original image dimensions
+        mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]))
+        # Convert mask to boolean
+        mask_bool = mask > 0
+        
+        # Apply the mask to the original image
+        segmented_image = original_image.copy()
+        segmented_image[~mask_bool] = 0
+        
+        # Convert the segmented image from BGR to RGB for correct display
+        segmented_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB)
+        
+        # Save the segmented image to a temporary buffer and upload to Cloudinary
+        pil_image = Image.fromarray(segmented_image)
         buffer = io.BytesIO()
-        mask_image.save(buffer, format="PNG")
+        pil_image.save(buffer, format="PNG")
         buffer.seek(0)
-        
-        # Upload to Cloudinary
         upload_result = cloudinary.uploader.upload(
             buffer,
             resource_type="image",
             allowed_cors_origins=["http://localhost:3000"],
             access_mode="anonymous"
         )
-        
-        mask_url = upload_result['secure_url']
+        segment_url = upload_result['secure_url']
         
         return {
-            'mask_url': mask_url,
+            'mask_url': segment_url,
             'success': True
         }
     except Exception as e:

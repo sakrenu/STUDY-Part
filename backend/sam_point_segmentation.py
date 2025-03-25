@@ -62,34 +62,47 @@ def generate_mask(image_embedding, points, labels, original_size):
 
 def segment_with_points(image_path, points, labels):
     """
-    Perform point-based segmentation on an image using SAM.
+    Perform point-based segmentation on an image using SAM and return the segmented colored image.
     """
     # Step 1: Get image embeddings
     image_embedding = get_image_embeddings(image_path)
 
     # Step 2: Get original image size
-    image = Image.open(image_path)
-    original_size = image.size  # (width, height)
+    image_pil = Image.open(image_path)
+    original_size = image_pil.size  # (width, height)
 
     # Step 3: Generate the mask using points
     mask = generate_mask(image_embedding, points, labels, original_size)
 
-    return mask
+    # Load the original image using cv2
+    original_image = cv2.imread(image_path)
+
+    # Resize the mask to match the original image dimensions
+    mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]))
+
+    # Convert mask to boolean
+    mask_bool = mask > 0
+
+    # Apply the mask to the original image
+    segmented_image = original_image.copy()
+    segmented_image[~mask_bool] = 0
+
+    return segmented_image
 
 # Example usage
 if __name__ == "__main__":
     # Example inputs
     start_time = time.time()
-    image_path = r"D:\abhin\Comding\ML\Major Project\StudyPart\STUDY-Part\backend\output_segmented.png"
+    image_path = "output_segmented.png"
     points = [[500, 300], [600, 400], [700, 200]]  # [x, y] in original image coordinates
     labels = [1, 1, 0]  # 1 for positive (foreground), 0 for negative (background)
 
     # Generate mask
-    mask = segment_with_points(image_path, points, labels)
+    segmented_image = segment_with_points(image_path, points, labels)
 
-    # Save the mask for visualization
-    cv2.imwrite("output_mask.png", mask)
+    # Save the segmented image for visualization
+    cv2.imwrite("output_segmented_image.png", segmented_image)
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"Execution time: {execution_time} seconds")
-    print("Mask saved as output_mask.png")
+    print("Segmented image saved as output_segmented_image.png")
