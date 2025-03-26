@@ -1,15 +1,19 @@
+/* Import Poppins font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 /* Reset default margins and padding */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   overflow-x: hidden;
+  font-family: 'Poppins', sans-serif;
 }
 
 /* Base layout */
-.landing-container {
+.landing-page .landing-container {
   min-height: 100vh;
-  background-color: #05071C;
+  background-color: #000000;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
@@ -17,7 +21,7 @@ html, body {
 
 /* Dynamic dark gradient background */
 .bg-gradient-shift {
-  background: linear-gradient(45deg, #b40c7c, #06296b, #073e3a, #4d0896);
+  background: linear-gradient(45deg, #e982c8, #000000, #0f0221, #4f2879);
   background-size: 400% 400%; /* Allows the animation to shift the gradient */
   animation: gradientShift 8s ease infinite; /* Smooth infinite animation */
 }
@@ -37,7 +41,7 @@ html, body {
 
 /* Navigation */
 .nav-container {
-  background-color: #193d66;
+  background-color: #3c2468;
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -67,7 +71,7 @@ html, body {
   display: inline-block;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   text-decoration: none;
-  font-family: 'Arial', 'Helvetica', sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .logo span {
@@ -79,7 +83,7 @@ html, body {
 }
 
 .logo .part {
-  color: #ffd700;
+  color: pink;
 }
 
 .nav-links {
@@ -100,7 +104,7 @@ html, body {
 }
 
 .register-btn {
-  background: linear-gradient(90deg, #4A90E2, #D774E4);
+  background: linear-gradient(90deg, #573688, #520c5b);
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   color: #FFFFFF;
@@ -109,12 +113,12 @@ html, body {
 }
 
 .register-btn:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 10px #4A90E2, 0 0 10px #4A90E2;
+  box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
 .hero-section {
   padding: 7rem 1.5rem 5rem;
-  max-width: 53%;
+  max-width: 55%;
   margin-left: 50px;
   display: flex;
   justify-content: center;
@@ -152,29 +156,28 @@ html, body {
   gap: 1rem;
 }
 
-.primary-btn {
-  background: linear-gradient(90deg, #816ced, #D774E4);
+.landing-page .primary-btn {
+  background: linear-gradient(90deg, #3e2663, #520c5b);
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
   color: #FFFFFF;
   transition: box-shadow 0.3s ease;
 }
 
-.primary-btn:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 15px #4A90E2, 0 0 15px #4A90E2;
+.landing-page .primary-btn:hover {
+  box-shadow: 0 0 10px #9b4ae2, 0 0 15px #7f4ae2, 0 0 15px #9b4ae2;
 }
 
-.secondary-btn {
-  background: linear-gradient(90deg, #FFD700, #338570);
-  border: 2px solid #FFD700;
-  color: #000000;
+.landing-page .secondary-btn {
+  background: linear-gradient(90deg, #3e2663, #520c5b);
+  color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
   transition: box-shadow 0.3s ease;
 }
 
-.secondary-btn:hover {
-  box-shadow: 0 0 10px #6039d6, 0 0 15px #7b3ee3, 0 0 15px #6a40c0;
+.landing-page .secondary-btn:hover {
+  box-shadow: 0 0 10px #9b4ae2, 0 0 15px #7f4ae2, 0 0 15px #9b4ae2;
 }
 
 .hero-image {
@@ -201,18 +204,18 @@ html, body {
 }
 
 .feature-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
+  background: linear-gradient(135deg, #000000, #30074d, hsl(0, 0%, 0%));
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .feature-card:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 20px #4A90E2, 0 0 30px #4A90E2;
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
 }
 
 .feature-title {
-  color: #FFD700;
+  color: #f1b5fe;
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
@@ -236,18 +239,18 @@ html, body {
 }
 
 .product-card {
-  background: linear-gradient(135deg, #965cd4, #2752a1, #105656);
+  background: linear-gradient(135deg,  #000000, #30074d, hsl(0, 0%, 0%));
   padding: 2rem;
   border-radius: 0.5rem;
   transition: box-shadow 0.3s ease;
 }
 
 .product-card:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 20px #4A90E2, 0 0 30px #4A90E2;
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
 }
 
 .product-title {
-  color: #FFD700;
+  color: #f1b5fe;
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
@@ -289,6 +292,48 @@ html, body {
   font-size: 2.5rem;
   font-weight: bold;
   text-shadow: 0 0 2px #FFFFFF, 0 0 10px #D774E4;
+}
+
+/* Style for each line */
+.typed-line {
+  display: block; /* Forces each span to a new line */
+  white-space: nowrap; /* Keeps text on a single line within each span */
+  overflow: hidden; /* Hides text until it’s “typed” */
+  max-width: 0; /* Starts with no width */
+  animation: typing 3s steps(30, end) forwards, blink 1s step-end 2s; /* Typing and cursor animations */
+}
+
+/* Animation delays for each line */
+.line1 {
+  animation-delay: 0s; /* Starts immediately */
+}
+
+.line2 {
+  animation-delay: 2.5s; /* Starts after line1 finishes */
+}
+
+.line3 {
+  animation-delay: 4.5s; /* Starts after line2 finishes */
+}
+
+/* Typing animation */
+@keyframes typing {
+  from {
+    max-width: 0; /* Text is hidden */
+  }
+  to {
+    max-width: 100%; /* Text fully appears */
+  }
+}
+
+/* Blinking cursor animation */
+@keyframes blink {
+  from, to {
+    border-color: transparent; /* Cursor invisible */
+  }
+  50% {
+    border-color: #FFFFFF; /* Cursor visible */
+  }
 }
 
 /* Media Queries for screens below 600px */
@@ -348,7 +393,7 @@ html, body {
   }
 
   .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
 
   .cta-container {
