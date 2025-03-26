@@ -1,0 +1,230 @@
+/* src/pages/teachers/PointSegmentation.css */
+
+/* Main container */
+.point-segmentation-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Header */
+  .segmentation-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .segmentation-header h1 {
+    color: white;
+    font-size: 2.5rem;
+    margin: 0;
+    padding: 16px;
+  }
+  
+  /* Messages */
+  .error-message {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-left: 4px solid #f44336;
+    color: #721c24;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+  }
+  
+  .success-message {
+    background-color: rgba(0, 255, 0, 0.1);
+    border-left: 4px solid #4caf50;
+    color: #155724;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+  }
+  
+  /* Sections */
+  .upload-section,
+  .selection-mode-section,
+  .image-interaction-section,
+  .result-section {
+    background-color: rgb(1, 1, 17);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+  section h2 {
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+  }
+  
+  /* File upload */
+  .upload-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .file-upload-label {
+    display: inline-block;
+    cursor: pointer;
+  }
+  
+  .file-input {
+    display: none;
+  }
+  
+  .upload-button {
+    display: inline-block;
+    background-color: #4a6cb3;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+  }
+  
+  .upload-button:hover {
+    background-color: #3a5da3;
+  }
+  
+  /* Buttons */
+  button {
+    cursor: pointer;
+    padding: 10px 18px;
+    background-color: #4a6cb3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.3s;
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
+  
+  button:hover {
+    background-color: #3a5da3;
+    transform: translateY(-2px);
+  }
+  
+  button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .generate-button {
+    display: block;
+    margin: 0 auto;
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+  
+  /* Selection mode */
+  .mode-buttons {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    gap: 10px;
+  }
+  
+  .mode-button {
+    flex: 1;
+    max-width: 200px;
+    padding: 12px;
+    text-align: center;
+  }
+  
+  .mode-button.active {
+    background-color: #333;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .selection-instructions {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  /* Image and Canvas */
+  .image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .image-canvas-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+    max-width: 100%;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  
+  .segmentation-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .selection-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+  }
+  
+  /* Control buttons */
+  .control-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .segment-button {
+    background-color: #28a745;
+    margin-left: 10px;
+  }
+  
+  .segment-button:hover {
+    background-color: #218838;
+  }
+  
+  /* Result section */
+  .result-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .mask-image {
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  
+  .actions-buttons {
+    display: flex;
+    justify-content: center;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .mode-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .mode-button {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
