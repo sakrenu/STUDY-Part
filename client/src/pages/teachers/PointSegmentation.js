@@ -18,6 +18,9 @@ const PointSegmentation = () => {
   const [maskUrl, setMaskUrl] = useState('');
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [selectionMode, setSelectionMode] = useState('foreground'); // 'foreground' or 'background'
+  const [simulationVisible, setSimulationVisible] = useState(false);
+  const [simulationProgress, setSimulationProgress] = useState(0);
+  const [simulationMessage, setSimulationMessage] = useState('');
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -48,39 +51,93 @@ const PointSegmentation = () => {
     }
   };
 
-  // Generate embeddings for the uploaded image
+  // Generate embeddings for the uploaded image with simulated progress
   const handleGenerateEmbeddings = async () => {
     if (!selectedFile) {
       setError("Please select an image first.");
       return;
     }
     
-    try {
-      setIsGeneratingEmbedding(true);
-      setError('');
-      
-      // First upload the image
-      const uploadForm = new FormData();
-      uploadForm.append('image', selectedFile);
-      const uploadResponse = await axios.post('http://127.0.0.1:8000/upload', uploadForm, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const imageUrl = uploadResponse.data.image_url;
-      setUploadedImageUrl(imageUrl);
-      
-      // Then generate embeddings
-      const embeddingResponse = await axios.post('http://127.0.0.1:8000/get_image_embedding', {
-        image_url: imageUrl,
-        teacher_id: teacherId
-      });
-      
-      setImageEmbeddingId(embeddingResponse.data.embedding_id);
+    setError('');
+    setSuccessMessage('');
+    setIsGeneratingEmbedding(true);
+    setSimulationVisible(true);
+    setSimulationProgress(0);
+    
+    let apiFinished = false;
+    let currentProgress = 0;
+    
+    const simulationPromise = new Promise(resolve => {
+      const updateProgress = () => {
+        if (apiFinished) {
+          // When API is finished, quickly complete the progress
+          const finishProgress = () => {
+            currentProgress = Math.min(100, currentProgress + 5);
+            setSimulationProgress(currentProgress);
+            setSimulationMessage(`Finishing up (${Math.round(currentProgress)}%)`);
+            
+            if (currentProgress < 100) {
+              setTimeout(finishProgress, 50); // Quick progress updates
+            } else {
+              resolve();
+            }
+          };
+          finishProgress();
+          return;
+        }
+
+        if (currentProgress < 25) {
+          setSimulationMessage(`Loading your image... (${Math.round(currentProgress)}%)`);
+          currentProgress = Math.min(25, currentProgress + 1);
+        } else if (currentProgress < 50) {
+          setSimulationMessage(`Generating image embeddings... (${Math.round(currentProgress)}%)`);
+          currentProgress = Math.min(50, currentProgress + 0.5);
+        } else if (currentProgress < 85) {
+          setSimulationMessage(`Almost there (${Math.round(currentProgress)}%)`);
+          currentProgress = Math.min(85, currentProgress + 0.3);
+        }
+
+        setSimulationProgress(currentProgress);
+        
+        if (!apiFinished) {
+          setTimeout(updateProgress, 100);
+        }
+      };
+
+      updateProgress();
+    });
+    
+    // API calls in parallel with the simulation
+    const apiPromise = (async () => {
+      try {
+        const uploadForm = new FormData();
+        uploadForm.append('image', selectedFile);
+        const uploadResponse = await axios.post('http://127.0.0.1:8000/upload', uploadForm, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        const imageUrl = uploadResponse.data.image_url;
+        setUploadedImageUrl(imageUrl);
+        
+        const embeddingResponse = await axios.post('http://127.0.0.1:8000/get_image_embedding', {
+          image_url: imageUrl,
+          teacher_id: teacherId
+        });
+        
+        setImageEmbeddingId(embeddingResponse.data.embedding_id);
+      } catch (err) {
+        setError('Failed to generate embeddings: ' + err.message);
+      } finally {
+        apiFinished = true;
+      }
+    })();
+    
+    await Promise.all([apiPromise, simulationPromise]);
+    setSimulationVisible(false);
+    
+    if (!error) {
       setSuccessMessage('Embeddings generated successfully! Now select points on the image.');
-    } catch (err) {
-      setError('Failed to generate embeddings: ' + err.message);
-    } finally {
-      setIsGeneratingEmbedding(false);
     }
+    setIsGeneratingEmbedding(false);
   };
 
   // Handle canvas click to add points
@@ -282,6 +339,54 @@ const PointSegmentation = () => {
               className="selection-canvas"
               onClick={handleCanvasClick}
             />
+            {simulationVisible && (
+              <>
+                <div className="simulation-background" style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent overlay
+                  zIndex: 9,
+                }}/>
+                <div className="simulation-overlay" style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  color: 'white',
+                  zIndex: 10,
+                  padding: '20px',
+                  borderRadius: '10px',
+                }}>
+                  <div className="simulation-bar-container" style={{
+                    width: '300px',
+                    height: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    marginBottom: '15px',
+                    borderRadius: '5px',
+                    overflow: 'hidden',
+                  }}>
+                    <div className="simulation-bar" style={{
+                      height: '100%',
+                      width: simulationProgress + '%',
+                      backgroundColor: '#3498db', // More visible blue color
+                      transition: 'width 0.2s linear',
+                      boxShadow: '0 0 10px rgba(52, 152, 219, 0.5)', // Glow effect
+                    }}></div>
+                  </div>
+                  <div className="simulation-message" style={{
+                    fontSize: '18px',
+                    fontWeight: '500',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5)', // Text shadow for better visibility
+                  }}>
+                    {simulationMessage}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
             
             {imageEmbeddingId && (
