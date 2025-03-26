@@ -253,19 +253,36 @@ const PointSegmentation = () => {
       {imagePreview && (
         <section className="image-interaction-section">
           <div className="image-container">
-            <div className="image-canvas-wrapper">
-              <img 
-                ref={imageRef}
-                src={imagePreview} 
-                alt="Uploaded preview" 
-                className="segmentation-image"
+          <div className="image-canvas-wrapper">
+            <img 
+              ref={imageRef}
+              src={imagePreview} 
+              alt="Uploaded preview" 
+              className="segmentation-image"
+            />
+            {maskUrl && (
+              <img
+                src={maskUrl}
+                alt="Segmentation mask"
+                className="mask-overlay"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  opacity: 0.5, // Translucent overlay
+                  pointerEvents: 'none', // Allows clicks to pass through to the canvas
+                }}
               />
-              <canvas 
-                ref={canvasRef}
-                className="selection-canvas"
-                onClick={handleCanvasClick}
-              />
-            </div>
+            )}
+            <canvas 
+              ref={canvasRef}
+              className="selection-canvas"
+              onClick={handleCanvasClick}
+            />
+          </div>
             
             {imageEmbeddingId && (
               <div className="control-buttons">
@@ -284,21 +301,6 @@ const PointSegmentation = () => {
                 </button>
               </div>
             )}
-          </div>
-        </section>
-      )}
-
-      {maskUrl && (
-        <section className="result-section">
-          <h2>Segmentation Result</h2>
-          <div className="result-container">
-            <img src={maskUrl} alt="Segmentation mask" className="mask-image" />
-          </div>
-          <div className="actions-buttons">
-            <button onClick={() => window.open(maskUrl, '_blank')}>
-              Download Full Size
-            </button>
-            {/* Add more actions as needed */}
           </div>
         </section>
       )}

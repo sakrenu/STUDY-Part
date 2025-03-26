@@ -160,8 +160,6 @@
     margin-bottom: 20px;
     max-width: 100%;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
   }
   
   .segmentation-image {
