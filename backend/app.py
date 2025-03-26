@@ -583,60 +583,59 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         
         # Generate binary mask
         points = [[point.x, point.y] for point in data.points]
+        # Generate binary mask
         mask = generate_mask(
             image_embedding=image_embedding,
             points=points,
             labels=data.labels,
             original_size=data.original_size
         )
-        
+
         # Retrieve the original image via stored URL
         original_url = embedding_data.get('image_url')
-        if not original_url:
-            raise HTTPException(status_code=500, detail="Original image URL is missing from the embedding data.")
-            
-        temp_orig = f"temp_orig_{str(uuid.uuid4())[:8]}.jpg"
-        try:
-            response = requests.get(original_url)
-            response.raise_for_status()
-            with open(temp_orig, 'wb') as f:
-                f.write(response.content)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to download original image: {str(e)}")
-        
+        response = requests.get(original_url)
+        temp_orig = "temp_orig_image.jpg"
+        with open(temp_orig, "wb") as f:
+            f.write(response.content)
+
         # Load the original image using cv2 in color mode
         original_image = cv2.imread(temp_orig, cv2.IMREAD_COLOR)
         os.remove(temp_orig)
-        if original_image is None:
-            raise HTTPException(status_code=500, detail="Failed to read the downloaded original image.")
-        
+
         # Resize the mask to match the original image dimensions
         mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]))
-        # Convert mask to boolean
-        mask_bool = mask > 0
-        
-        # Apply the mask to the original image
-        segmented_image = original_image.copy()
-        segmented_image[~mask_bool] = 0
-        
-        # Convert the segmented image from BGR to RGB for correct display
-        segmented_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB)
-        
-        # Save the segmented image to a temporary buffer and upload to Cloudinary
-        pil_image = Image.fromarray(segmented_image)
+        mask_bool = mask > 0  # Convert to boolean mask
+
+        # Define a color for the mask, e.g., cyan (BGR format for OpenCV)
+        color = (0, 255, 255)
+
+        # Create a colored mask (RGB channels)
+        colored_mask = np.zeros_like(original_image)  # Shape: (height, width, 3)
+        for c in range(3):
+            colored_mask[:, :, c] = np.where(mask_bool, color[c], 0)
+
+        # Create RGBA mask (height, width, 4)
+        mask_rgba = np.zeros((*original_image.shape[:2], 4), dtype=np.uint8)
+        mask_rgba[:, :, :3] = colored_mask  # RGB channels
+        mask_rgba[:, :, 3] = mask  # Alpha channel (0 or 255)
+
+        # Convert to PIL Image and save to buffer
+        pil_mask = Image.fromarray(mask_rgba, 'RGBA')
         buffer = io.BytesIO()
-        pil_image.save(buffer, format="PNG")
+        pil_mask.save(buffer, format="PNG")
         buffer.seek(0)
+
+        # Upload to Cloudinary
         upload_result = cloudinary.uploader.upload(
             buffer,
             resource_type="image",
             allowed_cors_origins=["http://localhost:3000"],
             access_mode="anonymous"
         )
-        segment_url = upload_result['secure_url']
-        
+        mask_url = upload_result['secure_url']
+
         return {
-            'mask_url': segment_url,
+            'mask_url': mask_url,
             'success': True
         }
     except Exception as e:
