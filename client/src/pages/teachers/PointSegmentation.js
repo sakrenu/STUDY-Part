@@ -195,21 +195,22 @@ const PointSegmentation = () => {
       const scaleY = canvas.height / imageSize.height;
       
       ctx.beginPath();
-      ctx.arc(point.x * scaleX, point.y * scaleY, 5, 0, 2 * Math.PI);
+      // Increase radius from 5 to 7 for better visibility
+      ctx.arc(point.x * scaleX, point.y * scaleY, 7, 0, 2 * Math.PI);
       
-      // Different colors for foreground/background points
-      if (labels[index] === 1) {
-        ctx.fillStyle = 'green'; // Foreground points
-      } else {
-        ctx.fillStyle = 'red';   // Background points
-      }
-      
+      // Set point fill color based on label
+      ctx.fillStyle = labels[index] === 1 ? 'green' : 'red';
       ctx.fill();
+      
+      // Add a white border stroke to help the point stand out
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.stroke();
       
       // Add point number
       ctx.fillStyle = 'white';
       ctx.font = '10px Arial';
-      ctx.fillText(index + 1, point.x * scaleX + 7, point.y * scaleY + 7);
+      ctx.fillText(index + 1, point.x * scaleX + 9, point.y * scaleY + 9);
     });
   };
 
@@ -446,7 +447,7 @@ const PointSegmentation = () => {
                     ref={imageRef}
                     src={imagePreview} 
                     alt="Uploaded preview" 
-                    className="segmentation-image"
+                    className={`segmentation-image ${simulationVisible ? 'dull-image' : ''}`}
                   />
                   {maskUrl && (
                     <img

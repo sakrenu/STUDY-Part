@@ -314,6 +314,10 @@ button:disabled {
   height: auto;
 }
 
+.segmentation-image.dull-image {
+  filter: brightness(0.3);
+}
+
 .selection-canvas {
   position: absolute;
   top: 0;
