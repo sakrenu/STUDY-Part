@@ -13,9 +13,13 @@ const PointSegmentation = () => {
   const [labels, setLabels] = useState([]);
   const [isGeneratingEmbedding, setIsGeneratingEmbedding] = useState(false);
   const [isSegmenting, setIsSegmenting] = useState(false);
+  const [isCuttingOut, setIsCuttingOut] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [maskUrl, setMaskUrl] = useState('');
+  const [cutoutUrls, setCutoutUrls] = useState([]);
+  const [puzzleOutlineUrl, setPuzzleOutlineUrl] = useState('');
+  const [cutoutPositions, setCutoutPositions] = useState([]);
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [selectionMode, setSelectionMode] = useState('foreground'); // 'foreground' or 'background'
   const [simulationVisible, setSimulationVisible] = useState(false);
@@ -39,6 +43,9 @@ const PointSegmentation = () => {
       setLabels([]);
       setImageEmbeddingId('');
       setMaskUrl('');
+      setCutoutUrls([]);
+      setPuzzleOutlineUrl('');
+      setCutoutPositions([]);
       setError('');
       setSuccessMessage('');
       
@@ -250,6 +257,35 @@ const PointSegmentation = () => {
     }
   };
 
+  // Generate cutouts based on points
+  const handleGetCutouts = async () => {
+    if (!imageEmbeddingId || points.length === 0) {
+      setError("Please generate embeddings and select at least one point.");
+      return;
+    }
+    
+    try {
+      setIsCuttingOut(true);
+      setError('');
+      
+      const cutoutResponse = await axios.post('http://127.0.0.1:8000/get_point_cutouts', {
+        image_embedding_id: imageEmbeddingId,
+        points: points,
+        labels: labels,
+        original_size: [imageSize.width, imageSize.height]
+      });
+      
+      setCutoutUrls(cutoutResponse.data.segmented_urls);
+      setPuzzleOutlineUrl(cutoutResponse.data.puzzle_outline_url);
+      setCutoutPositions(cutoutResponse.data.positions);
+      setSuccessMessage('Cutouts generated successfully!');
+    } catch (err) {
+      setError('Failed to generate cutouts: ' + err.message);
+    } finally {
+      setIsCuttingOut(false);
+    }
+  };
+
   return (
     <div className="point-segmentation-container">
       <header className="segmentation-header">
@@ -310,84 +346,84 @@ const PointSegmentation = () => {
       {imagePreview && (
         <section className="image-interaction-section">
           <div className="image-container">
-          <div className="image-canvas-wrapper">
-            <img 
-              ref={imageRef}
-              src={imagePreview} 
-              alt="Uploaded preview" 
-              className="segmentation-image"
-            />
-            {maskUrl && (
-              <img
-                src={maskUrl}
-                alt="Segmentation mask"
-                className="mask-overlay"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  opacity: 0.5, // Translucent overlay
-                  pointerEvents: 'none', // Allows clicks to pass through to the canvas
-                }}
+            <div className="image-canvas-wrapper">
+              <img 
+                ref={imageRef}
+                src={imagePreview} 
+                alt="Uploaded preview" 
+                className="segmentation-image"
               />
-            )}
-            <canvas 
-              ref={canvasRef}
-              className="selection-canvas"
-              onClick={handleCanvasClick}
-            />
-            {simulationVisible && (
-              <>
-                <div className="simulation-background" style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent overlay
-                  zIndex: 9,
-                }}/>
-                <div className="simulation-overlay" style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  color: 'white',
-                  zIndex: 10,
-                  padding: '20px',
-                  borderRadius: '10px',
-                }}>
-                  <div className="simulation-bar-container" style={{
-                    width: '300px',
-                    height: '10px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    marginBottom: '15px',
-                    borderRadius: '5px',
-                    overflow: 'hidden',
+              {maskUrl && (
+                <img
+                  src={maskUrl}
+                  alt="Segmentation mask"
+                  className="mask-overlay"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    opacity: 0.5, // Translucent overlay
+                    pointerEvents: 'none', // Allows clicks to pass through to the canvas
+                  }}
+                />
+              )}
+              <canvas 
+                ref={canvasRef}
+                className="selection-canvas"
+                onClick={handleCanvasClick}
+              />
+              {simulationVisible && (
+                <>
+                  <div className="simulation-background" style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent overlay
+                    zIndex: 9,
+                  }}/>
+                  <div className="simulation-overlay" style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                    color: 'white',
+                    zIndex: 10,
+                    padding: '20px',
+                    borderRadius: '10px',
                   }}>
-                    <div className="simulation-bar" style={{
-                      height: '100%',
-                      width: simulationProgress + '%',
-                      backgroundColor: '#3498db', // More visible blue color
-                      transition: 'width 0.2s linear',
-                      boxShadow: '0 0 10px rgba(52, 152, 219, 0.5)', // Glow effect
-                    }}></div>
+                    <div className="simulation-bar-container" style={{
+                      width: '300px',
+                      height: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      marginBottom: '15px',
+                      borderRadius: '5px',
+                      overflow: 'hidden',
+                    }}>
+                      <div className="simulation-bar" style={{
+                        height: '100%',
+                        width: simulationProgress + '%',
+                        backgroundColor: '#3498db', // More visible blue color
+                        transition: 'width 0.2s linear',
+                        boxShadow: '0 0 10px rgba(52, 152, 219, 0.5)', // Glow effect
+                      }}></div>
+                    </div>
+                    <div className="simulation-message" style={{
+                      fontSize: '18px',
+                      fontWeight: '500',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.5)', // Text shadow for better visibility
+                    }}>
+                      {simulationMessage}
+                    </div>
                   </div>
-                  <div className="simulation-message" style={{
-                    fontSize: '18px',
-                    fontWeight: '500',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5)', // Text shadow for better visibility
-                  }}>
-                    {simulationMessage}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
             
             {imageEmbeddingId && (
               <div className="control-buttons">
@@ -404,9 +440,54 @@ const PointSegmentation = () => {
                 >
                   {isSegmenting ? 'Segmenting...' : 'Generate Segment'}
                 </button>
+                <button 
+                  onClick={handleGetCutouts} 
+                  className={`cutout-button ${isCuttingOut ? 'disabled' : ''}`}
+                  disabled={isCuttingOut || points.length === 0}
+                >
+                  {isCuttingOut ? 'Getting Cutouts...' : 'Get Cutouts'}
+                </button>
               </div>
             )}
           </div>
+        </section>
+      )}
+
+      {/* Cutouts display section */}
+      {cutoutUrls.length > 0 && (
+        <section className="cutouts-section">
+          <h2>Cutouts</h2>
+          <div className="cutouts-container">
+            {cutoutUrls.map((url, index) => {
+              const position = cutoutPositions[index];
+              return (
+                <div key={index} className="cutout-item">
+                  <img 
+                    src={url}
+                    alt={`Cutout ${index + 1}`}
+                    style={{
+                      width: position.width,
+                      height: position.height,
+                      maxWidth: '100%'
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          {puzzleOutlineUrl && (
+            <div className="puzzle-outline-container">
+              <h3>Puzzle Outline</h3>
+              <img 
+                src={puzzleOutlineUrl}
+                alt="Puzzle Outline"
+                style={{
+                  maxWidth: '100%',
+                  height: 'auto'
+                }}
+              />
+            </div>
+          )}
         </section>
       )}
     </div>
