@@ -472,15 +472,6 @@ const PointSegmentation = () => {
                   />
                   {simulationVisible && (
                     <>
-                      <div className="simulation-background" style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent overlay
-                        zIndex: 9,
-                      }}/>
                       <div className="simulation-overlay" style={{
                         position: 'absolute',
                         top: '50%',
@@ -495,11 +486,6 @@ const PointSegmentation = () => {
                         backdropFilter: 'blur(8px)',
                         width: '400px',
                       }}>
-                        <div className="neural-animation">
-                          <div className="neural-particles"></div>
-                          <div className="neural-particles"></div>
-                          <div className="neural-particles"></div>
-                        </div>
                         <div className="simulation-bar-container">
                           <div className="simulation-bar">
                             <div className="simulation-progress" style={{
@@ -514,6 +500,11 @@ const PointSegmentation = () => {
                         <div className="simulation-message">
                           {simulationMessage}
                         </div>
+                      </div>
+                      <div className="neural-animation-overlay">
+                        <div className="neural-particles"></div>
+                        <div className="neural-particles"></div>
+                        <div className="neural-particles"></div>
                       </div>
                     </>
                   )}
