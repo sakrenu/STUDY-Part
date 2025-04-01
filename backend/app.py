@@ -644,6 +644,102 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post('/get_point_cutouts')
+async def get_point_cutouts(data: PointSegmentationRequest):
+    try:
+        # Check if the embedding exists
+        if data.image_embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found. It may have expired. Please generate a new embedding.")
+        
+        embedding_data = image_embeddings_store[data.image_embedding_id]
+        image_embedding = embedding_data['embedding']
+        
+        # Generate the binary mask from points and labels
+        points = [[point.x, point.y] for point in data.points]
+        mask = generate_mask(
+            image_embedding=image_embedding,
+            points=points,
+            labels=data.labels,
+            original_size=data.original_size
+        )
+
+        # Download the original image from the stored URL
+        original_url = embedding_data.get('image_url')
+        response = requests.get(original_url)
+        temp_file = "temp_orig_image.jpg"
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+
+        # Load the image in color mode
+        original_image = cv2.imread(temp_file, cv2.IMREAD_COLOR)
+        os.remove(temp_file)
+
+        # Resize the mask to match the original image size
+        mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]), interpolation=cv2.INTER_NEAREST)
+
+        # Find the bounding box of the mask
+        coords = cv2.findNonZero(mask)
+        if coords is None:
+            raise ValueError("No valid mask generated")
+        x, y, w, h = cv2.boundingRect(coords)
+
+        # Create the cutout
+        img_crop = original_image[y:y+h, x:x+w]  # Crop the image (BGR)
+        mask_crop = mask[y:y+h, x:x+w]           # Crop the mask
+        img_crop_rgba = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGBA)  # Convert to RGBA
+        img_crop_rgba[:, :, 3] = mask_crop  # Set alpha channel (255 where mask is True)
+
+        # Create the puzzle outline
+        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)  # Full image to RGBA
+        alpha_channel = np.where(mask == 0, 255, 0).astype(np.uint8)      # Transparent where mask is True
+        original_rgba[:, :, 3] = alpha_channel
+
+        # Convert to PIL Images for PNG saving
+        pil_cutout = Image.fromarray(cv2.cvtColor(img_crop_rgba, cv2.COLOR_BGRA2RGBA), 'RGBA')
+        pil_outline = Image.fromarray(cv2.cvtColor(original_rgba, cv2.COLOR_BGRA2RGBA), 'RGBA')
+
+        # Upload the cutout to Cloudinary
+        cutout_buffer = io.BytesIO()
+        pil_cutout.save(cutout_buffer, format='PNG')
+        cutout_buffer.seek(0)
+        upload_result_cutout = cloudinary.uploader.upload(
+            cutout_buffer,
+            public_id=f'cutout_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        cutout_url = upload_result_cutout['secure_url']
+
+        # Upload the puzzle outline to Cloudinary
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+        upload_result_outline = cloudinary.uploader.upload(
+            outline_buffer,
+            public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        puzzle_outline_url = upload_result_outline['secure_url']
+
+        # Define the position of the cutout
+        position = {
+            'x': x,
+            'y': y,
+            'width': w,
+            'height': h,
+            'original_width': original_image.shape[1],
+            'original_height': original_image.shape[0]
+        }
+
+        # Return the response
+        return {
+            'segmented_urls': [cutout_url],         # Single cutout URL in a list
+            'puzzle_outline_url': puzzle_outline_url,
+            'positions': [position]                 # Single position in a list
+        }
+    except Exception as e:
+        print(f"Error in get_point_cutouts: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Optional route to handle cleanup of embeddings
 @app.delete('/image_embedding/{embedding_id}')
 async def delete_embedding(embedding_id: str):
