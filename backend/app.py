@@ -685,18 +685,19 @@ async def get_point_cutouts(data: PointSegmentationRequest):
 
         # Create the cutout
         img_crop = original_image[y:y+h, x:x+w]  # Crop the image (BGR)
-        mask_crop = mask[y:y+h, x:x+w]           # Crop the mask
+        mask_crop = mask[y:y+h, x:x+w]            # Crop the mask
         img_crop_rgba = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGBA)  # Convert to RGBA
-        img_crop_rgba[:, :, 3] = mask_crop  # Set alpha channel (255 where mask is True)
+        alpha_mask_crop = np.where(mask_crop > 0, 255, 0).astype(np.uint8)
+        img_crop_rgba[:, :, 3] = alpha_mask_crop # Set alpha channel
 
         # Create the puzzle outline
-        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)  # Full image to RGBA
-        alpha_channel = np.where(mask == 0, 255, 0).astype(np.uint8)      # Transparent where mask is True
+        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA) # Full image to RGBA
+        alpha_channel = np.where(mask == 0, 255, 0).astype(np.uint8)     # Transparent where mask is True
         original_rgba[:, :, 3] = alpha_channel
 
         # Convert to PIL Images for PNG saving
-        pil_cutout = Image.fromarray(cv2.cvtColor(img_crop_rgba, cv2.COLOR_BGRA2RGBA), 'RGBA')
-        pil_outline = Image.fromarray(cv2.cvtColor(original_rgba, cv2.COLOR_BGRA2RGBA), 'RGBA')
+        pil_cutout = Image.fromarray(img_crop_rgba, 'RGBA')
+        pil_outline = Image.fromarray(original_rgba, 'RGBA')
 
         # Upload the cutout to Cloudinary
         cutout_buffer = io.BytesIO()
