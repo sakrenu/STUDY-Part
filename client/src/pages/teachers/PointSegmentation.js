@@ -491,28 +491,27 @@ const PointSegmentation = () => {
                         zIndex: 10,
                         padding: '20px',
                         borderRadius: '10px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        backdropFilter: 'blur(8px)',
+                        width: '400px',
                       }}>
-                        <div className="simulation-bar-container" style={{
-                          width: '300px',
-                          height: '10px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                          marginBottom: '15px',
-                          borderRadius: '5px',
-                          overflow: 'hidden',
-                        }}>
-                          <div className="simulation-bar" style={{
-                            height: '100%',
-                            width: simulationProgress + '%',
-                            backgroundColor: '#3498db', // More visible blue color
-                            transition: 'width 0.2s linear',
-                            boxShadow: '0 0 10px rgba(52, 152, 219, 0.5)', // Glow effect
-                          }}></div>
+                        <div className="neural-animation">
+                          <div className="neural-particles"></div>
+                          <div className="neural-particles"></div>
+                          <div className="neural-particles"></div>
                         </div>
-                        <div className="simulation-message" style={{
-                          fontSize: '18px',
-                          fontWeight: '500',
-                          textShadow: '0 2px 4px rgba(0,0,0,0.5)', // Text shadow for better visibility
-                        }}>
+                        <div className="simulation-bar-container">
+                          <div className="simulation-bar">
+                            <div className="simulation-progress" style={{
+                              width: `${simulationProgress}%`
+                            }}></div>
+                            <div className="simulation-glow"></div>
+                          </div>
+                        </div>
+                        <div className="simulation-percentage">
+                          {Math.round(simulationProgress)}%
+                        </div>
+                        <div className="simulation-message">
                           {simulationMessage}
                         </div>
                       </div>

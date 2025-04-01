@@ -348,6 +348,117 @@ button:disabled {
   background-color: #7b1fa2;
 }
 
+/* Neural Network Animation */
+.neural-animation {
+  position: relative;
+  height: 60px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.neural-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle, #4a9eff 1px, transparent 1px),
+    radial-gradient(circle, #4a9eff 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: particleFlow 3s linear infinite;
+  opacity: 0.5;
+}
+
+.neural-particles:nth-child(2) {
+  animation-delay: -1s;
+  opacity: 0.3;
+}
+
+.neural-particles:nth-child(3) {
+  animation-delay: -2s;
+  opacity: 0.2;
+}
+
+@keyframes particleFlow {
+  0% {
+    transform: translateY(-20px) translateX(-20px);
+  }
+  100% {
+    transform: translateY(20px) translateX(20px);
+  }
+}
+
+/* Progress Bar */
+.simulation-bar-container {
+  width: 100%;
+  padding: 10px;
+}
+
+.simulation-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.simulation-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #4a9eff, #8ed6ff);
+  border-radius: 3px;
+  position: relative;
+  transition: width 0.3s ease-out;
+}
+
+.simulation-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.simulation-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  filter: blur(5px);
+  background: inherit;
+  opacity: 0.5;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.simulation-percentage {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 15px 0;
+  text-shadow: 0 0 10px rgba(74, 158, 255, 0.8);
+}
+
+.simulation-message {
+  font-size: 16px;
+  opacity: 0.9;
+  margin-top: 10px;
+  color: #8ed6ff;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .main-content-with-sidebar {
