@@ -17,14 +17,16 @@ const PointSegmentation = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [maskUrl, setMaskUrl] = useState('');
-  const [cutoutUrls, setCutoutUrls] = useState([]);
-  const [puzzleOutlineUrl, setPuzzleOutlineUrl] = useState('');
-  const [cutoutPositions, setCutoutPositions] = useState([]);
+  const [currentCutoutUrl, setCurrentCutoutUrl] = useState('');
+  const [currentCutoutPosition, setCurrentCutoutPosition] = useState(null);
+  const [savedCutouts, setSavedCutouts] = useState([]);
+  const [cumulativePuzzleOutlineUrl, setCumulativePuzzleOutlineUrl] = useState('');
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [selectionMode, setSelectionMode] = useState('foreground'); // 'foreground' or 'background'
   const [simulationVisible, setSimulationVisible] = useState(false);
   const [simulationProgress, setSimulationProgress] = useState(0);
   const [simulationMessage, setSimulationMessage] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -43,9 +45,9 @@ const PointSegmentation = () => {
       setLabels([]);
       setImageEmbeddingId('');
       setMaskUrl('');
-      setCutoutUrls([]);
-      setPuzzleOutlineUrl('');
-      setCutoutPositions([]);
+      setCurrentCutoutUrl('');
+      setCurrentCutoutPosition(null);
+      // Note: We don't reset savedCutouts here to maintain them across uploads
       setError('');
       setSuccessMessage('');
       
@@ -224,10 +226,13 @@ const PointSegmentation = () => {
     }
   };
 
-  // Reset all points
+  // Reset all points and clear current segmentation
   const handleResetPoints = () => {
     setPoints([]);
     setLabels([]);
+    setMaskUrl('');
+    setCurrentCutoutUrl('');
+    setCurrentCutoutPosition(null);
   };
 
   // Generate segmentation based on points
@@ -249,7 +254,7 @@ const PointSegmentation = () => {
       });
       
       setMaskUrl(segmentationResponse.data.mask_url);
-      setSuccessMessage('Segmentation completed successfully!');
+      setSuccessMessage('Segmentation completed successfully! Click "Save Cutout" if you\'re satisfied.');
     } catch (err) {
       setError('Segmentation failed: ' + err.message);
     } finally {
@@ -257,10 +262,10 @@ const PointSegmentation = () => {
     }
   };
 
-  // Generate cutouts based on points
-  const handleGetCutouts = async () => {
-    if (!imageEmbeddingId || points.length === 0) {
-      setError("Please generate embeddings and select at least one point.");
+  // Generate and save the current cutout based on the segmentation
+  const handleSaveCutout = async () => {
+    if (!maskUrl) {
+      setError("Please generate a segmentation first.");
       return;
     }
     
@@ -275,15 +280,48 @@ const PointSegmentation = () => {
         original_size: [imageSize.width, imageSize.height]
       });
       
-      setCutoutUrls(cutoutResponse.data.segmented_urls);
-      setPuzzleOutlineUrl(cutoutResponse.data.puzzle_outline_url);
-      setCutoutPositions(cutoutResponse.data.positions);
-      setSuccessMessage('Cutouts generated successfully!');
+      // Store the current cutout
+      const cutoutUrl = cutoutResponse.data.segmented_urls[0];
+      const position = cutoutResponse.data.positions[0];
+      
+      setCurrentCutoutUrl(cutoutUrl);
+      setCurrentCutoutPosition(position);
+      
+      // Add the cutout to saved cutouts
+      const newCutout = {
+        id: Date.now(), // Unique ID for each cutout
+        url: cutoutUrl,
+        position: position
+      };
+      
+      const updatedCutouts = [...savedCutouts, newCutout];
+      setSavedCutouts(updatedCutouts);
+      
+      // Update the cumulative puzzle outline
+      setCumulativePuzzleOutlineUrl(cutoutResponse.data.puzzle_outline_url);
+      
+      setSuccessMessage('Cutout saved successfully! You can now reset and create another segment.');
+      
+      // Reset points and segmentation for a new cutout
+      setPoints([]);
+      setLabels([]);
+      setMaskUrl('');
     } catch (err) {
-      setError('Failed to generate cutouts: ' + err.message);
+      setError('Failed to save cutout: ' + err.message);
     } finally {
       setIsCuttingOut(false);
     }
+  };
+
+  // Remove a cutout from the saved list
+  const handleRemoveCutout = (cutoutId) => {
+    const updatedCutouts = savedCutouts.filter(cutout => cutout.id !== cutoutId);
+    setSavedCutouts(updatedCutouts);
+  };
+
+  // Toggle sidebar visibility
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   return (
@@ -295,192 +333,52 @@ const PointSegmentation = () => {
       {error && <div className="error-message">{error}</div>}
       {successMessage && <div className="success-message">{successMessage}</div>}
 
-      <section className="upload-section">
-        <h2>Upload your Image</h2>
-        <div className="upload-container">
-          <label className="file-upload-label">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="file-input"
-            />
-            <span className="upload-button">Choose Image</span>
-          </label>
-        </div>
-
-        {imagePreview && (
-          <button 
-            onClick={handleGenerateEmbeddings} 
-            className={`generate-button ${isGeneratingEmbedding ? 'disabled' : ''}`}
-            disabled={isGeneratingEmbedding}
-          >
-            {isGeneratingEmbedding ? 'Generating Embeddings...' : 'Generate Embeddings'}
-          </button>
-        )}
-      </section>
-
-      {imageEmbeddingId && (
-        <section className="selection-mode-section">
-          <h2>Selection Mode</h2>
-          <div className="mode-buttons">
+      <div className="main-content-with-sidebar">
+        {/* Sidebar for saved cutouts */}
+        <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+          <div className="sidebar-header">
+            <h2>Saved Cutouts</h2>
             <button 
-              className={`mode-button ${selectionMode === 'foreground' ? 'active' : ''}`}
-              onClick={() => setSelectionMode('foreground')}
+              className="toggle-sidebar-button"
+              onClick={toggleSidebar}
             >
-              Foreground (Green)
-            </button>
-            <button 
-              className={`mode-button ${selectionMode === 'background' ? 'active' : ''}`}
-              onClick={() => setSelectionMode('background')}
-            >
-              Background (Red)
+              {sidebarOpen ? '❮' : '❯'}
             </button>
           </div>
-          <div className="selection-instructions">
-            <p>Click on the image to add points. Green points select what to keep, red points select what to remove.</p>
-          </div>
-        </section>
-      )}
-
-      {imagePreview && (
-        <section className="image-interaction-section">
-          <div className="image-container">
-            <div className="image-canvas-wrapper">
-              <img 
-                ref={imageRef}
-                src={imagePreview} 
-                alt="Uploaded preview" 
-                className="segmentation-image"
-              />
-              {maskUrl && (
-                <img
-                  src={maskUrl}
-                  alt="Segmentation mask"
-                  className="mask-overlay"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    opacity: 0.5, // Translucent overlay
-                    pointerEvents: 'none', // Allows clicks to pass through to the canvas
-                  }}
-                />
-              )}
-              <canvas 
-                ref={canvasRef}
-                className="selection-canvas"
-                onClick={handleCanvasClick}
-              />
-              {simulationVisible && (
-                <>
-                  <div className="simulation-background" style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent overlay
-                    zIndex: 9,
-                  }}/>
-                  <div className="simulation-overlay" style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    textAlign: 'center',
-                    color: 'white',
-                    zIndex: 10,
-                    padding: '20px',
-                    borderRadius: '10px',
-                  }}>
-                    <div className="simulation-bar-container" style={{
-                      width: '300px',
-                      height: '10px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      marginBottom: '15px',
-                      borderRadius: '5px',
-                      overflow: 'hidden',
-                    }}>
-                      <div className="simulation-bar" style={{
-                        height: '100%',
-                        width: simulationProgress + '%',
-                        backgroundColor: '#3498db', // More visible blue color
-                        transition: 'width 0.2s linear',
-                        boxShadow: '0 0 10px rgba(52, 152, 219, 0.5)', // Glow effect
-                      }}></div>
-                    </div>
-                    <div className="simulation-message" style={{
-                      fontSize: '18px',
-                      fontWeight: '500',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.5)', // Text shadow for better visibility
-                    }}>
-                      {simulationMessage}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            
-            {imageEmbeddingId && (
-              <div className="control-buttons">
-                <button onClick={handleUndoPoint} disabled={points.length === 0}>
-                  Undo Last Point
-                </button>
-                <button onClick={handleResetPoints} disabled={points.length === 0}>
-                  Reset All Points
-                </button>
-                <button 
-                  onClick={handleSegment} 
-                  className={`segment-button ${isSegmenting ? 'disabled' : ''}`}
-                  disabled={isSegmenting || points.length === 0}
-                >
-                  {isSegmenting ? 'Segmenting...' : 'Generate Segment'}
-                </button>
-                <button 
-                  onClick={handleGetCutouts} 
-                  className={`cutout-button ${isCuttingOut ? 'disabled' : ''}`}
-                  disabled={isCuttingOut || points.length === 0}
-                >
-                  {isCuttingOut ? 'Getting Cutouts...' : 'Get Cutouts'}
-                </button>
+          
+          <div className="saved-cutouts-container">
+            {savedCutouts.length === 0 ? (
+              <div className="no-cutouts">
+                <p>No cutouts saved yet</p>
               </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Cutouts display section */}
-      {cutoutUrls.length > 0 && (
-        <section className="cutouts-section">
-          <h2>Cutouts</h2>
-          <div className="cutouts-container">
-            {cutoutUrls.map((url, index) => {
-              const position = cutoutPositions[index];
-              return (
-                <div key={index} className="cutout-item">
+            ) : (
+              savedCutouts.map((cutout) => (
+                <div key={cutout.id} className="saved-cutout-item">
                   <img 
-                    src={url}
-                    alt={`Cutout ${index + 1}`}
+                    src={cutout.url}
+                    alt="Saved cutout"
                     style={{
-                      width: position.width,
-                      height: position.height,
-                      maxWidth: '100%'
+                      maxWidth: '100%',
+                      height: 'auto'
                     }}
                   />
+                  <button 
+                    className="remove-cutout-button"
+                    onClick={() => handleRemoveCutout(cutout.id)}
+                  >
+                    Remove
+                  </button>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
-          {puzzleOutlineUrl && (
-            <div className="puzzle-outline-container">
+          
+          {cumulativePuzzleOutlineUrl && (
+            <div className="cumulative-outline-container">
               <h3>Puzzle Outline</h3>
               <img 
-                src={puzzleOutlineUrl}
-                alt="Puzzle Outline"
+                src={cumulativePuzzleOutlineUrl}
+                alt="Cumulative Puzzle Outline"
                 style={{
                   maxWidth: '100%',
                   height: 'auto'
@@ -488,8 +386,171 @@ const PointSegmentation = () => {
               />
             </div>
           )}
-        </section>
-      )}
+        </div>
+
+        {/* Main content area */}
+        <div className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+          <section className="upload-section">
+            <h2>Upload your Image</h2>
+            <div className="upload-container">
+              <label className="file-upload-label">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="file-input"
+                />
+                <span className="upload-button">Choose Image</span>
+              </label>
+            </div>
+
+            {imagePreview && (
+              <button 
+                onClick={handleGenerateEmbeddings} 
+                className={`generate-button ${isGeneratingEmbedding ? 'disabled' : ''}`}
+                disabled={isGeneratingEmbedding}
+              >
+                {isGeneratingEmbedding ? 'Generating Embeddings...' : 'Generate Embeddings'}
+              </button>
+            )}
+          </section>
+
+          {imageEmbeddingId && (
+            <section className="selection-mode-section">
+              <h2>Selection Mode</h2>
+              <div className="mode-buttons">
+                <button 
+                  className={`mode-button ${selectionMode === 'foreground' ? 'active' : ''}`}
+                  onClick={() => setSelectionMode('foreground')}
+                >
+                  Foreground (Green)
+                </button>
+                <button 
+                  className={`mode-button ${selectionMode === 'background' ? 'active' : ''}`}
+                  onClick={() => setSelectionMode('background')}
+                >
+                  Background (Red)
+                </button>
+              </div>
+              <div className="selection-instructions">
+                <p>Click on the image to add points. Green points select what to keep, red points select what to remove.</p>
+              </div>
+            </section>
+          )}
+
+          {imagePreview && (
+            <section className="image-interaction-section">
+              <div className="image-container">
+                <div className="image-canvas-wrapper">
+                  <img 
+                    ref={imageRef}
+                    src={imagePreview} 
+                    alt="Uploaded preview" 
+                    className="segmentation-image"
+                  />
+                  {maskUrl && (
+                    <img
+                      src={maskUrl}
+                      alt="Segmentation mask"
+                      className="mask-overlay"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        opacity: 0.5, // Translucent overlay
+                        pointerEvents: 'none', // Allows clicks to pass through to the canvas
+                      }}
+                    />
+                  )}
+                  <canvas 
+                    ref={canvasRef}
+                    className="selection-canvas"
+                    onClick={handleCanvasClick}
+                  />
+                  {simulationVisible && (
+                    <>
+                      <div className="simulation-background" style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent overlay
+                        zIndex: 9,
+                      }}/>
+                      <div className="simulation-overlay" style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center',
+                        color: 'white',
+                        zIndex: 10,
+                        padding: '20px',
+                        borderRadius: '10px',
+                      }}>
+                        <div className="simulation-bar-container" style={{
+                          width: '300px',
+                          height: '10px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          marginBottom: '15px',
+                          borderRadius: '5px',
+                          overflow: 'hidden',
+                        }}>
+                          <div className="simulation-bar" style={{
+                            height: '100%',
+                            width: simulationProgress + '%',
+                            backgroundColor: '#3498db', // More visible blue color
+                            transition: 'width 0.2s linear',
+                            boxShadow: '0 0 10px rgba(52, 152, 219, 0.5)', // Glow effect
+                          }}></div>
+                        </div>
+                        <div className="simulation-message" style={{
+                          fontSize: '18px',
+                          fontWeight: '500',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.5)', // Text shadow for better visibility
+                        }}>
+                          {simulationMessage}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                
+                {imageEmbeddingId && (
+                  <div className="control-buttons">
+                    <button onClick={handleUndoPoint} disabled={points.length === 0}>
+                      Undo Last Point
+                    </button>
+                    <button onClick={handleResetPoints} disabled={points.length === 0 && !maskUrl}>
+                      Reset Selection
+                    </button>
+                    <button 
+                      onClick={handleSegment} 
+                      className={`segment-button ${isSegmenting ? 'disabled' : ''}`}
+                      disabled={isSegmenting || points.length === 0}
+                    >
+                      {isSegmenting ? 'Segmenting...' : 'Generate Segment'}
+                    </button>
+                    {maskUrl && (
+                      <button 
+                        onClick={handleSaveCutout} 
+                        className={`cutout-button ${isCuttingOut ? 'disabled' : ''}`}
+                        disabled={isCuttingOut || !maskUrl}
+                      >
+                        {isCuttingOut ? 'Saving Cutout...' : 'Save Cutout'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
