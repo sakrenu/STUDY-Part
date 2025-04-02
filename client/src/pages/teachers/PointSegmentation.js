@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import './PointSegmentation.css'; // You'll need to create this CSS file
+import './PointSegmentation.css';
 
 const PointSegmentation = () => {
   const [imagePreview, setImagePreview] = useState(null);
@@ -48,6 +48,8 @@ const PointSegmentation = () => {
       setCurrentCutoutUrl('');
       setCurrentCutoutPosition(null);
       // Note: We don't reset savedCutouts here to maintain them across uploads
+      setSavedCutouts([]); // Clear saved cutouts for a new image
+      setCumulativePuzzleOutlineUrl(''); // Clear the cumulative outline for a new image
       setError('');
       setSuccessMessage('');
       
@@ -315,9 +317,50 @@ const PointSegmentation = () => {
   };
 
   // Remove a cutout from the saved list
-  const handleRemoveCutout = (cutoutId) => {
-    const updatedCutouts = savedCutouts.filter(cutout => cutout.id !== cutoutId);
-    setSavedCutouts(updatedCutouts);
+  const handleRemoveCutout = async (cutoutId) => {
+    try {
+      // Filter out the cutout to be removed
+      const cutoutToRemove = savedCutouts.find(cutout => cutout.id === cutoutId);
+      const updatedCutouts = savedCutouts.filter(cutout => cutout.id !== cutoutId);
+      
+      if (!cutoutToRemove) {
+        throw new Error("Cutout not found");
+      }
+      
+      // If no cutouts left, clear the outline
+      if (updatedCutouts.length === 0) {
+        setCumulativePuzzleOutlineUrl('');
+        setSavedCutouts([]);
+        return;
+      }
+      
+      setSavedCutouts(updatedCutouts);
+      
+      // Here, we need to regenerate the cumulative puzzle outline
+      // We'll need to send a request to get a fresh puzzle outline based on remaining cutouts
+      // This is a new endpoint we'll need to create in the backend
+      setIsCuttingOut(true);
+      
+      // The approach depends on your backend implementation
+      // Option 1: If you store masks in your backend, just send the IDs of remaining cutouts
+      // Option 2: If not, reapply each cutout one by one, which we'll do here
+      
+      // For demonstration, we'll assume you implemented a new endpoint that accepts a list of point selections
+      // Let's simulate the regeneration of the puzzle outline using the last cutout for now
+      const lastCutout = updatedCutouts[updatedCutouts.length - 1];
+      const regenerateResponse = await axios.post('http://127.0.0.1:8000/regenerate_puzzle_outline', {
+        image_embedding_id: imageEmbeddingId,
+        cutout_ids: updatedCutouts.map(cutout => cutout.id)
+      });
+      
+      // Update with the new cumulative outline
+      setCumulativePuzzleOutlineUrl(regenerateResponse.data.puzzle_outline_url);
+      
+    } catch (err) {
+      setError('Failed to remove cutout: ' + err.message);
+    } finally {
+      setIsCuttingOut(false);
+    }
   };
 
   // Toggle sidebar visibility
@@ -385,6 +428,7 @@ const PointSegmentation = () => {
                   height: 'auto'
                 }}
               />
+              <p className="outline-info">This outline shows the remaining image after all cutouts.</p>
             </div>
           )}
         </div>

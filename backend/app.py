@@ -690,9 +690,18 @@ async def get_point_cutouts(data: PointSegmentationRequest):
         alpha_mask_crop = np.where(mask_crop > 0, 255, 0).astype(np.uint8)
         img_crop_rgba[:, :, 3] = alpha_mask_crop # Set alpha channel
 
-        # Create the puzzle outline
+        # Handle the cumulative mask for all cutouts
+        # If this is the first cutout for this image, initialize the cumulative mask
+        if 'cumulative_mask' not in embedding_data:
+            embedding_data['cumulative_mask'] = np.zeros_like(mask)
+        
+        # Update the cumulative mask by combining with the current mask
+        embedding_data['cumulative_mask'] = np.logical_or(embedding_data['cumulative_mask'], mask).astype(np.uint8) * 255
+        cumulative_mask = embedding_data['cumulative_mask']
+        
+        # Create the puzzle outline using the cumulative mask
         original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA) # Full image to RGBA
-        alpha_channel = np.where(mask == 0, 255, 0).astype(np.uint8)     # Transparent where mask is True
+        alpha_channel = np.where(cumulative_mask == 0, 255, 0).astype(np.uint8)  # Transparent where cumulative mask is True
         original_rgba[:, :, 3] = alpha_channel
 
         # Convert to PIL Images for PNG saving
@@ -710,7 +719,7 @@ async def get_point_cutouts(data: PointSegmentationRequest):
         )
         cutout_url = upload_result_cutout['secure_url']
 
-        # Upload the puzzle outline to Cloudinary
+        # Upload the cumulative puzzle outline to Cloudinary
         outline_buffer = io.BytesIO()
         pil_outline.save(outline_buffer, format='PNG')
         outline_buffer.seek(0)
@@ -739,6 +748,115 @@ async def get_point_cutouts(data: PointSegmentationRequest):
         }
     except Exception as e:
         print(f"Error in get_point_cutouts: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/regenerate_puzzle_outline')
+async def regenerate_puzzle_outline(data: dict):
+    try:
+        # Extract data
+        embedding_id = data.get('image_embedding_id')
+        cutout_ids = data.get('cutout_ids', [])
+        
+        if not embedding_id:
+            raise HTTPException(status_code=400, detail="Missing image_embedding_id")
+            
+        if embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found")
+            
+        embedding_data = image_embeddings_store[embedding_id]
+        
+        # Download the original image
+        original_url = embedding_data.get('image_url')
+        response = requests.get(original_url)
+        temp_file = "temp_orig_image.jpg"
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+            
+        # Load the image in color mode
+        original_image = cv2.imread(temp_file, cv2.IMREAD_COLOR)
+        os.remove(temp_file)
+        
+        # Initialize an empty cumulative mask
+        height, width = original_image.shape[:2]
+        cumulative_mask = np.zeros((height, width), dtype=np.uint8)
+        
+        # If there are no cutouts, return empty outline (original image)
+        if not cutout_ids:
+            # Create transparent original image (no cutouts)
+            original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)
+            original_rgba[:, :, 3] = 255  # Fully opaque, no cutouts
+            
+            # Convert to PIL Image and upload
+            pil_outline = Image.fromarray(original_rgba, 'RGBA')
+            outline_buffer = io.BytesIO()
+            pil_outline.save(outline_buffer, format='PNG')
+            outline_buffer.seek(0)
+            upload_result = cloudinary.uploader.upload(
+                outline_buffer,
+                public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+                format="png"
+            )
+            
+            return {
+                'puzzle_outline_url': upload_result['secure_url'],
+                'success': True,
+                'message': 'Empty puzzle outline created'
+            }
+        
+        # Get stored cutout masks
+        if 'cutout_masks' not in embedding_data:
+            # Initialize cutout_masks if it doesn't exist
+            embedding_data['cutout_masks'] = {}
+            # If no masks stored yet, return error
+            raise HTTPException(status_code=400, detail="No cutout data available for regeneration")
+        
+        # Regenerate the cumulative mask from the remaining cutouts
+        for cutout_id in cutout_ids:
+            cutout_id_str = str(cutout_id)  # Ensure the ID is a string for dictionary lookup
+            if cutout_id_str in embedding_data['cutout_masks']:
+                mask = embedding_data['cutout_masks'][cutout_id_str]
+                # Resize mask if needed to match original image dimensions
+                if mask.shape[:2] != (height, width):
+                    mask = cv2.resize(mask, (width, height), interpolation=cv2.INTER_NEAREST)
+                # Add this mask to the cumulative mask
+                cumulative_mask = np.logical_or(cumulative_mask, mask).astype(np.uint8) * 255
+            else:
+                # Skip if mask not found for this ID
+                print(f"Warning: No mask found for cutout ID {cutout_id}")
+                continue
+        
+        # Store the updated cumulative mask
+        embedding_data['cumulative_mask'] = cumulative_mask
+        
+        # Create the puzzle outline using the cumulative mask
+        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)
+        # Make cutout areas transparent
+        alpha_channel = np.where(cumulative_mask == 0, 255, 0).astype(np.uint8)
+        original_rgba[:, :, 3] = alpha_channel
+        
+        # Convert to PIL Image for PNG saving
+        pil_outline = Image.fromarray(original_rgba, 'RGBA')
+        
+        # Upload the regenerated puzzle outline to Cloudinary
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+        upload_result = cloudinary.uploader.upload(
+            outline_buffer,
+            public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        puzzle_outline_url = upload_result['secure_url']
+        
+        return {
+            'puzzle_outline_url': puzzle_outline_url,
+            'success': True,
+            'message': 'Puzzle outline regenerated successfully'
+        }
+    except Exception as e:
+        print(f"Error in regenerate_puzzle_outline: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 # Optional route to handle cleanup of embeddings
