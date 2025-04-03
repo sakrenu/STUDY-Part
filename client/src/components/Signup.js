@@ -110,85 +110,87 @@ const Signup = () => {
   };
 
   return (
-    <div className="signup-container">
-      <div className="signup-card">
-                {/* Close Button */}
-                <button className="close-button" onClick={handleClose}>
-                    &times; {/* Unicode for close symbol */}
-                </button>
-        <h1 className="signup-title">Create an Account</h1>
-        <p className="signup-subtitle">Sign up and start using our services</p>
-        {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">Sign-up successful! Redirecting to login...</p>}
-        <form className="signup-form" onSubmit={handleSignup}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Sign up as:</label>
-            <div className="role-selector">
-              <label>
-                <input
-                  type="radio"
-                  name="role"
-                  value="student"
-                  checked={role === 'student'}
-                  onChange={(e) => setRole(e.target.value)}
-                />
-                Student
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="role"
-                  value="teacher"
-                  checked={role === 'teacher'}
-                  onChange={(e) => setRole(e.target.value)}
-                />
-                Teacher
-              </label>
+    <div className="signup-page">
+      <div className="signup-container">
+        <div className="signup-card">
+                  {/* Close Button */}
+                  <button className="close-button" onClick={handleClose}>
+                      &times; {/* Unicode for close symbol */}
+                  </button>
+          <h1 className="signup-title">Create an Account</h1>
+          <p className="signup-subtitle">Sign up and start using our services</p>
+          {error && <p className="error-message">{error}</p>}
+          {success && <p className="success-message">Sign-up successful! Redirecting to login...</p>}
+          <form className="signup-form" onSubmit={handleSignup}>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          </div>
-          <button type="submit" className="signup-button">
-            Sign Up
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Confirm Password</label>
+              <input
+                type="password"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Sign up as:</label>
+              <div className="role-selector">
+                <label>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="student"
+                    checked={role === 'student'}
+                    onChange={(e) => setRole(e.target.value)}
+                  />
+                  Student
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="teacher"
+                    checked={role === 'teacher'}
+                    onChange={(e) => setRole(e.target.value)}
+                  />
+                  Teacher
+                </label>
+              </div>
+            </div>
+            <button type="submit" className="signup-button">
+              Sign Up
+            </button>
+          </form>
+          <button className="google-button" onClick={handleGoogleSignup}>
+            Sign up with Google
           </button>
-        </form>
-        <button className="google-button" onClick={handleGoogleSignup}>
-          Sign up with Google
-        </button>
-        <p className="login-link">
-          Already have an account?{' '}
-          <span onClick={() => navigate('/login')} className="link">
-            Log in here
-          </span>
-        </p>
+          <p className="login-link">
+            Already have an account?{' '}
+            <span onClick={() => navigate('/login')} className="link">
+              Log in here
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );
