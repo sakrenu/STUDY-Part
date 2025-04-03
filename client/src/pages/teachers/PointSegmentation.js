@@ -379,7 +379,7 @@ const PointSegmentation = () => {
 
       <div className="main-content-with-sidebar">
         {/* Sidebar for saved cutouts */}
-        <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+        <div className={`point-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
           <div className="sidebar-header">
             <h2>Saved Cutouts</h2>
             <button 
