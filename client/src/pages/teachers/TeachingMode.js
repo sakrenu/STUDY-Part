@@ -1,3 +1,4 @@
+// src/pages/teachers/TeachingMode.js
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
@@ -6,7 +7,8 @@ import BasicVersion from './BasicVersion';
 import ManageStudents from './ManageStudents';
 import Home from './home';
 import Library from './Library';
-import Label from './Label'; // Import the new Label component
+import Label from './Label';
+import TeachByPart from './TeachByPart'; // New import
 
 const TeachingMode = () => {
   const [teacherEmail, setTeacherEmail] = useState(null);
@@ -102,6 +104,8 @@ const TeachingMode = () => {
         return <BasicVersion />;
       case 'label':
         return <Label teacherEmail={teacherEmail} />;
+      case 'teachbypart':
+        return <TeachByPart teacherEmail={teacherEmail} />;
       default:
         return null;
     }
@@ -128,6 +132,9 @@ const TeachingMode = () => {
           </li>
           <li className={activeTab === 'label' ? 'active' : ''} onClick={() => setActiveTab('label')}>
             Label
+          </li>
+          <li className={activeTab === 'teachbypart' ? 'active' : ''} onClick={() => setActiveTab('teachbypart')}>
+            TeachByPart
           </li>
         </ul>
       </nav>

@@ -1,0 +1,327 @@
+/* src/pages/teachers/TeachByPart.css */
+.teach-content {
+    padding: 20px;
+    background: #1a1a1a;
+    color: #ffffff;
+    min-height: 100vh;
+  }
+  
+  .dashboard-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .dashboard-title {
+    font-size: 2.5rem;
+    color: #00ffcc;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 1.2rem;
+    color: #cccccc;
+  }
+  
+  .error-message {
+    color: #ff5555;
+    text-align: center;
+    margin: 10px 0;
+  }
+  
+  .upload-section {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .upload-container {
+    text-align: center;
+  }
+  
+  .file-upload-label {
+    display: inline-block;
+  }
+  
+  .file-input {
+    display: none;
+  }
+  
+  .upload-button {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  
+  .upload-button:hover {
+    background-color: #00ccaa;
+  }
+  
+  .segmentation-mode-section {
+    text-align: center;
+    margin: 20px 0;
+  }
+  
+  .mode-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .mode-button {
+    background-color: #444;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .mode-button.active {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+  }
+  
+  .mode-button:hover {
+    background-color: #666;
+  }
+  
+  .generate-button {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .generate-button.disabled {
+    background-color: #666;
+    cursor: not-allowed;
+  }
+  
+  .cropper-container {
+    margin: 20px auto;
+    max-width: 800px;
+  }
+  
+  .region-selection-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .select-region-button,
+  .select-another-button,
+  .done-selecting-button {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .select-region-button:hover,
+  .select-another-button:hover,
+  .done-selecting-button:hover {
+    background-color: #00ccaa;
+  }
+  
+  .point-selection-section {
+    margin: 20px 0;
+  }
+  
+  .image-container {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .image-canvas-wrapper {
+    position: relative;
+  }
+  
+  .segmentation-image {
+    width: 100%;
+    height: auto;
+    max-width: 800px;
+    max-height: 600px;
+    object-fit: contain;
+  }
+  
+  .selection-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+  }
+  
+  .control-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .control-buttons button {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .control-buttons button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+  }
+  
+  .control-buttons button:hover:not(:disabled) {
+    background-color: #00ccaa;
+  }
+  
+  .processed-output-container {
+    margin-top: 20px;
+  }
+  
+  .original-image-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    margin: 0 auto;
+  }
+  
+  .base-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .region-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .label-input-wrapper {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .label-input {
+    padding: 5px;
+    border-radius: 5px;
+    border: none;
+  }
+  
+  .submit-label-button,
+  .close-button {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .submit-label-button:hover,
+  .close-button:hover {
+    background-color: #00ccaa;
+  }
+  
+  .done-labeling-button,
+  .teach-by-part-button {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    display: block;
+    margin: 10px auto;
+  }
+  
+  .done-labeling-button:hover,
+  .teach-by-part-button:hover {
+    background-color: #00ccaa;
+  }
+  
+  .teach-by-part-container {
+    margin-top: 20px;
+    position: relative;
+  }
+  
+  .original-image-teach {
+    background: #1a1a1a;
+    border: 1px solid #00ffcc;
+  }
+  
+  .parts-list {
+    background: #2a2a2a;
+    padding: 10px;
+    border-radius: 5px;
+    color: #ffffff;
+  }
+  
+  .parts-list h3 {
+    margin-top: 0;
+    color: #00ffcc;
+  }
+  
+  .exit-teach-button {
+    background-color: #00ffcc;
+    color: #1a1a1a;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  .exit-teach-button:hover {
+    background-color: #00ccaa;
+  }
+  
+  @keyframes slideIn {
+    from {
+      left: calc(100% + 320px);
+    }
+    to {
+      left: 0;
+    }
+  }
+  
+  @keyframes labelSlideIn {
+    from {
+      left: calc(100% + 420px);
+    }
+    to {
+      left: inherit;
+    }
+  }
+  
+  @keyframes labelSlideInText {
+    from {
+      left: calc(100% + 420px);
+    }
+    to {
+      left: inherit;
+    }
+  }
+  
+  .loading-message {
+    text-align: center;
+    color: #00ffcc;
+    margin: 20px 0;
+  }

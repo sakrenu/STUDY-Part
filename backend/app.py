@@ -8,7 +8,7 @@ from firebase_admin import credentials, firestore
 from fastapi import FastAPI, Request, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from PIL import Image
 import numpy as np
 import torch
@@ -16,7 +16,7 @@ import cv2
 import time
 from typing import List, Dict, Optional, Tuple
 from pydantic import Field
-from sam_label import segment_image,segment_image_for_label
+from sam_label import segment_image, segment_image_for_label
 from sam_point_segmentation import get_image_embeddings, generate_mask
 from sam_quiz import segment_quiz_image, get_image_without_masks
 from dotenv import load_dotenv
@@ -45,15 +45,15 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Adjust if your frontend port differs
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize FastSAM model - will auto-download if needed
+# Initialize FastSAM model
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = FastSAM('FastSAM-s.pt')  # This will automatically download if not found
+model = FastSAM('FastSAM-s.pt')
 model.to(device)
 
 # Define different colors for different regions
@@ -200,7 +200,6 @@ class AddNoteRequest(BaseModel):
     teacher_id: str
     lesson_id: str
 
-# New Pydantic models for request validation
 class PointPrompt(BaseModel):
     x: float
     y: float
@@ -210,12 +209,12 @@ class GetEmbeddingRequest(BaseModel):
     teacher_id: str
 
 class PointSegmentationRequest(BaseModel):
-    image_embedding_id: str  # ID to retrieve stored embedding
+    image_embedding_id: str
     points: List[PointPrompt]
-    labels: List[int]  # 1 for foreground, 0 for background
+    labels: List[int]
     original_size: Tuple[int, int] = Field(..., description="Original image dimensions as (width, height)")
 
-# In-memory storage for embeddings (consider a more persistent solution for production)
+# In-memory storage for embeddings
 image_embeddings_store = {}
 
 # Routes
@@ -306,7 +305,7 @@ async def segment_label(data: SegmentRequest):
                     data.bounding_box['height']
                 ],
                 model,
-                region_index=data.region_index  # Pass the region_index
+                region_index=data.region_index
             )
 
             # Upload the mask to Cloudinary
@@ -322,7 +321,7 @@ async def segment_label(data: SegmentRequest):
                     mask_url = upload_result['secure_url']
 
             return {
-                'mask_url': mask_url,  # URL to the translucent mask
+                'mask_url': mask_url,
                 'position': position,
                 'originalSize': {
                     'width': image.shape[1],
@@ -527,11 +526,11 @@ async def get_lessons(teacher_id: str):
     except Exception as e:
         print(f"Error in get_lessons: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+# New routes for TeachByPart functionality
 @app.post('/get_image_embedding')
 async def get_embedding(data: GetEmbeddingRequest):
     try:
-        # Download the image from URL
         temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
         try:
             response = requests.get(data.image_url)
@@ -542,7 +541,7 @@ async def get_embedding(data: GetEmbeddingRequest):
             if not os.path.exists(temp_path):
                 raise ValueError("Failed to save downloaded image")
 
-            # Get image embeddings
+            # Use the actual SAM model to get embeddings
             embedding = get_image_embeddings(temp_path)
             
             # Generate a unique ID for this embedding
@@ -553,7 +552,7 @@ async def get_embedding(data: GetEmbeddingRequest):
                 'embedding': embedding,
                 'teacher_id': data.teacher_id,
                 'created_at': time.time(),
-                'image_url': data.image_url   # new field for original image URL
+                'image_url': data.image_url
             }
             
             return {
@@ -580,18 +579,8 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         
         embedding_data = image_embeddings_store[data.image_embedding_id]
         image_embedding = embedding_data['embedding']
-        
-        # Generate binary mask
-        points = [[point.x, point.y] for point in data.points]
-        mask = generate_mask(
-            image_embedding=image_embedding,
-            points=points,
-            labels=data.labels,
-            original_size=data.original_size
-        )
-        
-        # Retrieve the original image via stored URL
         original_url = embedding_data.get('image_url')
+        
         if not original_url:
             raise HTTPException(status_code=500, detail="Original image URL is missing from the embedding data.")
             
@@ -610,20 +599,28 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         if original_image is None:
             raise HTTPException(status_code=500, detail="Failed to read the downloaded original image.")
         
+        # Generate binary mask using SAM
+        points = [[point.x, point.y] for point in data.points]
+        mask = generate_mask(
+            image_embedding=image_embedding,
+            points=points,
+            labels=data.labels,
+            original_size=data.original_size
+        )
+        
         # Resize the mask to match the original image dimensions
         mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]))
-        # Convert mask to boolean
         mask_bool = mask > 0
         
-        # Apply the mask to the original image
-        segmented_image = original_image.copy()
-        segmented_image[~mask_bool] = 0
+        # Apply the mask to the original image to create a cutout
+        cutout = original_image.copy()
+        cutout[~mask_bool] = 0
         
-        # Convert the segmented image from BGR to RGB for correct display
-        segmented_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB)
+        # Convert the cutout image from BGR to RGB for correct display
+        cutout = cv2.cvtColor(cutout, cv2.COLOR_BGR2RGB)
         
-        # Save the segmented image to a temporary buffer and upload to Cloudinary
-        pil_image = Image.fromarray(segmented_image)
+        # Save the cutout image to a temporary buffer and upload to Cloudinary
+        pil_image = Image.fromarray(cutout)
         buffer = io.BytesIO()
         pil_image.save(buffer, format="PNG")
         buffer.seek(0)
@@ -633,10 +630,11 @@ async def segment_with_points_route(data: PointSegmentationRequest):
             allowed_cors_origins=["http://localhost:3000"],
             access_mode="anonymous"
         )
-        segment_url = upload_result['secure_url']
+        cutout_url = upload_result['secure_url']
         
         return {
-            'mask_url': segment_url,
+            'cutout_url': cutout_url,
+            'position': {'x': points[0][0], 'y': points[0][1], 'width': 100, 'height': 100},
             'success': True
         }
     except Exception as e:
@@ -645,7 +643,6 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# Optional route to handle cleanup of embeddings
 @app.delete('/image_embedding/{embedding_id}')
 async def delete_embedding(embedding_id: str):
     if embedding_id in image_embeddings_store:
@@ -653,9 +650,8 @@ async def delete_embedding(embedding_id: str):
         return {"message": "Embedding deleted successfully"}
     raise HTTPException(status_code=404, detail="Embedding not found")
 
-# Maintenance endpoint to cleanup old embeddings (could also be a background task)
 @app.post('/cleanup_embeddings')
-async def cleanup_embeddings(max_age_seconds: int = 3600):  # Default: clean embeddings older than 1 hour
+async def cleanup_embeddings(max_age_seconds: int = 3600):
     current_time = time.time()
     expired_ids = [
         embedding_id 
