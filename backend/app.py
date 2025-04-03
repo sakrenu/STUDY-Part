@@ -12,6 +12,7 @@ from typing import List, Dict, Optional
 from PIL import Image
 import numpy as np
 import torch
+import base64
 import cv2
 import time
 from typing import List, Dict, Optional, Tuple
@@ -19,6 +20,7 @@ from pydantic import Field
 from sam_label import segment_image,segment_image_for_label
 from sam_point_segmentation import get_image_embeddings, generate_mask
 from sam_quiz import segment_quiz_image, get_image_without_masks
+from sam import segment_all_regions
 from dotenv import load_dotenv
 import uuid
 from ultralytics import FastSAM
@@ -200,6 +202,12 @@ class AddNoteRequest(BaseModel):
     teacher_id: str
     lesson_id: str
 
+class DeleteImageRequest(BaseModel):
+    public_id: str
+
+class SegmentAllRequest(BaseModel):
+    image_url: str
+    bounding_boxes: List[dict]
 # New Pydantic models for request validation
 class PointPrompt(BaseModel):
     x: float
@@ -500,6 +508,76 @@ async def add_note(data: AddNoteRequest):
         return {"message": "Note added successfully!"}
     except Exception as e:
         print(f"Error in add_note: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete('/delete-image')
+async def delete_image(request: DeleteImageRequest):
+    try:
+        if not request.public_id:
+            raise HTTPException(status_code=400, detail="Missing public_id parameter")
+
+        # Delete the image from Cloudinary
+        result = cloudinary.uploader.destroy(request.public_id)
+        
+        if result.get('result') == 'ok':
+            return {'message': 'Image deleted successfully'}
+        else:
+            raise HTTPException(status_code=500, detail='Failed to delete image from Cloudinary')
+
+    except Exception as e:
+        print(f"Error in delete_image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/segment-all')
+async def segment_all(request: SegmentAllRequest):
+    if not request.image_url or not request.bounding_boxes:
+        raise HTTPException(status_code=400, detail='Missing required parameters')
+    
+    try:
+        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
+        try:
+            response = requests.get(request.image_url)
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(response.content)
+            
+            # Process the image and get region data
+            combined_image = segment_all_regions(temp_path, request.bounding_boxes)
+            
+            # Convert the combined image to base64
+            _, buffer = cv2.imencode('.png', combined_image)
+            combined_image_b64 = base64.b64encode(buffer).decode('utf-8')
+            combined_image_url = f"data:image/png;base64,{combined_image_b64}"
+            
+            # Create region data for frontend
+            regions = [
+                {
+                    'index': i,
+                    'bbox': [
+                        int(float(bbox['x'])),
+                        int(float(bbox['y'])),
+                        int(float(bbox['x'] + bbox['width'])),
+                        int(float(bbox['y'] + bbox['height']))
+                    ]
+                }
+                for i, bbox in enumerate(request.bounding_boxes)
+            ]
+            
+            return {
+                'combined_image': combined_image_url,
+                'regions': regions,
+                'num_regions': len(request.bounding_boxes)
+            }
+            
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=500, detail=f'Failed to download image: {str(e)}')
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+                
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get('/get_lessons')
