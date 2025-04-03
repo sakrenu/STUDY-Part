@@ -583,64 +583,278 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         
         # Generate binary mask
         points = [[point.x, point.y] for point in data.points]
+        # Generate binary mask
         mask = generate_mask(
             image_embedding=image_embedding,
             points=points,
             labels=data.labels,
             original_size=data.original_size
         )
-        
+
         # Retrieve the original image via stored URL
         original_url = embedding_data.get('image_url')
-        if not original_url:
-            raise HTTPException(status_code=500, detail="Original image URL is missing from the embedding data.")
-            
-        temp_orig = f"temp_orig_{str(uuid.uuid4())[:8]}.jpg"
-        try:
-            response = requests.get(original_url)
-            response.raise_for_status()
-            with open(temp_orig, 'wb') as f:
-                f.write(response.content)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to download original image: {str(e)}")
-        
+        response = requests.get(original_url)
+        temp_orig = "temp_orig_image.jpg"
+        with open(temp_orig, "wb") as f:
+            f.write(response.content)
+
         # Load the original image using cv2 in color mode
         original_image = cv2.imread(temp_orig, cv2.IMREAD_COLOR)
         os.remove(temp_orig)
-        if original_image is None:
-            raise HTTPException(status_code=500, detail="Failed to read the downloaded original image.")
-        
+
         # Resize the mask to match the original image dimensions
         mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]))
-        # Convert mask to boolean
-        mask_bool = mask > 0
-        
-        # Apply the mask to the original image
-        segmented_image = original_image.copy()
-        segmented_image[~mask_bool] = 0
-        
-        # Convert the segmented image from BGR to RGB for correct display
-        segmented_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB)
-        
-        # Save the segmented image to a temporary buffer and upload to Cloudinary
-        pil_image = Image.fromarray(segmented_image)
+        mask_bool = mask > 0  # Convert to boolean mask
+
+        # Define a color for the mask, e.g., cyan (BGR format for OpenCV)
+        color = (0, 255, 255)
+
+        # Create a colored mask (RGB channels)
+        colored_mask = np.zeros_like(original_image)  # Shape: (height, width, 3)
+        for c in range(3):
+            colored_mask[:, :, c] = np.where(mask_bool, color[c], 0)
+
+        # Create RGBA mask (height, width, 4)
+        mask_rgba = np.zeros((*original_image.shape[:2], 4), dtype=np.uint8)
+        mask_rgba[:, :, :3] = colored_mask  # RGB channels
+        mask_rgba[:, :, 3] = mask  # Alpha channel (0 or 255)
+
+        # Convert to PIL Image and save to buffer
+        pil_mask = Image.fromarray(mask_rgba, 'RGBA')
         buffer = io.BytesIO()
-        pil_image.save(buffer, format="PNG")
+        pil_mask.save(buffer, format="PNG")
         buffer.seek(0)
+
+        # Upload to Cloudinary
         upload_result = cloudinary.uploader.upload(
             buffer,
             resource_type="image",
             allowed_cors_origins=["http://localhost:3000"],
             access_mode="anonymous"
         )
-        segment_url = upload_result['secure_url']
-        
+        mask_url = upload_result['secure_url']
+
         return {
-            'mask_url': segment_url,
+            'mask_url': mask_url,
             'success': True
         }
     except Exception as e:
         print(f"Debug - Error in segment_with_points: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/get_point_cutouts')
+async def get_point_cutouts(data: PointSegmentationRequest):
+    try:
+        # Check if the embedding exists
+        if data.image_embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found. It may have expired. Please generate a new embedding.")
+        
+        embedding_data = image_embeddings_store[data.image_embedding_id]
+        image_embedding = embedding_data['embedding']
+        
+        # Generate the binary mask from points and labels
+        points = [[point.x, point.y] for point in data.points]
+        mask = generate_mask(
+            image_embedding=image_embedding,
+            points=points,
+            labels=data.labels,
+            original_size=data.original_size
+        )
+
+        # Download the original image from the stored URL
+        original_url = embedding_data.get('image_url')
+        response = requests.get(original_url)
+        temp_file = "temp_orig_image.jpg"
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+
+        # Load the image in color mode
+        original_image = cv2.imread(temp_file, cv2.IMREAD_COLOR)
+        os.remove(temp_file)
+
+        # Resize the mask to match the original image size
+        mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]), interpolation=cv2.INTER_NEAREST)
+
+        # Find the bounding box of the mask
+        coords = cv2.findNonZero(mask)
+        if coords is None:
+            raise ValueError("No valid mask generated")
+        x, y, w, h = cv2.boundingRect(coords)
+
+        # Create the cutout
+        img_crop = original_image[y:y+h, x:x+w]  # Crop the image (BGR)
+        mask_crop = mask[y:y+h, x:x+w]            # Crop the mask
+        img_crop_rgba = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGBA)  # Convert to RGBA
+        alpha_mask_crop = np.where(mask_crop > 0, 255, 0).astype(np.uint8)
+        img_crop_rgba[:, :, 3] = alpha_mask_crop # Set alpha channel
+
+        # Handle the cumulative mask for all cutouts
+        # If this is the first cutout for this image, initialize the cumulative mask
+        if 'cumulative_mask' not in embedding_data:
+            embedding_data['cumulative_mask'] = np.zeros_like(mask)
+        
+        # Update the cumulative mask by combining with the current mask
+        embedding_data['cumulative_mask'] = np.logical_or(embedding_data['cumulative_mask'], mask).astype(np.uint8) * 255
+        cumulative_mask = embedding_data['cumulative_mask']
+        
+        # Create the puzzle outline using the cumulative mask
+        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA) # Full image to RGBA
+        alpha_channel = np.where(cumulative_mask == 0, 255, 0).astype(np.uint8)  # Transparent where cumulative mask is True
+        original_rgba[:, :, 3] = alpha_channel
+
+        # Convert to PIL Images for PNG saving
+        pil_cutout = Image.fromarray(img_crop_rgba, 'RGBA')
+        pil_outline = Image.fromarray(original_rgba, 'RGBA')
+
+        # Upload the cutout to Cloudinary
+        cutout_buffer = io.BytesIO()
+        pil_cutout.save(cutout_buffer, format='PNG')
+        cutout_buffer.seek(0)
+        upload_result_cutout = cloudinary.uploader.upload(
+            cutout_buffer,
+            public_id=f'cutout_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        cutout_url = upload_result_cutout['secure_url']
+
+        # Upload the cumulative puzzle outline to Cloudinary
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+        upload_result_outline = cloudinary.uploader.upload(
+            outline_buffer,
+            public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        puzzle_outline_url = upload_result_outline['secure_url']
+
+        # Define the position of the cutout
+        position = {
+            'x': x,
+            'y': y,
+            'width': w,
+            'height': h,
+            'original_width': original_image.shape[1],
+            'original_height': original_image.shape[0]
+        }
+
+        # Return the response
+        return {
+            'segmented_urls': [cutout_url],         # Single cutout URL in a list
+            'puzzle_outline_url': puzzle_outline_url,
+            'positions': [position]                 # Single position in a list
+        }
+    except Exception as e:
+        print(f"Error in get_point_cutouts: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/regenerate_puzzle_outline')
+async def regenerate_puzzle_outline(data: dict):
+    try:
+        # Extract data
+        embedding_id = data.get('image_embedding_id')
+        cutout_ids = data.get('cutout_ids', [])
+        
+        if not embedding_id:
+            raise HTTPException(status_code=400, detail="Missing image_embedding_id")
+            
+        if embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found")
+            
+        embedding_data = image_embeddings_store[embedding_id]
+        
+        # Download the original image
+        original_url = embedding_data.get('image_url')
+        response = requests.get(original_url)
+        temp_file = "temp_orig_image.jpg"
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+            
+        # Load the image in color mode
+        original_image = cv2.imread(temp_file, cv2.IMREAD_COLOR)
+        os.remove(temp_file)
+        
+        # Initialize an empty cumulative mask
+        height, width = original_image.shape[:2]
+        cumulative_mask = np.zeros((height, width), dtype=np.uint8)
+        
+        # If there are no cutouts, return empty outline (original image)
+        if not cutout_ids:
+            # Create transparent original image (no cutouts)
+            original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)
+            original_rgba[:, :, 3] = 255  # Fully opaque, no cutouts
+            
+            # Convert to PIL Image and upload
+            pil_outline = Image.fromarray(original_rgba, 'RGBA')
+            outline_buffer = io.BytesIO()
+            pil_outline.save(outline_buffer, format='PNG')
+            outline_buffer.seek(0)
+            upload_result = cloudinary.uploader.upload(
+                outline_buffer,
+                public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+                format="png"
+            )
+            
+            return {
+                'puzzle_outline_url': upload_result['secure_url'],
+                'success': True,
+                'message': 'Empty puzzle outline created'
+            }
+        
+        # Get stored cutout masks
+        if 'cutout_masks' not in embedding_data:
+            # Initialize cutout_masks if it doesn't exist
+            embedding_data['cutout_masks'] = {}
+            # If no masks stored yet, return error
+            raise HTTPException(status_code=400, detail="No cutout data available for regeneration")
+        
+        # Regenerate the cumulative mask from the remaining cutouts
+        for cutout_id in cutout_ids:
+            cutout_id_str = str(cutout_id)  # Ensure the ID is a string for dictionary lookup
+            if cutout_id_str in embedding_data['cutout_masks']:
+                mask = embedding_data['cutout_masks'][cutout_id_str]
+                # Resize mask if needed to match original image dimensions
+                if mask.shape[:2] != (height, width):
+                    mask = cv2.resize(mask, (width, height), interpolation=cv2.INTER_NEAREST)
+                # Add this mask to the cumulative mask
+                cumulative_mask = np.logical_or(cumulative_mask, mask).astype(np.uint8) * 255
+            else:
+                # Skip if mask not found for this ID
+                print(f"Warning: No mask found for cutout ID {cutout_id}")
+                continue
+        
+        # Store the updated cumulative mask
+        embedding_data['cumulative_mask'] = cumulative_mask
+        
+        # Create the puzzle outline using the cumulative mask
+        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)
+        # Make cutout areas transparent
+        alpha_channel = np.where(cumulative_mask == 0, 255, 0).astype(np.uint8)
+        original_rgba[:, :, 3] = alpha_channel
+        
+        # Convert to PIL Image for PNG saving
+        pil_outline = Image.fromarray(original_rgba, 'RGBA')
+        
+        # Upload the regenerated puzzle outline to Cloudinary
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+        upload_result = cloudinary.uploader.upload(
+            outline_buffer,
+            public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        puzzle_outline_url = upload_result['secure_url']
+        
+        return {
+            'puzzle_outline_url': puzzle_outline_url,
+            'success': True,
+            'message': 'Puzzle outline regenerated successfully'
+        }
+    except Exception as e:
+        print(f"Error in regenerate_puzzle_outline: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
