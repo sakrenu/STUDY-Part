@@ -27,6 +27,13 @@ const PointSegmentation = () => {
   const [simulationProgress, setSimulationProgress] = useState(0);
   const [simulationMessage, setSimulationMessage] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [puzzleMeta, setPuzzleMeta] = useState({
+    title: '',
+    description: '',
+    subject: '',
+    difficulty: 'medium'
+  });
+  const [isSaving, setIsSaving] = useState(false);
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -368,6 +375,36 @@ const PointSegmentation = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const handleSavePuzzle = async () => {
+    if (!puzzleMeta.title.trim()) {
+      setError('Please enter a puzzle title');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setError('');
+      setSuccessMessage('');
+
+      const puzzleData = {
+        teacher_id: teacherId,
+        image_url: uploadedImageUrl,
+        segmented_urls: savedCutouts.map(cutout => cutout.url),
+        puzzle_outline_url: cumulativePuzzleOutlineUrl,
+        positions: savedCutouts.map(cutout => cutout.position),
+        meta: puzzleMeta
+      };
+
+      const response = await axios.post('http://127.0.0.1:8000/save_point_puzzle', puzzleData);
+      setSuccessMessage('Puzzle saved successfully!');
+    } catch (error) {
+      console.error("Error saving puzzle: ", error);
+      setError('Failed to save puzzle: ' + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="point-segmentation-container">
       <header className="segmentation-header">
@@ -586,6 +623,64 @@ const PointSegmentation = () => {
           )}
         </div>
       </div>
+
+      {savedCutouts.length > 0 && (
+        <section className="puzzle-metadata-section card-neon">
+          <h2>Puzzle Details</h2>
+          <div className="metadata-form">
+            <div className="form-group">
+              <label htmlFor="puzzle-title">Puzzle Title</label>
+              <input
+                id="puzzle-title"
+                type="text"
+                placeholder="Enter a title for your puzzle"
+                value={puzzleMeta.title}
+                onChange={(e) => setPuzzleMeta({ ...puzzleMeta, title: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="puzzle-description">Description</label>
+              <textarea
+                id="puzzle-description"
+                placeholder="Describe what this puzzle is about"
+                value={puzzleMeta.description}
+                onChange={(e) => setPuzzleMeta({ ...puzzleMeta, description: e.target.value })}
+                rows="4"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="puzzle-subject">Subject (Optional)</label>
+              <input
+                id="puzzle-subject"
+                type="text"
+                placeholder="E.g., Science, History, Math"
+                value={puzzleMeta.subject}
+                onChange={(e) => setPuzzleMeta({ ...puzzleMeta, subject: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="puzzle-difficulty">Difficulty Level</label>
+              <select
+                id="puzzle-difficulty"
+                value={puzzleMeta.difficulty}
+                onChange={(e) => setPuzzleMeta({ ...puzzleMeta, difficulty: e.target.value })}
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <button
+              className="save-button"
+              onClick={handleSavePuzzle}
+              disabled={!puzzleMeta.title.trim() || isSaving}
+            >
+              {isSaving ? 'Saving Puzzle...' : 'Save Puzzle'}
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
