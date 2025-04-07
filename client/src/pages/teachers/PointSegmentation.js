@@ -395,7 +395,7 @@ const PointSegmentation = () => {
         meta: puzzleMeta
       };
 
-      const response = await axios.post('http://127.0.0.1:8000/save_point_puzzle', puzzleData);
+      const response = await axios.post('http://127.0.0.1:8000/save_quiz', puzzleData);
       setSuccessMessage('Puzzle saved successfully!');
     } catch (error) {
       console.error("Error saving puzzle: ", error);

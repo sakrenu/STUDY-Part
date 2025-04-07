@@ -10,6 +10,7 @@
 .puzzle-toolbar {
   text-align: center;
   margin-bottom: 20px;
+  position: relative;
 }
 
 .puzzle-toolbar h2 {
@@ -24,8 +25,8 @@
 
 .back-button {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 0;
+  left: 0;
   padding: 0.5rem 1rem;
   background-color: #3498db;
   color: white;
@@ -39,6 +40,66 @@
   background-color: #2980b9;
 }
 
+.puzzle-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.progress-container {
+  flex: 1;
+  max-width: 60%;
+}
+
+.progress-label {
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #d3d3d3;
+}
+
+.progress-bar {
+  height: 12px;
+  background-color: #2c2c54;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #3498db;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.puzzle-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.hint-button, .zoom-button {
+  padding: 0.5rem 1rem;
+  background-color: #2c2c54;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hint-button:hover, .zoom-button:hover {
+  background-color: #34344a;
+}
+
+.hint-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .puzzle-container {
   display: flex;
   justify-content: center;
@@ -50,7 +111,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 200px;
+  width: 220px;
   padding: 1rem;
   background-color: #2c2c54;
   border-radius: 8px;
@@ -58,10 +119,45 @@
   max-height: 600px;
 }
 
+.pieces-area h3 {
+  width: 100%;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
+}
+
+.all-pieces-used {
+  margin-top: 20px;
+  padding: 10px;
+  text-align: center;
+  background-color: rgba(39, 174, 96, 0.2);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #27ae60;
+}
+
 .puzzle-area {
   position: relative;
   width: 800px;
   height: 600px;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.puzzle-area.zoomed {
+  overflow: auto;
+  cursor: move;
+}
+
+.puzzle-scale-container {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .puzzle-outline {
@@ -72,23 +168,47 @@
   pointer-events: none;
 }
 
-.drop-zones-grid {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: grid;
-}
-
 .puzzle-piece {
   width: 100px;
   height: 100px;
   background-size: cover;
   margin: 5px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.puzzle-piece:hover:not(.placed) {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.5);
+  z-index: 10;
+}
+
+.puzzle-piece.dragging {
+  transform: scale(1.05);
+  z-index: 1000;
 }
 
 .drop-zone {
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.drop-zone.correct-hover {
+  box-shadow: 0 0 20px rgba(39, 174, 96, 0.7);
+  z-index: 5;
+}
+
+.drop-zone.active {
+  background-color: rgba(52, 152, 219, 0.2) !important;
+}
+
+.drop-zone.hint {
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 5px rgba(243, 156, 18, 0.5); }
+  100% { box-shadow: 0 0 20px rgba(243, 156, 18, 0.8); }
 }
 
 .loading {
@@ -190,4 +310,39 @@
 
 .completion-buttons button:hover {
   background-color: #2980b9;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .puzzle-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .pieces-area {
+    width: 90%;
+    max-width: 600px;
+    max-height: 200px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .pieces-area h3 {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .puzzle-stats {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .progress-container {
+    max-width: 100%;
+    width: 100%;
+  }
 }
