@@ -12,9 +12,15 @@ from typing import List, Dict, Optional
 from PIL import Image
 import numpy as np
 import torch
+import base64
 import cv2
-from sam_label import segment_image, segment_image_for_label
+import time
+from typing import List, Dict, Optional, Tuple
+from pydantic import Field
+from sam_label import segment_image,segment_image_for_label
+from sam_point_segmentation import get_image_embeddings, generate_mask
 from sam_quiz import segment_quiz_image, get_image_without_masks
+from sam import segment_all_regions
 from dotenv import load_dotenv
 import uuid
 from ultralytics import FastSAM
@@ -195,6 +201,32 @@ class AddNoteRequest(BaseModel):
     note: str
     teacher_id: str
     lesson_id: str
+
+class DeleteImageRequest(BaseModel):
+    public_id: str
+
+class SegmentAllRequest(BaseModel):
+    image_url: str
+    bounding_boxes: List[dict]
+# New Pydantic models for request validation
+class PointPrompt(BaseModel):
+    x: float
+    y: float
+
+class GetEmbeddingRequest(BaseModel):
+    image_url: str
+    teacher_id: str
+
+class PointSegmentationRequest(BaseModel):
+    image_embedding_id: str  # ID to retrieve stored embedding
+    points: List[PointPrompt]
+    labels: List[int]  # 1 for foreground, 0 for background
+    original_size: Tuple[int, int] = Field(..., description="Original image dimensions as (width, height)")
+
+# In-memory storage for embeddings (consider a more persistent solution for production)
+image_embeddings_store = {}
+
+# Routes
 
 @app.get('/')
 async def home():
@@ -490,6 +522,76 @@ async def add_note(data: AddNoteRequest):
         print(f"Error in add_note: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete('/delete-image')
+async def delete_image(request: DeleteImageRequest):
+    try:
+        if not request.public_id:
+            raise HTTPException(status_code=400, detail="Missing public_id parameter")
+
+        # Delete the image from Cloudinary
+        result = cloudinary.uploader.destroy(request.public_id)
+        
+        if result.get('result') == 'ok':
+            return {'message': 'Image deleted successfully'}
+        else:
+            raise HTTPException(status_code=500, detail='Failed to delete image from Cloudinary')
+
+    except Exception as e:
+        print(f"Error in delete_image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/segment-all')
+async def segment_all(request: SegmentAllRequest):
+    if not request.image_url or not request.bounding_boxes:
+        raise HTTPException(status_code=400, detail='Missing required parameters')
+    
+    try:
+        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
+        try:
+            response = requests.get(request.image_url)
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(response.content)
+            
+            # Process the image and get region data
+            combined_image = segment_all_regions(temp_path, request.bounding_boxes)
+            
+            # Convert the combined image to base64
+            _, buffer = cv2.imencode('.png', combined_image)
+            combined_image_b64 = base64.b64encode(buffer).decode('utf-8')
+            combined_image_url = f"data:image/png;base64,{combined_image_b64}"
+            
+            # Create region data for frontend
+            regions = [
+                {
+                    'index': i,
+                    'bbox': [
+                        int(float(bbox['x'])),
+                        int(float(bbox['y'])),
+                        int(float(bbox['x'] + bbox['width'])),
+                        int(float(bbox['y'] + bbox['height']))
+                    ]
+                }
+                for i, bbox in enumerate(request.bounding_boxes)
+            ]
+            
+            return {
+                'combined_image': combined_image_url,
+                'regions': regions,
+                'num_regions': len(request.bounding_boxes)
+            }
+            
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=500, detail=f'Failed to download image: {str(e)}')
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+                
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get('/get_lessons')
 async def get_lessons(teacher_id: str):
     try:
@@ -515,6 +617,360 @@ async def get_lessons(teacher_id: str):
     except Exception as e:
         print(f"Error in get_lessons: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post('/get_image_embedding')
+async def get_embedding(data: GetEmbeddingRequest):
+    try:
+        # Download the image from URL
+        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
+        try:
+            response = requests.get(data.image_url)
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(response.content)
+
+            if not os.path.exists(temp_path):
+                raise ValueError("Failed to save downloaded image")
+
+            # Get image embeddings
+            embedding = get_image_embeddings(temp_path)
+            
+            # Generate a unique ID for this embedding
+            embedding_id = str(uuid.uuid4())
+            
+            # Store the embedding with the ID and original image URL
+            image_embeddings_store[embedding_id] = {
+                'embedding': embedding,
+                'teacher_id': data.teacher_id,
+                'created_at': time.time(),
+                'image_url': data.image_url   # new field for original image URL
+            }
+            
+            return {
+                'embedding_id': embedding_id,
+                'success': True,
+                'message': 'Image embedding created successfully'
+            }
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=500, detail=f"Failed to download image: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/segment_with_points')
+async def segment_with_points_route(data: PointSegmentationRequest):
+    try:
+        # Retrieve the stored embedding
+        if data.image_embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found. It may have expired. Please generate a new embedding.")
+        
+        embedding_data = image_embeddings_store[data.image_embedding_id]
+        image_embedding = embedding_data['embedding']
+        
+        # Generate binary mask
+        points = [[point.x, point.y] for point in data.points]
+        # Generate binary mask
+        mask = generate_mask(
+            image_embedding=image_embedding,
+            points=points,
+            labels=data.labels,
+            original_size=data.original_size
+        )
+
+        # Retrieve the original image via stored URL
+        original_url = embedding_data.get('image_url')
+        response = requests.get(original_url)
+        temp_orig = "temp_orig_image.jpg"
+        with open(temp_orig, "wb") as f:
+            f.write(response.content)
+
+        # Load the original image using cv2 in color mode
+        original_image = cv2.imread(temp_orig, cv2.IMREAD_COLOR)
+        os.remove(temp_orig)
+
+        # Resize the mask to match the original image dimensions
+        mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]))
+        mask_bool = mask > 0  # Convert to boolean mask
+
+        # Define a color for the mask, e.g., cyan (BGR format for OpenCV)
+        color = (0, 255, 255)
+
+        # Create a colored mask (RGB channels)
+        colored_mask = np.zeros_like(original_image)  # Shape: (height, width, 3)
+        for c in range(3):
+            colored_mask[:, :, c] = np.where(mask_bool, color[c], 0)
+
+        # Create RGBA mask (height, width, 4)
+        mask_rgba = np.zeros((*original_image.shape[:2], 4), dtype=np.uint8)
+        mask_rgba[:, :, :3] = colored_mask  # RGB channels
+        mask_rgba[:, :, 3] = mask  # Alpha channel (0 or 255)
+
+        # Convert to PIL Image and save to buffer
+        pil_mask = Image.fromarray(mask_rgba, 'RGBA')
+        buffer = io.BytesIO()
+        pil_mask.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            buffer,
+            resource_type="image",
+            allowed_cors_origins=["http://localhost:3000"],
+            access_mode="anonymous"
+        )
+        mask_url = upload_result['secure_url']
+
+        return {
+            'mask_url': mask_url,
+            'success': True
+        }
+    except Exception as e:
+        print(f"Debug - Error in segment_with_points: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/get_point_cutouts')
+async def get_point_cutouts(data: PointSegmentationRequest):
+    try:
+        # Check if the embedding exists
+        if data.image_embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found. It may have expired. Please generate a new embedding.")
+        
+        embedding_data = image_embeddings_store[data.image_embedding_id]
+        image_embedding = embedding_data['embedding']
+        
+        # Generate the binary mask from points and labels
+        points = [[point.x, point.y] for point in data.points]
+        mask = generate_mask(
+            image_embedding=image_embedding,
+            points=points,
+            labels=data.labels,
+            original_size=data.original_size
+        )
+
+        # Download the original image from the stored URL
+        original_url = embedding_data.get('image_url')
+        response = requests.get(original_url)
+        temp_file = "temp_orig_image.jpg"
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+
+        # Load the image in color mode
+        original_image = cv2.imread(temp_file, cv2.IMREAD_COLOR)
+        os.remove(temp_file)
+
+        # Resize the mask to match the original image size
+        mask = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]), interpolation=cv2.INTER_NEAREST)
+
+        # Find the bounding box of the mask
+        coords = cv2.findNonZero(mask)
+        if coords is None:
+            raise ValueError("No valid mask generated")
+        x, y, w, h = cv2.boundingRect(coords)
+
+        # Create the cutout
+        img_crop = original_image[y:y+h, x:x+w]  # Crop the image (BGR)
+        mask_crop = mask[y:y+h, x:x+w]            # Crop the mask
+        img_crop_rgba = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGBA)  # Convert to RGBA
+        alpha_mask_crop = np.where(mask_crop > 0, 255, 0).astype(np.uint8)
+        img_crop_rgba[:, :, 3] = alpha_mask_crop # Set alpha channel
+
+        # Handle the cumulative mask for all cutouts
+        # If this is the first cutout for this image, initialize the cumulative mask
+        if 'cumulative_mask' not in embedding_data:
+            embedding_data['cumulative_mask'] = np.zeros_like(mask)
+        
+        # Update the cumulative mask by combining with the current mask
+        embedding_data['cumulative_mask'] = np.logical_or(embedding_data['cumulative_mask'], mask).astype(np.uint8) * 255
+        cumulative_mask = embedding_data['cumulative_mask']
+        
+        # Create the puzzle outline using the cumulative mask
+        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA) # Full image to RGBA
+        alpha_channel = np.where(cumulative_mask == 0, 255, 0).astype(np.uint8)  # Transparent where cumulative mask is True
+        original_rgba[:, :, 3] = alpha_channel
+
+        # Convert to PIL Images for PNG saving
+        pil_cutout = Image.fromarray(img_crop_rgba, 'RGBA')
+        pil_outline = Image.fromarray(original_rgba, 'RGBA')
+
+        # Upload the cutout to Cloudinary
+        cutout_buffer = io.BytesIO()
+        pil_cutout.save(cutout_buffer, format='PNG')
+        cutout_buffer.seek(0)
+        upload_result_cutout = cloudinary.uploader.upload(
+            cutout_buffer,
+            public_id=f'cutout_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        cutout_url = upload_result_cutout['secure_url']
+
+        # Upload the cumulative puzzle outline to Cloudinary
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+        upload_result_outline = cloudinary.uploader.upload(
+            outline_buffer,
+            public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        puzzle_outline_url = upload_result_outline['secure_url']
+
+        # Define the position of the cutout
+        position = {
+            'x': x,
+            'y': y,
+            'width': w,
+            'height': h,
+            'original_width': original_image.shape[1],
+            'original_height': original_image.shape[0]
+        }
+
+        # Return the response
+        return {
+            'segmented_urls': [cutout_url],         # Single cutout URL in a list
+            'puzzle_outline_url': puzzle_outline_url,
+            'positions': [position]                 # Single position in a list
+        }
+    except Exception as e:
+        print(f"Error in get_point_cutouts: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/regenerate_puzzle_outline')
+async def regenerate_puzzle_outline(data: dict):
+    try:
+        # Extract data
+        embedding_id = data.get('image_embedding_id')
+        cutout_ids = data.get('cutout_ids', [])
+        
+        if not embedding_id:
+            raise HTTPException(status_code=400, detail="Missing image_embedding_id")
+            
+        if embedding_id not in image_embeddings_store:
+            raise HTTPException(status_code=404, detail="Image embedding not found")
+            
+        embedding_data = image_embeddings_store[embedding_id]
+        
+        # Download the original image
+        original_url = embedding_data.get('image_url')
+        response = requests.get(original_url)
+        temp_file = "temp_orig_image.jpg"
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+            
+        # Load the image in color mode
+        original_image = cv2.imread(temp_file, cv2.IMREAD_COLOR)
+        os.remove(temp_file)
+        
+        # Initialize an empty cumulative mask
+        height, width = original_image.shape[:2]
+        cumulative_mask = np.zeros((height, width), dtype=np.uint8)
+        
+        # If there are no cutouts, return empty outline (original image)
+        if not cutout_ids:
+            # Create transparent original image (no cutouts)
+            original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)
+            original_rgba[:, :, 3] = 255  # Fully opaque, no cutouts
+            
+            # Convert to PIL Image and upload
+            pil_outline = Image.fromarray(original_rgba, 'RGBA')
+            outline_buffer = io.BytesIO()
+            pil_outline.save(outline_buffer, format='PNG')
+            outline_buffer.seek(0)
+            upload_result = cloudinary.uploader.upload(
+                outline_buffer,
+                public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+                format="png"
+            )
+            
+            return {
+                'puzzle_outline_url': upload_result['secure_url'],
+                'success': True,
+                'message': 'Empty puzzle outline created'
+            }
+        
+        # Get stored cutout masks
+        if 'cutout_masks' not in embedding_data:
+            # Initialize cutout_masks if it doesn't exist
+            embedding_data['cutout_masks'] = {}
+            # If no masks stored yet, return error
+            raise HTTPException(status_code=400, detail="No cutout data available for regeneration")
+        
+        # Regenerate the cumulative mask from the remaining cutouts
+        for cutout_id in cutout_ids:
+            cutout_id_str = str(cutout_id)  # Ensure the ID is a string for dictionary lookup
+            if cutout_id_str in embedding_data['cutout_masks']:
+                mask = embedding_data['cutout_masks'][cutout_id_str]
+                # Resize mask if needed to match original image dimensions
+                if mask.shape[:2] != (height, width):
+                    mask = cv2.resize(mask, (width, height), interpolation=cv2.INTER_NEAREST)
+                # Add this mask to the cumulative mask
+                cumulative_mask = np.logical_or(cumulative_mask, mask).astype(np.uint8) * 255
+            else:
+                # Skip if mask not found for this ID
+                print(f"Warning: No mask found for cutout ID {cutout_id}")
+                continue
+        
+        # Store the updated cumulative mask
+        embedding_data['cumulative_mask'] = cumulative_mask
+        
+        # Create the puzzle outline using the cumulative mask
+        original_rgba = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGBA)
+        # Make cutout areas transparent
+        alpha_channel = np.where(cumulative_mask == 0, 255, 0).astype(np.uint8)
+        original_rgba[:, :, 3] = alpha_channel
+        
+        # Convert to PIL Image for PNG saving
+        pil_outline = Image.fromarray(original_rgba, 'RGBA')
+        
+        # Upload the regenerated puzzle outline to Cloudinary
+        outline_buffer = io.BytesIO()
+        pil_outline.save(outline_buffer, format='PNG')
+        outline_buffer.seek(0)
+        upload_result = cloudinary.uploader.upload(
+            outline_buffer,
+            public_id=f'puzzle_outline_{uuid.uuid4().hex[:8]}',
+            format="png"
+        )
+        puzzle_outline_url = upload_result['secure_url']
+        
+        return {
+            'puzzle_outline_url': puzzle_outline_url,
+            'success': True,
+            'message': 'Puzzle outline regenerated successfully'
+        }
+    except Exception as e:
+        print(f"Error in regenerate_puzzle_outline: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Optional route to handle cleanup of embeddings
+@app.delete('/image_embedding/{embedding_id}')
+async def delete_embedding(embedding_id: str):
+    if embedding_id in image_embeddings_store:
+        del image_embeddings_store[embedding_id]
+        return {"message": "Embedding deleted successfully"}
+    raise HTTPException(status_code=404, detail="Embedding not found")
+
+# Maintenance endpoint to cleanup old embeddings (could also be a background task)
+@app.post('/cleanup_embeddings')
+async def cleanup_embeddings(max_age_seconds: int = 3600):  # Default: clean embeddings older than 1 hour
+    current_time = time.time()
+    expired_ids = [
+        embedding_id 
+        for embedding_id, data in image_embeddings_store.items() 
+        if current_time - data['created_at'] > max_age_seconds
+    ]
+    
+    for embedding_id in expired_ids:
+        del image_embeddings_store[embedding_id]
+    
+    return {"message": f"Cleaned up {len(expired_ids)} expired embeddings"}
 
 if __name__ == "__main__":
     import uvicorn

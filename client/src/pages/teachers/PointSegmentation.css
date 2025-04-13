@@ -1,0 +1,500 @@
+/* src/pages/teachers/PointSegmentation.css */
+
+/* Main container */
+.point-segmentation-container {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.segmentation-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.segmentation-header h1 {
+  color: white;
+  font-size: 2.5rem;
+  margin: 0;
+  padding: 16px;
+}
+
+/* Messages */
+.error-message {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-left: 4px solid #f44336;
+  color: #721c24;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.success-message {
+  background-color: rgba(0, 255, 0, 0.1);
+  border-left: 4px solid #4caf50;
+  color: #155724;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+/* Layout with sidebar */
+.main-content-with-sidebar {
+  display: flex;
+  gap: 20px;
+  min-height: 500px;
+}
+
+.main-content {
+  flex: 1;
+  transition: width 0.3s ease;
+}
+
+.main-content.sidebar-open {
+  width: calc(100% - 300px);
+}
+
+.main-content.sidebar-closed {
+  width: 100%;
+}
+
+/* Sidebar */
+.point-segmentation-container .point-sidebar {
+  width: 300px;
+  background-color: rgb(3, 3, 26);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.point-sidebar.open {
+  width: 300px;
+  min-width: 300px;
+}
+
+.point-sidebar.closed {
+  width: 50px;
+  min-width: 50px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  color: white;
+  font-size: 1.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.point-sidebar.closed .sidebar-header h2 {
+  opacity: 0;
+}
+
+.toggle-sidebar-button {
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: background-color 0.3s;
+  border-radius: 4px;
+}
+
+.toggle-sidebar-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.saved-cutouts-container {
+  padding: 15px;
+  max-height: 500px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.point-sidebar.closed .saved-cutouts-container,
+.point-sidebar.closed .cumulative-outline-container {
+  display: none;
+}
+
+.no-cutouts {
+  color: #999;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.saved-cutout-item {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.saved-cutout-item:hover {
+  transform: translateY(-2px);
+}
+
+.remove-cutout-button {
+  background-color: rgba(255, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.remove-cutout-button:hover {
+  background-color: rgba(255, 0, 0, 0.9);
+}
+
+.cumulative-outline-container {
+  padding: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cumulative-outline-container h3 {
+  color: white;
+  font-size: 1rem;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+/* Sections */
+.upload-section,
+.selection-mode-section,
+.image-interaction-section,
+.result-section,
+.cutouts-section {
+  background-color: rgb(1, 1, 17);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+section h2 {
+  color: white;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+section h3 {
+  color: #ccc;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+/* File upload */
+.upload-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.file-upload-label {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-button {
+  display: inline-block;
+  background-color: #4a6cb3;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.upload-button:hover {
+  background-color: #3a5da3;
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+  padding: 10px 18px;
+  background-color: #4a6cb3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.3s;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+button:hover {
+  background-color: #3a5da3;
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.generate-button {
+  display: block;
+  margin: 0 auto;
+  padding: 12px 24px;
+  font-size: 1rem;
+}
+
+/* Selection mode */
+.mode-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.mode-button {
+  flex: 1;
+  max-width: 200px;
+  padding: 12px;
+  text-align: center;
+}
+
+.mode-button.active {
+  background-color: #333;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.selection-instructions {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* Image and Canvas */
+.image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.image-canvas-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.segmentation-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.segmentation-image.dull-image {
+  filter: brightness(0.3);
+}
+
+.selection-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* Control buttons */
+.control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.segment-button {
+  background-color: #28a745;
+}
+
+.segment-button:hover {
+  background-color: #218838;
+}
+
+.cutout-button {
+  background-color: #9c27b0;
+}
+
+.cutout-button:hover {
+  background-color: #7b1fa2;
+}
+
+/* Neural Network Animation */
+.neural-animation {
+  position: relative;
+  height: 60px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.neural-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle, #4a9eff 1px, transparent 1px),
+    radial-gradient(circle, #4a9eff 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: particleFlow 3s linear infinite;
+  opacity: 0.5;
+}
+
+.neural-particles:nth-child(2) {
+  animation-delay: -1s;
+  opacity: 0.3;
+}
+
+.neural-particles:nth-child(3) {
+  animation-delay: -2s;
+  opacity: 0.2;
+}
+
+.neural-animation-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 8;
+}
+
+@keyframes particleFlow {
+  0% {
+    transform: translateY(-20px) translateX(-20px);
+  }
+  100% {
+    transform: translateY(20px) translateX(20px);
+  }
+}
+
+/* Progress Bar */
+.simulation-bar-container {
+  width: 100%;
+  padding: 10px;
+}
+
+.simulation-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.simulation-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #4a9eff, #8ed6ff);
+  border-radius: 3px;
+  position: relative;
+  transition: width 0.3s ease-out;
+}
+
+.simulation-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.simulation-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  filter: blur(5px);
+  background: inherit;
+  opacity: 0.5;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.simulation-percentage {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 15px 0;
+  text-shadow: 0 0 10px rgba(74, 158, 255, 0.8);
+}
+
+.simulation-message {
+  font-size: 16px;
+  opacity: 0.9;
+  margin-top: 10px;
+  color: #8ed6ff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .main-content-with-sidebar {
+    flex-direction: column;
+  }
+  
+  .point-sidebar.open {
+    width: 100%;
+    min-width: 100%;
+  }
+  
+  .main-content.sidebar-open {
+    width: 100%;
+  }
+  
+  .mode-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .mode-button {
+    width: 100%;
+    max-width: 100%;
+  }
+}
