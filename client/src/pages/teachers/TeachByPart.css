@@ -1,327 +1,187 @@
-/* src/pages/teachers/TeachByPart.css */
-.teach-content {
-    padding: 20px;
-    background: #1a1a1a;
-    color: #ffffff;
-    min-height: 100vh;
-  }
-  
-  .dashboard-header {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  
-  .dashboard-title {
-    font-size: 2.5rem;
-    color: #00ffcc;
-  }
-  
-  .dashboard-subtitle {
-    font-size: 1.2rem;
-    color: #cccccc;
-  }
-  
-  .error-message {
-    color: #ff5555;
-    text-align: center;
-    margin: 10px 0;
-  }
-  
-  .upload-section {
-    background: #2a2a2a;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-  }
-  
-  .upload-container {
-    text-align: center;
-  }
-  
-  .file-upload-label {
-    display: inline-block;
-  }
-  
-  .file-input {
-    display: none;
-  }
-  
-  .upload-button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    display: inline-block;
-  }
-  
-  .upload-button:hover {
-    background-color: #00ccaa;
-  }
-  
-  .segmentation-mode-section {
-    text-align: center;
-    margin: 20px 0;
-  }
-  
-  .mode-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .mode-button {
-    background-color: #444;
-    color: #ffffff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .mode-button.active {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-  }
-  
-  .mode-button:hover {
-    background-color: #666;
-  }
-  
-  .generate-button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .generate-button.disabled {
-    background-color: #666;
-    cursor: not-allowed;
-  }
-  
-  .cropper-container {
-    margin: 20px auto;
-    max-width: 800px;
-  }
-  
-  .region-selection-controls {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  
-  .select-region-button,
-  .select-another-button,
-  .done-selecting-button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .select-region-button:hover,
-  .select-another-button:hover,
-  .done-selecting-button:hover {
-    background-color: #00ccaa;
-  }
-  
-  .point-selection-section {
-    margin: 20px 0;
-  }
-  
-  .image-container {
-    position: relative;
-    max-width: 800px;
-    margin: 0 auto;
-  }
-  
-  .image-canvas-wrapper {
-    position: relative;
-  }
-  
-  .segmentation-image {
-    width: 100%;
-    height: auto;
-    max-width: 800px;
-    max-height: 600px;
-    object-fit: contain;
-  }
-  
-  .selection-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: crosshair;
-  }
-  
-  .control-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  
-  .control-buttons button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .control-buttons button:disabled {
-    background-color: #666;
-    cursor: not-allowed;
-  }
-  
-  .control-buttons button:hover:not(:disabled) {
-    background-color: #00ccaa;
-  }
-  
-  .processed-output-container {
-    margin-top: 20px;
-  }
-  
-  .original-image-container {
-    position: relative;
-    width: 800px;
-    height: 600px;
-    margin: 0 auto;
-  }
-  
-  .base-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  
-  .region-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .label-input-wrapper {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .label-input {
-    padding: 5px;
-    border-radius: 5px;
-    border: none;
-  }
-  
-  .submit-label-button,
-  .close-button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .submit-label-button:hover,
-  .close-button:hover {
-    background-color: #00ccaa;
-  }
-  
-  .done-labeling-button,
-  .teach-by-part-button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-    display: block;
-    margin: 10px auto;
-  }
-  
-  .done-labeling-button:hover,
-  .teach-by-part-button:hover {
-    background-color: #00ccaa;
-  }
-  
-  .teach-by-part-container {
-    margin-top: 20px;
-    position: relative;
-  }
-  
-  .original-image-teach {
-    background: #1a1a1a;
-    border: 1px solid #00ffcc;
-  }
-  
-  .parts-list {
-    background: #2a2a2a;
-    padding: 10px;
-    border-radius: 5px;
-    color: #ffffff;
-  }
-  
-  .parts-list h3 {
-    margin-top: 0;
-    color: #00ffcc;
-  }
-  
-  .exit-teach-button {
-    background-color: #00ffcc;
-    color: #1a1a1a;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-  }
-  
-  .exit-teach-button:hover {
-    background-color: #00ccaa;
-  }
-  
-  @keyframes slideIn {
-    from {
-      left: calc(100% + 320px);
-    }
-    to {
-      left: 0;
-    }
-  }
-  
-  @keyframes labelSlideIn {
-    from {
-      left: calc(100% + 420px);
-    }
-    to {
-      left: inherit;
-    }
-  }
-  
-  @keyframes labelSlideInText {
-    from {
-      left: calc(100% + 420px);
-    }
-    to {
-      left: inherit;
-    }
-  }
-  
-  .loading-message {
-    text-align: center;
-    color: #00ffcc;
-    margin: 20px 0;
-  }
+/* src/styles/TeachByParts.css */
+.teach-by-parts-container {
+  display: flex;
+  min-height: 100vh;
+  background: #1A1A1A; /* Charcoal Black */
+  color: #E6E6E6; /* Very Light Gray */
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar {
+  width: 250px;
+  background: #4D4D4D; /* Dark Gray */
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-title {
+  color: #FFFFFF; /* White */
+  font-size: 24px;
+  margin: 0;
+  text-align: center;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: #E6E6E6;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-item:hover {
+  background: #7B68EE; /* Soft Purple (complementary) */
+}
+
+.sidebar-item.active {
+  background: #3399FF; /* Sky Blue */
+  color: #1A1A1A;
+}
+
+.sidebar-item svg {
+  color: inherit;
+}
+
+.main-content {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.main-header {
+  text-align: center;
+}
+
+.main-header h1 {
+  color: #FFFFFF;
+  font-size: 32px;
+  margin: 0;
+}
+
+.main-header p {
+  color: #B3B3B3; /* Light Gray */
+  font-size: 18px;
+  margin: 5px 0 0;
+}
+
+.welcome-section {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.welcome-section h2 {
+  color: #E6E6E6;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.welcome-section p {
+  color: #B3B3B3;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.start-button {
+  background: #3399FF; /* Sky Blue */
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  color: #FFFFFF;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.start-button:hover {
+  background: #4DA8FF;
+}
+
+.upload-container {
+  background: #1A1A1A;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.upload-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.upload-header h2 {
+  color: #E6E6E6;
+  font-size: 24px;
+  margin: 0;
+}
+
+.upload-description {
+  color: #B3B3B3;
+  font-size: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.upload-area {
+  border: 2px dashed #3399FF;
+  border-radius: 10px;
+  padding: 40px;
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.upload-area.dragging {
+  border-color: #4DA8FF;
+  background: rgba(51, 153, 255, 0.1);
+}
+
+.upload-placeholder {
+  color: #E6E6E6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.upload-icon {
+  color: #3399FF;
+}
+
+.back-button {
+  background: #FFCC00; /* Golden Yellow */
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: #1A1A1A;
+  transition: background 0.3s ease;
+}
+
+.back-button:hover {
+  background: #FFD700;
+}
+
+.error-message {
+  color: #FF6666; /* Soft Red */
+  margin-top: 10px;
+  text-align: center;
+}

@@ -21,3 +21,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+# Ignore large model files
+backend/FastSAM-x.pt
+backend/sam2.1_b.pt
