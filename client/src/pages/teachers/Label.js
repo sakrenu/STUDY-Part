@@ -13,7 +13,7 @@ const Label = ({ teacherEmail }) => {
   const [currentImageUrl, setCurrentImageUrl] = useState(null);
   const [processedRegions, setProcessedRegions] = useState([]);
   const [isLabeling, setIsLabeling] = useState(false);
-  const [labels, setLabels] = useState([]);
+  const [labels, setLabels] = useState([]); // { text, regionIndex, clickX, clickY, recordingUrl }
   const [currentLabel, setCurrentLabel] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +21,7 @@ const Label = ({ teacherEmail }) => {
   const [currentPartIndex, setCurrentPartIndex] = useState(-1);
   const cropperRef = useRef(null);
   const imageRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -36,12 +37,23 @@ const Label = ({ teacherEmail }) => {
       const parts = processedOutput.regions.map((region, index) => ({
         ...region,
         label: labels.find((l) => l.regionIndex === region.regionIndex)?.text || `Part ${index + 1}`,
+        recordingUrl: labels.find((l) => l.regionIndex === region.regionIndex)?.recordingUrl || null,
       }));
       if (currentPartIndex < parts.length) {
-        const timer = setTimeout(() => {
-          setCurrentPartIndex((prev) => prev + 1);
-        }, 4000); // 4 seconds as requested earlier
-        return () => clearTimeout(timer);
+        const currentPart = parts[currentPartIndex];
+        if (currentPart.recordingUrl) {
+          const audio = new Audio(currentPart.recordingUrl);
+          audio.play();
+          audio.onended = () => {
+            setCurrentPartIndex((prev) => prev + 1);
+          };
+        } else {
+          const utterance = new SpeechSynthesisUtterance(currentPart.label);
+          utterance.onend = () => {
+            setCurrentPartIndex((prev) => prev + 1);
+          };
+          window.speechSynthesis.speak(utterance);
+        }
       }
     }
   }, [isStudyByPart, currentPartIndex, processedOutput, labels]);
@@ -116,6 +128,33 @@ const Label = ({ teacherEmail }) => {
     }
   };
 
+  const startRecording = () => {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      const chunks = [];
+      mediaRecorderRef.current.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorderRef.current.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio', blob, 'recording.webm');
+        try {
+          const response = await axios.post('http://127.0.0.1:8000/upload_audio', formData);
+          setCurrentLabel((prev) => ({ ...prev, recordingUrl: response.data.audio_url }));
+        } catch (error) {
+          setError('Failed to upload recording: ' + error.message);
+        }
+      };
+      mediaRecorderRef.current.start();
+    });
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+    }
+  };
+
   const handleImageClick = (e) => {
     if (!isLabeling || !processedOutput) return;
 
@@ -156,6 +195,7 @@ const Label = ({ teacherEmail }) => {
           clickY: y,
           regionIndex: clickedRegion.regionIndex,
           text: '',
+          recordingUrl: null,
         });
       }
     }
@@ -188,11 +228,14 @@ const Label = ({ teacherEmail }) => {
     const parts = processedOutput.regions.map((region, index) => ({
       ...region,
       label: labels.find((l) => l.regionIndex === region.regionIndex)?.text || `Part ${index + 1}`,
+      recordingUrl: labels.find((l) => l.regionIndex === region.regionIndex)?.recordingUrl || null,
+      clickX: labels.find((l) => l.regionIndex === region.regionIndex)?.clickX || 0,
+      clickY: labels.find((l) => l.regionIndex === region.regionIndex)?.clickY || 0,
     }));
 
     return (
-      <div className="study-by-part-container" style={{ display: 'flex', gap: '20px' }}>
-        <div className="original-image-study" style={{ position: 'relative', width: '800px', height: '600px' }}>
+      <div className="study-by-part-container">
+        <div className="original-image-study">
           <img
             src={currentImageUrl}
             alt="Original with empty parts"
@@ -224,26 +267,42 @@ const Label = ({ teacherEmail }) => {
                 />
               )}
               {index <= currentPartIndex && (
-                <img
-                  src={part.maskUrl}
-                  alt={`Part ${index}`}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: index === currentPartIndex ? 'calc(100% + 320px)' : 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    opacity: 1,
-                    transition: index === currentPartIndex ? 'left 1s ease-in-out' : 'none',
-                    animation: index === currentPartIndex ? 'slideIn 1s ease-in-out forwards' : 'none',
-                  }}
-                />
+                <>
+                  <img
+                    src={part.maskUrl}
+                    alt={`Part ${index}`}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: index === currentPartIndex ? 'calc(100% + 320px)' : 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      opacity: index === currentPartIndex ? 1 : 0.5, // Translucent when settled
+                      transition: index === currentPartIndex ? 'left 1s ease-in-out' : 'none',
+                      animation: index === currentPartIndex ? 'slideIn 1s ease-in-out forwards' : 'none',
+                    }}
+                  />
+                  {index <= currentPartIndex && (
+                    <div
+                      className="study-label"
+                      style={{
+                        position: 'absolute',
+                        top: part.clickY - 20,
+                        left: part.clickX + 100,
+                        opacity: index === currentPartIndex ? 1 : 0,
+                        transition: 'opacity 0.5s ease',
+                      }}
+                    >
+                      {part.label}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))}
         </div>
-        <div className="parts-list" style={{ width: '300px' }}>
+        <div className="parts-list">
           <h3>Parts</h3>
           {parts.map((part, index) => (
             <div
@@ -343,11 +402,6 @@ const Label = ({ teacherEmail }) => {
                     position: 'absolute',
                     top: labelY,
                     left: labelX,
-                    backgroundColor: '#2a2a2a',
-                    color: '#ffffff',
-                    padding: '5px 10px',
-                    borderRadius: '5px',
-                    whiteSpace: 'nowrap',
                   }}
                 >
                   {label.text}
@@ -375,6 +429,12 @@ const Label = ({ teacherEmail }) => {
                   if (e.key === 'Enter') handleLabelSubmit();
                 }}
               />
+              <button onClick={startRecording} className="record-button">
+                Record
+              </button>
+              <button onClick={stopRecording} className="stop-record-button">
+                Stop
+              </button>
               <button onClick={handleLabelSubmit} className="submit-label-button">
                 Add
               </button>
