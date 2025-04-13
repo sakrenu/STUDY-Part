@@ -47,15 +47,15 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Adjust if your frontend port differs
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize FastSAM model - will auto-download if needed
+# Initialize FastSAM model
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = FastSAM('FastSAM-s.pt')  # This will automatically download if not found
+model = FastSAM('FastSAM-s.pt')
 model.to(device)
 
 # Define different colors for different regions
@@ -243,6 +243,21 @@ async def upload_file(image: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post('/upload_audio')
+async def upload_audio(audio: UploadFile = File(...)):
+    try:
+        if not audio:
+            raise HTTPException(status_code=400, detail="No audio file")
+
+        response = cloudinary.uploader.upload(
+            audio.file,
+            resource_type="video",  # Use 'video' for audio files in Cloudinary
+            format="webm"
+        )
+        return {"audio_url": response['secure_url']}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post('/segment')
 async def segment_image(data: SegmentRequest):
     try:
@@ -289,7 +304,6 @@ async def segment_image(data: SegmentRequest):
 @app.post('/segment_label')
 async def segment_label(data: SegmentRequest):
     try:
-        # Download the image from the provided URL
         temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
         try:
             response = requests.get(data.image_url)
@@ -304,7 +318,6 @@ async def segment_label(data: SegmentRequest):
             if image is None:
                 raise ValueError("Failed to read downloaded image")
 
-            # Call the segment_image_for_label function from sam_label.py
             mask_urls, position = segment_image_for_label(
                 temp_path,
                 [
@@ -314,10 +327,9 @@ async def segment_label(data: SegmentRequest):
                     data.bounding_box['height']
                 ],
                 model,
-                region_index=data.region_index  # Pass the region_index
+                region_index=data.region_index
             )
 
-            # Upload the mask to Cloudinary
             mask_url = None
             if mask_urls:
                 with open(mask_urls[0].lstrip('/'), 'rb') as mask_file:
@@ -330,7 +342,7 @@ async def segment_label(data: SegmentRequest):
                     mask_url = upload_result['secure_url']
 
             return {
-                'mask_url': mask_url,  # URL to the translucent mask
+                'mask_url': mask_url,
                 'position': position,
                 'originalSize': {
                     'width': image.shape[1],
