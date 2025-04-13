@@ -1,208 +1,135 @@
-import torch
+# sam.py
+import requests
 import numpy as np
-import cv2
 from PIL import Image
-from ultralytics import FastSAM
-from ultralytics.models.fastsam import FastSAM
+from io import BytesIO
+import cv2
 from segment_anything import sam_model_registry, SamPredictor
+import cloudinary.uploader
+import logging
+import os
 
-# Initialize SAM model globally
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = FastSAM('FastSAM-x.pt').to(device)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-def generate_mask(bounding_box, image_path):
-    """
-    Generate mask using FastSAM model
-    """
-    bbox = [
-        int(bounding_box['x']),
-        int(bounding_box['y']),
-        int(bounding_box['x'] + bounding_box['width']),
-        int(bounding_box['y'] + bounding_box['height'])
-    ]
-    
-    results = model(image_path, device=device, retina_masks=True, imgsz=1024, conf=0.4, iou=0.9,
-                   bboxes=[bbox])
-    
-    if len(results[0].masks.data) == 0:
-        raise Exception("No mask generated")
-    
-    mask = results[0].masks.data[0].cpu().numpy()
-    return mask
+sam_checkpoint = "sam_vit_b_01ec64.pth"
+model_type = "vit_b"
+sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+predictor = SamPredictor(sam)
 
-def create_highlighted_outline(image, mask):
-    """
-    Create glowing outline effect around the mask
-    """
-    # Resize mask to match image size if needed
-    if mask.shape[:2] != image.shape[:2]:
-        mask = cv2.resize(mask, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_NEAREST)
-    
-    mask = mask > 0  # Convert to boolean mask
-    
-    # Get contours
-    contours, _ = cv2.findContours(
-        mask.astype(np.uint8), 
-        cv2.RETR_EXTERNAL, 
-        cv2.CHAIN_APPROX_SIMPLE
-    )
-    
-    # Create outline image
-    outline = image.copy()
-    cv2.drawContours(outline, contours, -1, (0, 255, 0), 2)
-    
-    # Add glow effect
-    blur = cv2.GaussianBlur(outline, (0, 0), sigmaX=2, sigmaY=2)
-    outline = cv2.addWeighted(outline, 1.5, blur, -0.5, 0)
-    
-    return outline
+def segment_with_boxes(image_url: str, regions: list) -> list:
+    response = requests.get(image_url)
+    response.raise_for_status()
+    img = Image.open(BytesIO(response.content))
+    img_np = np.array(img)
+    img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    predictor.set_image(img_np)
+    results = []
+    for region in regions:
+        input_box = np.array([region['x'], region['y'], region['x'] + region['width'], region['y'] + region['height']])
+        masks, _, _ = predictor.predict(box=input_box, multimask_output=False)
+        mask = masks[0].astype(np.uint8) * 255
+        mask_img = Image.fromarray(mask)
+        mask_buffer = BytesIO()
+        mask_img.save(mask_buffer, format="PNG")
+        mask_response = cloudinary.uploader.upload(mask_buffer.getvalue(), resource_type="image")
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        outline_img = np.zeros_like(img_np)
+        cv2.drawContours(outline_img, contours, -1, (0, 255, 255), 2)
+        outline_pil = Image.fromarray(cv2.cvtColor(outline_img, cv2.COLOR_BGR2RGB))
+        outline_buffer = BytesIO()
+        outline_pil.save(outline_buffer, format="PNG")
+        outline_response = cloudinary.uploader.upload(outline_buffer.getvalue(), resource_type="image")
+        results.append({
+            "cutout": mask_response['secure_url'],
+            "outline": outline_response['secure_url'],
+            "position": {"x": region['x'], "y": region['y'], "width": region['width'], "height": region['height']},
+            "type": "bounding_box"
+        })
+    return results
 
-def create_cutout(image, mask):
-    """
-    Create cutout with transparent background
-    """
-    # Resize mask to match image size if needed
-    if mask.shape[:2] != image.shape[:2]:
-        mask = cv2.resize(mask, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_NEAREST)
-    
-    mask = mask > 0  # Convert to boolean mask
-    rgba = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
-    rgba[~mask] = [0, 0, 0, 0]
-    return rgba
+def segment_with_points(image_url: str, regions: list) -> list:
+    response = requests.get(image_url)
+    response.raise_for_status()
+    img = Image.open(BytesIO(response.content))
+    img_np = np.array(img)
+    img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    predictor.set_image(img_np)
+    results = []
+    for region in regions:
+        points = np.array([[p['x'], p['y']] for p in region['points']])
+        labels = np.array([1] * len(region['points']))
+        exclude_points = region.get('excludePoints', [])
+        if exclude_points:
+            exclude_coords = np.array([[p['x'], p['y']] for p in exclude_points])
+            exclude_labels = np.array([0] * len(exclude_points))
+            points = np.concatenate([points, exclude_coords])
+            labels = np.concatenate([labels, exclude_labels])
+        masks, _, _ = predictor.predict(point_coords=points, point_labels=labels, multimask_output=False)
+        mask = masks[0].astype(np.uint8) * 255
+        mask_img = Image.fromarray(mask)
+        mask_buffer = BytesIO()
+        mask_img.save(mask_buffer, format="PNG")
+        mask_response = cloudinary.uploader.upload(mask_buffer.getvalue(), resource_type="image")
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        outline_img = np.zeros_like(img_np)
+        cv2.drawContours(outline_img, contours, -1, (0, 255, 255), 2)
+        outline_pil = Image.fromarray(cv2.cvtColor(outline_img, cv2.COLOR_BGR2RGB))
+        outline_buffer = BytesIO()
+        outline_pil.save(outline_buffer, format="PNG")
+        outline_response = cloudinary.uploader.upload(outline_buffer.getvalue(), resource_type="image")
+        results.append({
+            "cutout": mask_response['secure_url'],
+            "outline": outline_response['secure_url'],
+            "position": region.get('position', {}),
+            "type": "point_based"
+        })
+    return results
 
-def process_image(image_path, bounding_box):
-    """
-    Process image using SAM and create all necessary outputs
-    """
-    # Read and process image
-    image = cv2.imread(image_path)
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    # Generate mask
-    mask = generate_mask(bounding_box, image_path)
-    
-    # Create outputs
-    cutout = create_cutout(image, mask)
-    outline = create_highlighted_outline(image, mask)
-    
-    return {
-        'mask': mask,
-        'cutout': cutout,
-        'outline': outline
-    }
-
-def segment_image(image_path, bounding_box):
-    # Convert bounding box to correct format
-    bounding_box = [
-        int(bounding_box[0]),  # x_min
-        int(bounding_box[1]),  # y_min
-        int(bounding_box[0] + bounding_box[2]),  # x_max
-        int(bounding_box[1] + bounding_box[3])   # y_max
-    ]
-
-    # Perform segmentation
-    results = model(image_path, bboxes=[bounding_box])
-
-    # Extract masks
-    masks = results[0].masks.data.cpu().numpy().astype(np.uint8)
-    
-    # Load original image
-    original_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)  # Convert to RGB
-
-    cutouts = []
-    transparent_cutouts = []
-
-    for mask in masks:
-        mask_resized = cv2.resize(mask, (original_image.shape[1], original_image.shape[0]), interpolation=cv2.INTER_NEAREST)
-        mask_resized = (mask_resized > 0).astype(np.uint8) * 255
-        
-        # Create a 4-channel image (RGBA)
-        cutout_rgba = np.zeros((*original_image.shape[:2], 4), dtype=np.uint8)
-        cutout_rgba[:, :, :3] = original_image  # Copy RGB channels
-        cutout_rgba[:, :, 3] = mask_resized  # Set alpha channel
-        
-        cutouts.append(cutout_rgba)
-
-    return cutouts
-
-def segment_all_regions(image_path, bounding_boxes):
-    """
-    Process multiple regions in an image and return the combined result
-    """
-    try:
-        # Read the original image
-        original_image = cv2.imread(image_path)
-        if original_image is None:
-            raise ValueError(f'Failed to load image from path: {image_path}')
-        
-        # Create a copy for drawing all segments
-        combined_image = original_image.copy()
-        
-        # Create a mask to track overlapping regions
-        overlap_mask = np.zeros(original_image.shape[:2], dtype=np.int32)
-        
-        # Define colors for different regions
-        colors = [
-            (0, 255, 0),    # Green
-            (255, 0, 0),    # Blue
-            (0, 0, 255),    # Red
-            (255, 255, 0),  # Cyan
-            (255, 0, 255),  # Magenta
-            (0, 255, 255),  # Yellow
-            (128, 0, 128),  # Purple
-            (0, 128, 128),  # Teal
-            (128, 128, 0),  # Olive
-            (255, 165, 0)   # Orange
-        ]
-        
-        if not bounding_boxes:
-            raise ValueError('No bounding boxes provided')
-            
-        for i, bbox in enumerate(bounding_boxes):
-            try:
-                # Convert the bbox format
-                bbox_array = [
-                    int(float(bbox['x'])),
-                    int(float(bbox['y'])),
-                    int(float(bbox['x']) + float(bbox['width'])),
-                    int(float(bbox['y']) + float(bbox['height']))
-                ]
-                
-                # Use the model to generate a mask
-                results = model(image_path, device=device, retina_masks=True, imgsz=1024, conf=0.4, iou=0.9,
-                              bboxes=[bbox_array])
-                
-                if len(results[0].masks.data) > 0:
-                    # Get the mask
-                    mask = results[0].masks.data[0].cpu().numpy()
-                    
-                    # Resize mask to match image size if needed
-                    if mask.shape[:2] != original_image.shape[:2]:
-                        mask = cv2.resize(mask, 
-                                        (original_image.shape[1], original_image.shape[0]), 
-                                        interpolation=cv2.INTER_NEAREST)
-                    
-                    mask = (mask > 0).astype(np.uint8)
-                    
-                    # Update overlap mask
-                    overlap_mask[mask > 0] = i + 1
-                    
-                    # Get contours
-                    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    
-                    if contours:
-                        # Draw contours with different colors for each region
-                        color = colors[i % len(colors)]
-                        cv2.drawContours(combined_image, contours, -1, color, 2)
-            
-            except Exception as e:
-                print(f"Warning: Failed to process region {i+1}: {str(e)}")
-                continue
-        
-        return combined_image
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise ValueError(f'Failed to process image: {str(e)}')
+def segment_with_box_as_points(image_url: str, regions: list) -> list:
+    response = requests.get(image_url)
+    response.raise_for_status()
+    img = Image.open(BytesIO(response.content))
+    img_np = np.array(img)
+    img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    predictor.set_image(img_np)
+    results = []
+    for region in regions:
+        mask = np.zeros_like(img_np[:, :, 0], dtype=np.uint8)
+        x, y, w, h = region['x'], region['y'], region['width'], region['height']
+        mask[y:y+h, x:x+w] = 255
+        exclude_points = region.get('excludePoints', [])
+        for point in exclude_points:
+            cv2.circle(mask, (int(point['x']), int(point['y'])), 10, 0, -1)
+        foreground_coords = np.where(mask > 0)
+        if len(foreground_coords[0]) == 0:
+            continue
+        num_points = min(10, len(foreground_coords[0]))
+        indices = np.random.choice(len(foreground_coords[0]), num_points, replace=False)
+        points = np.array([[foreground_coords[1][i], foreground_coords[0][i]] for i in indices])
+        labels = np.array([1] * num_points)
+        if exclude_points:
+            exclude_coords = np.array([[p['x'], p['y']] for p in exclude_points])
+            exclude_labels = np.array([0] * len(exclude_points))
+            points = np.concatenate([points, exclude_coords])
+            labels = np.concatenate([labels, exclude_labels])
+        masks, _, _ = predictor.predict(point_coords=points, point_labels=labels, multimask_output=False)
+        mask = masks[0].astype(np.uint8) * 255
+        mask_img = Image.fromarray(mask)
+        mask_buffer = BytesIO()
+        mask_img.save(mask_buffer, format="PNG")
+        mask_response = cloudinary.uploader.upload(mask_buffer.getvalue(), resource_type="image")
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        outline_img = np.zeros_like(img_np)
+        cv2.drawContours(outline_img, contours, -1, (0, 255, 255), 2)
+        outline_pil = Image.fromarray(cv2.cvtColor(outline_img, cv2.COLOR_BGR2RGB))
+        outline_buffer = BytesIO()
+        outline_pil.save(outline_buffer, format="PNG")
+        outline_response = cloudinary.uploader.upload(outline_buffer.getvalue(), resource_type="image")
+        results.append({
+            "cutout": mask_response['secure_url'],
+            "outline": outline_response['secure_url'],
+            "position": {"x": region['x'], "y": region['y'], "width": region['width'], "height": region['height']},
+            "type": "box_as_points"
+        })
+    return results
