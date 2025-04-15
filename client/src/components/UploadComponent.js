@@ -1,108 +1,62 @@
-// src/components/UploadComponent.js
-import React, { useState, useRef } from 'react';
+
+import React, { useState } from 'react';
 import axios from 'axios';
-import { MdUpload, MdArrowBack } from 'react-icons/md';
 import { motion } from 'framer-motion';
+import './UploadComponent.css';
 import { toast } from 'react-toastify';
-import { Tooltip } from 'react-tooltip';
-import '../pages/teachers/TeachByParts.css';
 
 const UploadComponent = ({ onImageUploaded, onBack }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = async (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      await uploadImage(file);
-    } else {
-      setError('Please drop an image file.');
-      toast.error('Please drop an image file.', { theme: 'dark' });
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      await uploadImage(file);
-    }
-  };
-
-  const uploadImage = async (file) => {
+  const handleUpload = async () => {
+    if (!file) return;
+    setUploading(true);
     try {
-      setError(null);
       const formData = new FormData();
-      formData.append('image', file);
-      const response = await axios.post('http://127.0.0.1:8000/upload', formData);
-      const imageUrl = response.data.image_url;
-      onImageUploaded({ file, imageUrl });
-      toast.success('Image uploaded successfully!', { theme: 'dark' });
-    } catch (err) {
-      setError('Failed to upload image: ' + err.message);
-      toast.error('Failed to upload image.', { theme: 'dark' });
+      formData.append('file', file);
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const response = await axios.post(`${API_URL}/upload_image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      console.log("Upload response:", response.data);
+
+      onImageUploaded({
+        file,
+        imageUrl: response.data.image_url,
+        image_id: response.data.image_id // 🟢 send image_id
+      });
+    } catch (error) {
+      console.error('Upload error:', error, error.response?.data || 'No response data');
+      toast.error("Failed to upload image.");
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-    <motion.div
-      className="upload-container"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="upload-header">
-        <motion.button
-          className="back-button"
-          onClick={onBack}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          data-tooltip-id="back-tooltip"
-          data-tooltip-content="Go back to start"
-        >
-          <MdArrowBack size={24} />
+    <motion.div className="upload-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+      <h2>Upload an Image</h2>
+      <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
+      {previewUrl && <img src={previewUrl} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px' }} />}
+      <div className="upload-controls">
+        <motion.button onClick={handleUpload} disabled={!file || uploading} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+          {uploading ? 'Uploading...' : 'Upload'}
         </motion.button>
-        <h2>Upload Your Image</h2>
-        <Tooltip id="back-tooltip" place="top" />
+        <motion.button onClick={onBack} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+          Back
+        </motion.button>
       </div>
-      <p className="upload-description">
-        Drag and drop an image or click to select one to start creating your lesson.
-      </p>
-      <motion.div
-        className={`upload-area ${isDragging ? 'dragging' : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        whileHover={{ borderColor: '#4DA8FF' }}
-      >
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-        />
-        <motion.div
-          className="upload-placeholder"
-          onClick={() => fileInputRef.current.click()}
-          whileHover={{ scale: 1.05 }}
-        >
-          <MdUpload size={48} className="upload-icon" />
-          <span>{isDragging ? 'Drop here!' : 'Drop an image or click to browse'}</span>
-        </motion.div>
-      </motion.div>
-      {error && <div className="error-message">{error}</div>}
     </motion.div>
   );
 };

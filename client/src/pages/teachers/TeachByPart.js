@@ -1,22 +1,20 @@
-
-import React, { useState, useEffect } from 'react'; // Adjusted path assuming firebase.js is at src/
-import UploadComponent from '../../components/UploadComponent'; // Assuming components/ is one level up
+import React, { useState, useEffect } from 'react';
+import UploadComponent from '../../components/UploadComponent';
 import { motion } from 'framer-motion';
-import { MdUpload, MdLibraryBooks } from 'react-icons/md';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';// Assuming styles/ is one level up
+import { MdUpload, MdLibraryBooks, MdCrop } from 'react-icons/md';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { auth } from '../../firebase';
 import './TeachByParts.css';
 import { Tooltip } from 'react-tooltip';
 import SelectionComponent from '../../components/SelectionComponent';
-import { MdCrop } from 'react-icons/md';
 
 const TeachByParts = () => {
   const [teacherEmail, setTeacherEmail] = useState(null);
-  const [currentStep, setCurrentStep] = useState('welcome'); // welcome, upload, select, annotate, preview, library
+  const [currentStep, setCurrentStep] = useState('welcome');
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedImageId, setUploadedImageId] = useState(null);
   const [segmentedRegions, setSegmentedRegions] = useState(null);
-  
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -30,8 +28,19 @@ const TeachByParts = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleImageUploaded = ({ file, imageUrl }) => {
-    setUploadedImage({ file, url: imageUrl });
+  useEffect(() => {
+    console.log('TeachByParts state:', { currentStep, uploadedImageId, uploadedImage });
+  }, [currentStep, uploadedImageId, uploadedImage]);
+
+  const handleImageUploaded = ({ file, imageUrl, image_id }) => {
+    console.log('Image uploaded:', { file: file.name, imageUrl, image_id });
+    if (!image_id || typeof image_id !== 'string' || image_id.trim() === '') {
+      console.error('Invalid image_id received:', image_id);
+      toast.error('Failed to process image ID. Please try uploading again.');
+      return;
+    }
+    setUploadedImage({ file, url: imageUrl, width: 0, height: 0 });
+    setUploadedImageId(image_id);
     setCurrentStep('select');
   };
 
@@ -39,10 +48,12 @@ const TeachByParts = () => {
     if (currentStep === 'upload') {
       setCurrentStep('welcome');
       setUploadedImage(null);
+      setUploadedImageId(null);
     }
   };
 
   const handleStepChange = (step) => {
+    console.log('Changing step to:', step);
     if (step === 'library' || (step === 'upload' && !teacherEmail)) {
       setCurrentStep(step);
     } else if (teacherEmail) {
@@ -69,7 +80,6 @@ const TeachByParts = () => {
       step: 'select',
       description: 'Choose regions or points to segment your image',
     },
-    // Placeholder for Select, Annotate, Preview
   ];
 
   return (
@@ -139,23 +149,39 @@ const TeachByParts = () => {
           />
         )}
 
-        {currentStep === 'select' && (
+        {currentStep === 'select' && uploadedImage && uploadedImageId && typeof uploadedImageId === 'string' && uploadedImageId.trim() !== '' && (
           <SelectionComponent
             image={uploadedImage}
+            image_id={uploadedImageId}
             teacherEmail={teacherEmail}
             onRegionsSegmented={(regions) => {
+              console.log('Regions segmented:', regions);
               setSegmentedRegions(regions);
               setCurrentStep('annotate');
             }}
             onBack={() => {
               setCurrentStep('upload');
               setUploadedImage(null);
+              setUploadedImageId(null);
             }}
           />
         )}
-        
-        
-        {/* Placeholder for select, annotate, preview, library */}
+
+        {currentStep === 'select' && (!uploadedImage || !uploadedImageId) && (
+          <div>
+            <p>Error: No image uploaded. Please return to the upload step.</p>
+            <motion.button
+              className="start-button"
+              onClick={() => setCurrentStep('upload')}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Back to Upload
+            </motion.button>
+          </div>
+        )}
+
+        {/* Future: annotate, preview, library */}
       </div>
 
       <ToastContainer position="top-right" autoClose={3000} theme="dark" />
