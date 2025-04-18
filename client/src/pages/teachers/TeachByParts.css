@@ -163,6 +163,14 @@
   z-index: 2;
 }
 
+.mask-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .regions-overlay-container {
   position: absolute;
   top: 0;
@@ -249,33 +257,4 @@
 
 .selcomp-back-button {
   background: #4a545e;
-}
-
-/* Preview Container */
-.selcomp-preview-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 1200px;
-  background-color: #1A1A1A;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-/* Preview Title */
-.selcomp-preview-title {
-  font-size: 1.8rem;
-  color: #b0b8e2;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-/* Mask Canvas */
-.selcomp-mask-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 1;
 }
