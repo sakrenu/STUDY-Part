@@ -154,27 +154,29 @@ const Signup = () => {
             </div>
             <div className="form-group">
               <label>Sign up as:</label>
-              <div className="role-selector">
-                <label>
+              <div className="role-selection">
+                <div className="role-option">
                   <input
                     type="radio"
                     name="role"
                     value="student"
                     checked={role === 'student'}
                     onChange={(e) => setRole(e.target.value)}
+                    id="student-role"
                   />
-                  Student
-                </label>
-                <label>
+                  <label htmlFor="student-role">Student</label>
+                </div>
+                <div className="role-option">
                   <input
                     type="radio"
                     name="role"
                     value="teacher"
                     checked={role === 'teacher'}
                     onChange={(e) => setRole(e.target.value)}
+                    id="teacher-role"
                   />
-                  Teacher
-                </label>
+                  <label htmlFor="teacher-role">Teacher</label>
+                </div>
               </div>
             </div>
             <button type="submit" className="signup-button">
