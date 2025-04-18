@@ -272,3 +272,168 @@
     width: 250px; 
     margin-bottom: 20px;
   }
+
+.student-dashboard {
+    min-height: 100vh;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Top Navigation */
+.top-nav {
+    background-color: #3c2468;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.logo {
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-decoration: none;
+}
+
+.logo .study {
+    color: white;
+}
+
+.logo .part {
+    color: pink;
+}
+
+.logout-btn {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 9999px;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+}
+
+.logout-btn:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Main Content */
+.dashboard-content {
+    padding: 7rem 2rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.welcome-section {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.welcome-section h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+}
+
+.welcome-section h3 {
+    font-size: 1.2rem;
+    color: #D3D3D3;
+}
+
+/* Mode Cards Grid */
+.mode-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.mode-card {
+    background: linear-gradient(135deg, #000000, #30074d, hsl(0, 0%, 0%));
+    border-radius: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.mode-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
+}
+
+.card-icon {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1.5rem;
+}
+
+.card-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #6f42c1;
+}
+
+.mode-card h2 {
+    color: #f1b5fe;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.mode-card p {
+    color: #D3D3D3;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-content {
+        padding: 6rem 1rem 1rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 2rem;
+    }
+
+    .welcome-section h3 {
+        font-size: 1rem;
+    }
+
+    .mode-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .mode-card {
+        aspect-ratio: auto;
+        padding: 1.5rem;
+    }
+}
