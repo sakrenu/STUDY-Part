@@ -31,10 +31,13 @@ const AdminDashboard = () => {
                 
                 <div className="admin-widgets">
                     <div className="widget">
-                        <h3>User Management</h3>
-                        <p>View and manage registered users, roles, and permissions.</p>
-                        {/* Add link or button to user management section */}
+                    <h3>User Management</h3>
+                    <p>View and manage registered users, roles, and permissions.</p>
+                    <button onClick={() => navigate('/user-management')} className="widget-button">
+                    Go to User Management
+                    </button>
                     </div>
+
                     <div className="widget">
                         <h3>Content Moderation</h3>
                         <p>Review and moderate user-generated content like notes or discussions.</p>

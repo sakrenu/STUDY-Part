@@ -1,0 +1,21 @@
+.user-management-container {
+    padding: 2rem;
+    font-family: sans-serif;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.user-table th,
+.user-table td {
+    border: 1px solid #ccc;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.user-table th {
+    background-color: #f0f0f0;
+}
