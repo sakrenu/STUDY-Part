@@ -19,6 +19,12 @@ body, html {
   color: #FFFFFF;
   font-family: 'Poppins', sans-serif;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7rem 2rem 2rem;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* Top Navigation */
@@ -77,22 +83,11 @@ body, html {
   box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
-/* Main Content */
-.dashboard-content {
-  padding: 7rem 2rem 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  margin-left: 270px;
-  transition: margin-left 0.3s ease;
-}
-
-.dashboard-content.sidebar-closed {
-  margin-left: 20px;
-}
-
 .welcome-section {
   text-align: center;
   margin-bottom: 3rem;
+  width: 100%;
+  max-width: 1200px;
 }
 
 .welcome-section h1 {
@@ -107,33 +102,14 @@ body, html {
   color: #D3D3D3;
 }
 
-/* Sidebar */
-.sidebar {
-  position: fixed;
-  top: 70px;
-  left: 0;
-  height: calc(100vh - 70px);
-  width: 250px;
-  background-color: #2C2C54;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1.5rem;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
-  z-index: 999;
-}
-
-.sidebar.closed {
-  transform: translateX(-260px);
-}
-
 /* Mode Cards Grid */
 .mode-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
   padding: 1rem;
+  width: 100%;
+  max-width: 1200px;
 }
 
 .mode-card {
@@ -182,44 +158,14 @@ body, html {
   line-height: 1.5;
 }
 
-/* Menu Items */
-.menu-items {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.menu-item {
-  background: linear-gradient(90deg, #4A90E2, #D774E4);
-  border: none;
-  color: #FFFFFF;
-  padding: 1rem;
-  font-size: 1rem;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease;
-}
-
-.menu-item:hover {
-  box-shadow: 0 0 10px #4A90E2, 0 0 20px #D774E4;
-  transform: scale(1.02);
-}
-
 /* Responsive Design */
 /* Tablet Styles */
 @media (max-width: 1024px) {
-  .dashboard-content {
-    margin-left: 260px;
+  .student-dashboard {
     padding: 6rem 1.5rem 2rem;
-    width: calc(100% - 260px);
-    margin: 0;
-    margin-left: 260px;
   }
 
   .welcome-section {
-    text-align: center;
-    width: 100%;
     padding: 0 1rem;
   }
 
@@ -234,11 +180,7 @@ body, html {
   .mode-cards {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
     padding: 1rem;
-    justify-content: center;
   }
 
   .mode-card {
@@ -253,41 +195,15 @@ body, html {
     height: 80px;
   }
 
-  .menu-item {
-    padding: 0.9rem;
-    font-size: 0.95rem;
-    text-align: center;
-  }
-
-  .sidebar {
-    padding: 1.5rem 1rem;
-  }
-
-  .menu-items {
-    align-items: center;
-    width: 100%;
+  .mode-card h2 {
+    font-size: 1.3rem;
   }
 }
 
 /* Medium Tablet/Small Tablet */
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-260px);
-    padding: 1.5rem 1rem;
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .dashboard-content {
-    margin-left: 0;
+  .student-dashboard {
     padding: 5rem 1rem 2rem;
-    width: 100%;
-  }
-
-  .dashboard-content.sidebar-closed {
-    margin-left: 0;
   }
 
   .welcome-section {
@@ -305,8 +221,6 @@ body, html {
   .mode-cards {
     grid-template-columns: 1fr;
     gap: 1.2rem;
-    max-width: 500px;
-    margin: 0 auto;
   }
 
   .mode-card {
@@ -325,14 +239,6 @@ body, html {
     font-size: 1.3rem;
   }
 
-  .menu-item {
-    padding: 0.8rem;
-    font-size: 0.9rem;
-    width: 100%;
-    max-width: 220px;
-    margin: 0 auto;
-  }
-
   .logo {
     font-size: 1.8rem;
   }
@@ -340,10 +246,6 @@ body, html {
   .logo-image {
     width: 35px;
     height: 35px;
-  }
-
-  .menu-items {
-    align-items: center;
   }
 }
 
@@ -362,7 +264,7 @@ body, html {
     height: 30px;
   }
 
-  .dashboard-content {
+  .student-dashboard {
     padding: 4rem 0.8rem 1.5rem;
   }
 
@@ -392,24 +294,15 @@ body, html {
     height: 60px;
   }
 
-  .menu-item {
-    padding: 0.7rem;
-    font-size: 0.85rem;
-  }
-
   .logout-btn {
     padding: 0.4rem 0.8rem;
     font-size: 0.9rem;
-  }
-
-  .sidebar {
-    padding: 1rem;
   }
 }
 
 /* Small Mobile Styles */
 @media (max-width: 320px) {
-  .dashboard-content {
+  .student-dashboard {
     padding: 3.5rem 0.6rem 1rem;
   }
 
@@ -436,11 +329,6 @@ body, html {
   .card-icon {
     width: 50px;
     height: 50px;
-  }
-
-  .menu-item {
-    padding: 0.6rem;
-    font-size: 0.8rem;
   }
 
   .logout-btn {
