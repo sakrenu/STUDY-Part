@@ -391,6 +391,23 @@ const NotesMode = () => {
 
     return (
         <div className="notes-mode">
+            {/* Navigation Bar */}
+            <nav className="nav-container">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
+                </div>
+                <button 
+                    onClick={() => navigate('/student-dashboard')} 
+                    className="logout-btn"
+                >
+                    Back
+                </button>
+            </nav>
+
             <div className="notes-mode-container">
                 {/* Sidebar for Notes */}
                 <div className={`notes-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
@@ -470,7 +487,20 @@ const NotesMode = () => {
                     onMouseLeave={() => setShowToggleText(false)}
                 >
                     <button className="toggle-button" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                        <img src={`${process.env.PUBLIC_URL}/toggle-icon.svg`} alt="Toggle" className="toggle-icon" />
+                        <svg 
+                            className="toggle-icon" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path 
+                                d="M15 6L9 12L15 18" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                            />
+                        </svg>
                     </button>
                     {showToggleText && <span className="toggle-text">{isSidebarOpen ? 'Close' : 'Open'}</span>}
                 </div>
@@ -478,13 +508,6 @@ const NotesMode = () => {
                 {/* Main Content */}
                 <div className={`main-content ${isSidebarOpen ? '' : 'closed'}`}>
                     <h1>Notes Mode</h1>
-
-                    <button 
-                        onClick={() => navigate('/student-dashboard')} 
-                        className="back-button"
-                    >
-                        ← Back to Dashboard
-                    </button>
 
                     {/* Image Upload */}
                     <div className="image-upload">
