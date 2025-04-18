@@ -152,19 +152,6 @@ async def segment(request: SegmentRequest):
         regions = []
         lesson_id = str(uuid.uuid4())
         for i, mask in enumerate(masks):
-            # Convert mask to image
-            # mask_img = Image.fromarray((mask * 255).astype(np.uint8))
-            # mask_buffer = BytesIO()
-            # mask_img.save(mask_buffer, format="PNG")
-            # mask_buffer.seek(0)
-
-            # # Upload mask to Cloudinary
-            # logger.info(f"Uploading mask {i} for lesson_id: {lesson_id}")
-            # mask_upload = cloudinary.uploader.upload(
-            #     mask_buffer,
-            #     public_id=f"lessons/{image_id}/masks/{lesson_id}_{i}",
-            #     resource_type="image"
-            # )
             # Define color palette (you can extend this)
             colors = [
                 (255, 0, 0),     # Red
