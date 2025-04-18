@@ -152,19 +152,37 @@ async def segment(request: SegmentRequest):
         regions = []
         lesson_id = str(uuid.uuid4())
         for i, mask in enumerate(masks):
-            # Convert mask to image
-            mask_img = Image.fromarray((mask * 255).astype(np.uint8))
+            # Define color palette (you can extend this)
+            colors = [
+                (255, 0, 0),     # Red
+                (0, 255, 0),     # Green
+                (0, 0, 255),     # Blue
+                (255, 255, 0),   # Yellow
+                (255, 0, 255),   # Magenta
+                (0, 255, 255),   # Cyan
+                (255, 165, 0),   # Orange
+                (128, 0, 128)    # Purple
+            ]
+            color = colors[i % len(colors)]
+
+            # Generate RGBA mask image
+            rgba_mask = np.zeros((*mask.shape, 4), dtype=np.uint8)
+            rgba_mask[:, :, 0] = mask.astype(np.uint8) * color[0]  # R
+            rgba_mask[:, :, 1] = mask.astype(np.uint8) * color[1]  # G
+            rgba_mask[:, :, 2] = mask.astype(np.uint8) * color[2]  # B
+            rgba_mask[:, :, 3] = mask.astype(np.uint8) * 255       # A (fully opaque where mask=1)
+
+            mask_img = Image.fromarray(rgba_mask, mode='RGBA')
             mask_buffer = BytesIO()
             mask_img.save(mask_buffer, format="PNG")
             mask_buffer.seek(0)
 
-            # Upload mask to Cloudinary
-            logger.info(f"Uploading mask {i} for lesson_id: {lesson_id}")
             mask_upload = cloudinary.uploader.upload(
                 mask_buffer,
                 public_id=f"lessons/{image_id}/masks/{lesson_id}_{i}",
                 resource_type="image"
             )
+
 
             # Create cutout (for future steps)
             cutout = image_np.copy()

@@ -1,0 +1,180 @@
+.featadd-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #1A1A1A;
+    padding: 20px;
+  }
+  
+  .featadd-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .featadd-header h2 {
+    font-size: 1.8rem;
+    color: #cab7ce;
+  }
+  
+  .featadd-header p {
+    font-size: 1rem;
+    color: #dde7e8;
+  }
+  
+  .featadd-content {
+    display: flex;
+    gap: 1.5rem;
+    min-height: 500px;
+  }
+  
+  .featadd-image-container {
+    flex: 2;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .featadd-base-image {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+  }
+  
+  .featadd-regions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  
+  .featadd-region {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  
+  .featadd-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.5;
+    pointer-events: none; /* Prevent interaction with mask directly */
+  }
+  
+  .featadd-selected .featadd-mask {
+    border: 2px solid #e982c8;
+  }
+  
+  .featadd-sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #3c4249;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+  .featadd-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .featadd-panel h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #cab7ce;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .featadd-color-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid #FFFFFF;
+  }
+  
+  .featadd-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .featadd-action-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #3e2663, #520c5b);
+    color: #FFFFFF;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .featadd-action-button:hover {
+    box-shadow: 0 0 8px #9b4ae2, 0 0 12px #7f4ae2;
+  }
+  
+  .featadd-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+    background-color: #4a545e;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+  }
+  
+  .featadd-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+  
+  .featadd-back-button,
+  .featadd-save-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .featadd-back-button {
+    background-color: #4a545e;
+    color: #FFFFFF;
+  }
+  
+  .featadd-save-button {
+    background: linear-gradient(90deg, #3e2663, #520c5b);
+    color: #FFFFFF;
+  }
+  
+  .featadd-back-button:hover,
+  .featadd-save-button:hover {
+    box-shadow: 0 0 8px #9b4ae2, 0 0 12px #7f4ae2;
+  }
