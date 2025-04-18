@@ -16,14 +16,14 @@
 .teacher-feature-page {
   display: flex;
   width: 100%;
-  height: 100vh; /* Ensure it takes the full viewport height */
+  height: 100vh;
   flex-direction: column;
   background-color: #1E1E2C;
   color: #FFFFFF;
-  font-family: 'Arial', sans-serif;
-  margin: 0; /* Remove default margin */
-  padding: 0; /* Remove default padding */
-  overflow: hidden; /* Prevent scrollbars from appearing */
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 .study-part-title {
@@ -34,20 +34,21 @@
   font-weight: bold;
   color: #FFFFFF;
   text-shadow: 0 0 5px #FFFFFF, 0 0 10px #4A90E2, 0 0 20px #D774E4;
-  z-index: 1000; /* Ensure it stays on top */
-  text-decoration: none; /* Remove underline */
-  cursor: pointer; /* Change cursor to pointer to indicate clickability */
+  z-index: 1000;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .study-part-title:hover {
-  text-decoration: none; /* Ensure no underline on hover */
+  text-decoration: none;
 }
+
 /* Sidebar */
 .teacher-feature-page .sidebar {
   position: fixed;
-  top: 70px; /* Start below the title */
+  top: 70px;
   left: 0;
-  height: calc(100vh - 70px); /* Adjust height to account for the title */
+  height: calc(100vh - 70px);
   width: 250px;
   background-color: #2C2C54;
   display: flex;
@@ -57,8 +58,9 @@
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   transition: transform 0.3s ease;
-  transform: translateX(0); /* Initial position */
-  border-radius: 0 20px 20px 0; /* Rounded edges on the right */
+  transform: translateX(0);
+  border-radius: 0 20px 20px 0;
+  z-index: 999;
 }
 
 .teacher-feature-page .sidebar.open {
@@ -66,8 +68,7 @@
 }
 
 .teacher-feature-page .sidebar.closed {
-  transform: translateX(-260px); /* Move completely out of view, including the box-shadow */
-  border-radius: 0 20px 20px 0; /* Ensure rounded edges are maintained when closed */
+  transform: translateX(-260px);
 }
 
 .teacher-feature-page .menu {
@@ -100,7 +101,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 20px; /* Add margin to move the logout button up */
+  margin-bottom: 20px;
 }
 
 .teacher-feature-page .logout button {
@@ -121,25 +122,25 @@
 }
 
 .teacher-feature-page .feature-info {
-  margin-left: 260px; /* Adjusted to match the sidebar width including box-shadow */
+  margin-left: 260px;
   padding: 40px;
-  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-y: auto;
   transition: margin-left 0.3s ease;
-  width: calc(100% - 260px); /* Adjust the width to exclude the sidebar width */
-  height: 100vh; /* Make the main content take the full viewport height */
-  margin-top: 0; /* Ensure no extra space at the top */
-  box-sizing: border-box; /* Include padding in the height calculation */
+  width: calc(100% - 260px);
+  height: 100vh;
+  margin-top: 0;
+  box-sizing: border-box;
 }
 
 .teacher-feature-page .feature-info.closed {
-  margin-left: 0; /* Move completely to the left */
-  width: 100%; /* Take full width when sidebar is closed */
+  margin-left: 0;
+  width: 100%;
 }
 
 .teacher-feature-page .toggle-button-container {
   position: fixed;
-  top: 80px; /* Adjust to align with the sidebar */
-  left: 250px; /* Position next to the sidebar */
+  top: 80px;
+  left: 250px;
   z-index: 1000;
   transition: left 0.3s ease;
   display: flex;
@@ -148,24 +149,24 @@
 }
 
 .teacher-feature-page .toggle-button-container.open {
-  left: 250px; /* Adjust this value to position the button correctly */
+  left: 250px;
 }
 
 .teacher-feature-page .toggle-button-container.closed {
-  left: 0; /* Adjust this value to position the button correctly when the sidebar is closed */
+  left: 0;
 }
 
 .teacher-feature-page .toggle-button {
   border: none;
   padding: 0;
   cursor: pointer;
-  background: none; /* Remove background */
+  background: none;
 }
 
 .teacher-feature-page .toggle-icon {
-  width: 30px; /* Adjust the size as needed */
-  height: 30px; /* Adjust the size as needed */
-  filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%) drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5)); /* Added drop-shadow for a bolder appearance */
+  width: 30px;
+  height: 30px;
+  filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%) drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 .teacher-feature-page .toggle-text {
@@ -183,7 +184,7 @@
 }
 
 .teacher-feature-page .header-text {
-  margin-top: 40px; /* Adjusted to move the header text higher */
+  margin-top: 40px;
   margin-bottom: 20px;
   color: #FFFFFF;
   text-shadow: 0 0 5px #FFFFFF, 0 0 10px #4A90E2, 0 0 20px #D774E4;
@@ -195,16 +196,16 @@
 }
 
 .teacher-feature-page .header-text h1 {
-  margin-bottom: 10px; /* Add space below the h1 */
+  margin-bottom: 10px;
 }
 
 .teacher-feature-page .header-text h2 {
-  margin-top: 10px; /* Add space above the h2 */
-  margin-bottom: 10px; /* Add space below the h2 */
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .teacher-feature-page .header-text p {
-  margin-top: 10px; /* Add space above the p */
+  margin-top: 10px;
 }
 
 .teacher-feature-page .image-box {
@@ -216,17 +217,17 @@
   background-color: #2C2C54;
   border-radius: 20px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-  cursor: pointer; /* Change cursor to pointer to indicate clickability */
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .teacher-feature-page .image-box:last-child {
-  margin-bottom: 0; /* Remove margin from the last image-box */
+  margin-bottom: 0;
 }
 
 .teacher-feature-page .image-box:hover {
-  transform: scale(1.02); /* Slightly scale up on hover */
-  box-shadow: 0 0 20px rgba(74, 144, 226, 0.6), 0 0 30px rgba(215, 116, 228, 0.6); /* Glow effect */
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(74, 144, 226, 0.6), 0 0 30px rgba(215, 116, 228, 0.6);
 }
 
 .teacher-feature-page .image-content img {
@@ -269,7 +270,7 @@
   top: 0;
   left: 0;
   z-index: 1000;
-  width: 250px; 
+  width: 250px;
   margin-bottom: 20px;
 }
 
@@ -283,12 +284,12 @@
   }
 
   .teacher-feature-page .logo-container {
-    width: 100%; 
+    width: 100%;
   }
 
   .teacher-feature-page .logo-image {
-    width: 20px; 
-    height: 20px; 
+    width: 20px;
+    height: 20px;
   }
 
   .teacher-feature-page .logo {
@@ -296,60 +297,386 @@
   }
 
   .teacher-feature-page .image-box {
-    flex-direction: column-reverse; 
-    align-items: center; 
+    flex-direction: column-reverse;
+    align-items: center;
   }
 
   .teacher-feature-page .text-content {
-    text-align: center; 
+    text-align: center;
     margin-right: 0;
-    margin-bottom: 20px; 
+    margin-bottom: 20px;
   }
 
   .teacher-feature-page .image-content img {
-    width: 100%; 
-    max-width: 100%; 
-    height: auto; /* Maintain aspect ratio */
-    border-radius: 15px; /* Maintain rounded corners */
-    margin-bottom: 20px; /* Add space below the image */
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 15px;
+    margin-bottom: 20px;
   }
 
-  /* Sidebar overlay */
   .teacher-feature-page .sidebar {
-    position: fixed; /* Fix the sidebar to the viewport */
-    top: 70px; /* Align below the logo */
-    left: -250px; /* Initially hidden off-screen */
-    width: 250px; /* Sidebar width */
-    height: calc(100vh - 70px); /* Full height minus logo height */
-    background-color: rgba(44, 44, 84, 0.95); /* Semi-transparent background */
-    z-index: 1001; /* Ensure sidebar is above the content */
-    transition: left 0.3s ease; /* Smooth slide-in animation */
+    position: fixed;
+    top: 70px;
+    left: -250px;
+    width: 250px;
+    height: calc(100vh - 70px);
+    background-color: rgba(44, 44, 84, 0.95);
+    z-index: 1001;
+    transition: left 0.3s ease;
   }
 
   .teacher-feature-page .sidebar.open {
-    left: 0; /* Slide in when open */
+    left: 0;
   }
 
-  /* Blur effect on the content when sidebar is open */
   .teacher-feature-page .feature-info {
-    transition: filter 0.3s ease; /* Smooth transition for blur */
+    transition: filter 0.3s ease;
   }
 
   .teacher-feature-page .sidebar.open ~ .feature-info {
-    filter: blur(100px); /* Apply blur to the content */
-    pointer-events: none; /* Disable interactions with the blurred content */
+    filter: blur(100px);
+    pointer-events: none;
   }
 
-  /* Adjust toggle button position */
   .teacher-feature-page .toggle-button-container {
     position: fixed;
-    top: 80px; /* Align with the sidebar */
-    left: 100px; /* Move toggle button closer to the edge */
-    z-index: 1002; /* Ensure toggle button is above the sidebar */
+    top: 80px;
+    left: 100px;
+    z-index: 1002;
   }
 
-  /* Ensure the logo and other elements don't interfere */
   .teacher-feature-page .logo-container {
-    z-index: 1003; /* Ensure logo is above the sidebar */
+    z-index: 1003;
+  }
+}
+
+.teacher-dashboard {
+  min-height: 100vh;
+  background-color: #000000;
+  color: #FFFFFF;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Top Navigation */
+.top-nav {
+  background-color: #3c2468;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+}
+
+.logo .study {
+  color: white;
+}
+
+.logo .part {
+  color: pink;
+}
+
+.logout-btn {
+  background: linear-gradient(90deg, #573688, #520c5b);
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 9999px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+}
+
+.logout-btn:hover {
+  box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Main Content */
+.dashboard-content {
+  padding: 7rem 2rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-left: 270px;
+  transition: margin-left 0.3s ease;
+}
+
+.dashboard-content.sidebar-closed {
+  margin-left: 20px;
+}
+
+.welcome-section {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.welcome-section h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+}
+
+.welcome-section h3 {
+  font-size: 1.2rem;
+  color: #D3D3D3;
+}
+
+/* Mode Cards Grid */
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.mode-card {
+  background: linear-gradient(135deg, #000000, #30074d, hsl(0, 0%, 0%));
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.mode-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
+}
+
+.card-icon {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 1.5rem;
+}
+
+.card-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #6f42c1;
+}
+
+.mode-card h2 {
+  color: #f1b5fe;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.mode-card p {
+  color: #D3D3D3;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+/* Tablet Styles */
+@media (max-width: 1024px) {
+  .dashboard-content {
+    margin-left: 260px;
+    padding: 6rem 1.5rem 2rem;
+  }
+
+  .welcome-section h1 {
+    font-size: 2.2rem;
+  }
+
+  .welcome-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .mode-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .mode-card {
+    padding: 1.8rem;
+  }
+
+  .card-icon {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-feature-page .sidebar {
+    transform: translateX(-260px);
+  }
+
+  .teacher-feature-page .sidebar.open {
+    transform: translateX(0);
+    width: 250px;
+  }
+
+  .dashboard-content {
+    margin-left: 0;
+    padding: 5rem 1rem 2rem;
+  }
+
+  .dashboard-content.sidebar-closed {
+    margin-left: 0;
+  }
+
+  .study-part-title {
+    font-size: 1.8rem;
+    top: 15px;
+    left: 15px;
+  }
+
+  .welcome-section h1 {
+    font-size: 2rem;
+  }
+
+  .welcome-section h3 {
+    font-size: 1rem;
+  }
+
+  .mode-cards {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .mode-card {
+    aspect-ratio: auto;
+    padding: 1.5rem;
+  }
+
+  .card-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 1rem;
+  }
+
+  .mode-card h2 {
+    font-size: 1.3rem;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 480px) {
+  .top-nav {
+    padding: 0.6rem 1rem;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+  }
+
+  .logo-image {
+    width: 30px;
+    height: 30px;
+  }
+
+  .study-part-title {
+    font-size: 1.5rem;
+    top: 10px;
+    left: 10px;
+  }
+
+  .dashboard-content {
+    padding: 4rem 0.8rem 1.5rem;
+  }
+
+  .welcome-section h1 {
+    font-size: 1.8rem;
+  }
+
+  .welcome-section h3 {
+    font-size: 0.9rem;
+  }
+
+  .mode-card {
+    padding: 1.2rem;
+  }
+
+  .mode-card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .mode-card p {
+    font-size: 0.85rem;
+  }
+
+  .card-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .logout-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Small Mobile Styles */
+@media (max-width: 320px) {
+  .study-part-title {
+    font-size: 1.3rem;
+  }
+
+  .dashboard-content {
+    padding: 3.5rem 0.6rem 1rem;
+  }
+
+  .welcome-section h1 {
+    font-size: 1.6rem;
+  }
+
+  .welcome-section h3 {
+    font-size: 0.85rem;
+  }
+
+  .mode-card {
+    padding: 1rem;
+  }
+
+  .mode-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .mode-card p {
+    font-size: 0.8rem;
+  }
+
+  .card-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .logout-btn {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
   }
 }

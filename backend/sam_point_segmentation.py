@@ -8,7 +8,7 @@ from segment_anything import SamPredictor, sam_model_registry
 # Load SAM model
 device = 'cpu'  # or 'cuda' if available
 print(device)
-sam = sam_model_registry["vit_h"](checkpoint=r"sam_vit_h_4b8939.pth").to(device)
+sam = sam_model_registry["vit_b"](checkpoint=r"sam_vit_b_01ec64.pth").to(device)
 predictor = SamPredictor(sam)
 
 def get_image_embeddings(image_path):

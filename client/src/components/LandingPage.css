@@ -299,7 +299,7 @@ html, body {
 .typed-line {
   display: block; /* Forces each span to a new line */
   white-space: nowrap; /* Keeps text on a single line within each span */
-  overflow: hidden; /* Hides text until it’s “typed” */
+  overflow: hidden; /* Hides text until it's "typed" */
   max-width: 0; /* Starts with no width */
   animation: typing 3s steps(30, end) forwards, blink 1s step-end 2s; /* Typing and cursor animations */
 }
@@ -337,133 +337,238 @@ html, body {
   }
 }
 
-/* Media Queries for screens below 600px */
-@media (max-width: 600px) {
-  /* Navigation Bar */
-  .nav-container {
-    padding: 0.5rem 1rem;
+/* Responsive Design */
+/* Tablet Styles */
+@media (max-width: 1024px) {
+  .hero-section {
+    padding: 6rem 1.5rem 4rem;
+    max-width: 80%;
   }
 
-  .logo-container {
-    gap: 0.25rem;
+  .hero-title {
+    font-size: 3.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.5rem;
+  }
+
+  .features-section,
+  .products-section,
+  .about-section {
+    padding: 4rem 2rem;
+  }
+
+  .features-grid,
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 2.2rem;
+  }
+
+  .about-description {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0.8rem 1.2rem;
+  }
+
+  .logo {
+    font-size: 1.8rem;
   }
 
   .logo-image {
-    width: 20px;
-    height: 20px;
+    width: 35px;
+    height: 35px;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: linear-gradient(135deg, #000000, #30074d);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
+    border: 1px solid var(--accent-purple);
+  }
+
+  .nav-links.active {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 200px;
+  }
+
+  .nav-link,
+  .register-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.8rem;
+  }
+
+  .menu-icon {
+    display: block;
+    font-size: 1.5rem;
+  }
+
+  .hero-section {
+    padding: 5rem 1rem 3rem;
+    max-width: 90%;
+    margin: 0 auto;
+  }
+
+  .hero-title {
+    font-size: 2.8rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.3rem;
+  }
+
+  .features-grid,
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .feature-card,
+  .product-card {
+    padding: 1.8rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .about-description {
+    font-size: 1rem;
+    padding: 0;
+  }
+
+  .cta-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 480px) {
+  .nav-container {
+    padding: 0.6rem 1rem;
   }
 
   .logo {
     font-size: 1.5rem;
   }
 
-  .nav-links {
-    display: none; 
-    flex-direction: column;
-    position: absolute;
-    top: 50px; 
-    right: 0.5rem;
-    background-color: #193d66;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  .logo-image {
+    width: 30px;
+    height: 30px;
   }
 
-  .nav-links.active {
-    display: flex;
-  }
-
-  .menu-icon {
-    display: block; /* Show the menu icon */
-    cursor: pointer;
-    font-size: 1.5rem;
-    color: #FFFFFF;
-    margin-right: 30px;
-  }
-
-  /* Hero Section */
   .hero-section {
-    padding: 5rem 1rem 3rem;
+    padding: 4rem 1rem 2rem;
     max-width: 100%;
-    margin-left: 0;
-    text-align: center;
   }
 
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .hero-subtitle {
     font-size: 1rem;
   }
 
-  .cta-container {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .primary-btn,
-  .secondary-btn {
-    width: 100%;
-    max-width: 200px;
-  }
-
-  /* Features Section */
-  .features-section {
-    padding: 2rem 1rem;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .feature-card {
-    padding: 1.5rem;
-  }
-
-  .feature-title {
-    font-size: 1.25rem;
-  }
-
-  .feature-description {
+  .typed-line {
     font-size: 0.9rem;
   }
 
-  /* Products Section */
-  .products-section {
-    padding: 3rem 1rem;
-  }
-
-  .products-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .product-card {
-    padding: 1.5rem;
-  }
-
-  .product-title {
-    font-size: 1.25rem;
-  }
-
-  .product-description {
-    font-size: 0.9rem;
-  }
-
-  /* About Section */
+  .features-section,
+  .products-section,
   .about-section {
     padding: 3rem 1rem;
   }
 
-  .about-title {
-    font-size: 2rem;
+  .feature-card,
+  .product-card {
+    padding: 1.5rem;
   }
 
-  .about-description {
-    font-size: 1rem;
+  .feature-title,
+  .product-title {
+    font-size: 1.3rem;
+  }
+
+  .feature-description,
+  .product-description {
+    font-size: 0.9rem;
   }
 
   .section-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
+  }
+
+  .about-description {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Small Mobile Styles */
+@media (max-width: 320px) {
+  .hero-title {
+    font-size: 1.8rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .typed-line {
+    font-size: 0.8rem;
+  }
+
+  .feature-card,
+  .product-card {
+    padding: 1.2rem;
+  }
+
+  .feature-title,
+  .product-title {
+    font-size: 1.2rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .about-description {
+    font-size: 0.85rem;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
   }
 }
