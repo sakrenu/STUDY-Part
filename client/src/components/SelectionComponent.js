@@ -5,6 +5,7 @@ import axios from 'axios';
 import '../pages/teachers/TeachByParts.css';
 import { toast } from 'react-toastify';
 import { MdCrop, MdAddCircle, MdCheckCircle, MdUndo, MdRestartAlt, MdVisibility } from 'react-icons/md';
+import FeatureAddition from './FeatureAddition';
 
 const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented, onBack }) => {
   // State for image dimensions, regions, etc.
@@ -32,6 +33,8 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
 
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
+
+  const [showFeatureAddition, setShowFeatureAddition] = useState(false);
 
   useEffect(() => {
     console.log('SelectionComponent received image_id:', image_id);
@@ -281,7 +284,13 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
   };
 
   const handleDone = () => {
-    onRegionsSegmented({
+    if (regions.length === 0) {
+      toast.error("No regions have been segmented. Please segment at least one region.");
+      return;
+    }
+
+    console.log("Doing handleDone with:", {lessonId, regions});
+    handleRegionsSegmented({
       lesson_id: lessonId,
       regions: regions.map(region => ({
         ...region,
@@ -315,6 +324,25 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
     setShowMasks(!showMasks);
   };
 
+  const handleRegionsSegmented = (data) => {
+    console.log("Received regions data:", data);
+    setLessonId(data.lesson_id);
+    setRegions(data.regions);
+    setShowFeatureAddition(true);
+  };
+
+  const handleFeaturesComplete = (data) => {
+    console.log("Features completed:", data);
+    onRegionsSegmented({
+      lesson_id: lessonId,
+      regions: regions.map(region => ({
+        ...region,
+        teacher_email: teacherEmail,
+        features: data.features
+      }))
+    });
+  };
+
   return (
     <motion.div
       className="selection-container"
@@ -322,6 +350,8 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {!showFeatureAddition ? (
+        <>
       <div className="controls">
         {/* Activate Box Mode */}
         <motion.button
@@ -474,6 +504,17 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
           />
         ))}
       </div>
+        </>
+      ) : (
+        <FeatureAddition
+          image={image}
+          lessonId={lessonId}
+          regions={regions}
+          teacherEmail={teacherEmail}
+          onBack={() => setShowFeatureAddition(false)}
+          onComplete={handleFeaturesComplete}
+        />
+      )}
     </motion.div>
   );
 };

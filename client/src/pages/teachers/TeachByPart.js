@@ -15,6 +15,7 @@ const TeachByParts = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [uploadedImageId, setUploadedImageId] = useState(null);
   const [segmentedRegions, setSegmentedRegions] = useState(null);
+  const [lessonWithFeatures, setLessonWithFeatures] = useState(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -59,6 +60,13 @@ const TeachByParts = () => {
     } else if (teacherEmail) {
       setCurrentStep(step);
     }
+  };
+
+  const handleRegionsSegmented = (data) => {
+    console.log('Regions segmented with features:', data);
+    setSegmentedRegions(data);
+    setLessonWithFeatures(data);
+    setCurrentStep('finalPreview');
   };
 
   const sidebarItems = [
@@ -154,11 +162,7 @@ const TeachByParts = () => {
             image={uploadedImage}
             image_id={uploadedImageId}
             teacherEmail={teacherEmail}
-            onRegionsSegmented={(regions) => {
-              console.log('Regions segmented:', regions);
-              setSegmentedRegions(regions);
-              setCurrentStep('annotate');
-            }}
+            onRegionsSegmented={handleRegionsSegmented}
             onBack={() => {
               setCurrentStep('upload');
               setUploadedImage(null);
@@ -181,7 +185,18 @@ const TeachByParts = () => {
           </div>
         )}
 
-        {/* Future: annotate, preview, library */}
+        {currentStep === 'finalPreview' && lessonWithFeatures && (
+          <div className="final-preview">
+            <h2>Lesson Created Successfully</h2>
+            <p>Your lesson with {lessonWithFeatures.regions.length} segments and features has been saved.</p>
+            <button
+              className="start-button"
+              onClick={() => setCurrentStep('welcome')}
+            >
+              Create Another Lesson
+            </button>
+          </div>
+        )}
       </div>
 
       <ToastContainer position="top-right" autoClose={3000} theme="dark" />
