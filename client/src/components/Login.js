@@ -52,10 +52,12 @@ const Login = () => {
             const role = await checkRoleExists(user.uid);
             if (role) {
                 setSuccess(true);
-                if (role === 'teacher') {
-                    navigate('/dashboard'); // Redirect to teacher dashboard
+                if (role === 'admin') {
+                    navigate('/admin-dashboard'); // Redirect admin
+                } else if (role === 'teacher') {
+                    navigate('/dashboard'); // Redirect teacher
                 } else {
-                    navigate('/student-dashboard'); // Redirect to student dashboard
+                    navigate('/student-dashboard'); // Redirect student
                 }
             }
         } 
@@ -88,15 +90,21 @@ const Login = () => {
 
             const role = await checkRoleExists(user.uid);
             if (role) {
-                if (role === 'teacher') {
-                    navigate('/dashboard'); // Redirect to teacher dashboard
+                if (role === 'admin') {
+                    navigate('/admin-dashboard'); // Redirect admin
+                } else if (role === 'teacher') {
+                    navigate('/dashboard'); // Redirect teacher
                 } else {
-                    navigate('/student-dashboard'); // Redirect to student dashboard
+                    navigate('/student-dashboard'); // Redirect student (or default)
                 }
             }
         } catch (err) {
             console.error(err.message);
-            setError('Failed to log in with Google.');
+            if (err.code === 'auth/popup-closed-by-user') {
+                setError('Google Sign-In cancelled.');
+            } else {
+                setError('Failed to log in with Google. Ensure you have an account setup.');
+            }
         }
     };
 

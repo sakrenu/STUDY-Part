@@ -8,11 +8,12 @@ import TeachingMode from './pages/teachers/TeachingMode';
 import StudentDashboard from './pages/students/StudentDashboard';
 import QuizMode from './pages/students/QuizMode';
 import QuizDashboard from './pages/students/QuizDashboard';
-import LandingPage from './components/LandingPage'; 
+import LandingPage from './components/LandingPage';
 import ManageStudents from './pages/teachers/ManageStudents';
 import LearningMode from './pages/students/LearningMode';
 import NotesMode from './pages/students/NotesMode';
 import QuizTeachingDashboard from './pages/teachers/QuizTeachingDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 const App = () => {
   return (
@@ -33,7 +34,12 @@ const App = () => {
           {/* Student Quiz Routes */}
           <Route path="/student-dashboard/quiz-mode" element={<QuizDashboard />} />
           <Route path="/student-dashboard/quiz-mode/:quizId" element={<QuizMode />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+
+          {/* Admin Route */}
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
+          {/* Redirect any other path - consider a 404 page later */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     </Router>
