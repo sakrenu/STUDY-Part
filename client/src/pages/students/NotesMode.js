@@ -14,22 +14,20 @@ const NotesMode = () => {
     const [cropper, setCropper] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showToggleText, setShowToggleText] = useState(false);
-    const [note, setNote] = useState('');
     const [savedNotes, setSavedNotes] = useState([]);
     const [noteToDelete, setNoteToDelete] = useState(null);
     const [selectedNote, setSelectedNote] = useState(null);
     const [selectedRegions, setSelectedRegions] = useState([]);
     const [isSelectingRegions, setIsSelectingRegions] = useState(true);
-    const [processedRegions, setProcessedRegions] = useState([]);
     const [currentRegionForNotes, setCurrentRegionForNotes] = useState(null);
     const [regionNotes, setRegionNotes] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const cropperRef = useRef(null);
     const [currentImageUrl, setCurrentImageUrl] = useState(null);
+    const [currentImageId, setCurrentImageId] = useState(null);
+    const [currentImageDimensions, setCurrentImageDimensions] = useState({ width: 0, height: 0 });
     const [isNotesPopupVisible, setIsNotesPopupVisible] = useState(false);
-    // Add a new state variable at the top of the component:
-    const [combinedSegmentImage, setCombinedSegmentImage] = useState(null);
-    const [regionData, setRegionData] = useState([]);
+    const [segmentationResults, setSegmentationResults] = useState([]);
     const auth = getAuth();
     const user = auth.currentUser;
     const [isEditing, setIsEditing] = useState(false);
@@ -64,7 +62,7 @@ const NotesMode = () => {
             </div>
         );
     };
-    // Fetch notes from Firestore
+
     const fetchNotes = async () => {
         if (!user) return;
 
@@ -75,57 +73,53 @@ const NotesMode = () => {
             querySnapshot.forEach((doc) => {
                 notes.push({ id: doc.id, ...doc.data() });
             });
-            setSavedNotes(notes); // Update savedNotes state with fetched notes
+            setSavedNotes(notes);
         } catch (error) {
             console.error("Error fetching notes:", error);
         }
     };
 
-    // Fetch notes on component mount and when user changes
     useEffect(() => {
         fetchNotes();
-    }, [user]); // Dependency on `user` ensures notes are fetched when user logs in
+    }, [user]);
 
-    // Add this useEffect after other useEffects
     useEffect(() => {
-        // Reset all states when component mounts
         setSelectedNote(null);
-        setNote('');
         setImage(null);
         setCurrentImageUrl(null);
+        setCurrentImageId(null);
+        setCurrentImageDimensions({ width: 0, height: 0 });
         setSelectedRegions([]);
-        setProcessedRegions([]);
+        setSegmentationResults([]);
         setRegionNotes({});
         setIsSelectingRegions(true);
-        setCombinedSegmentImage(null);
-        setRegionData([]);
         setIsEditing(false);
-    }, []); // Empty dependency array means this runs once on mount
+    }, []);
 
-    // Handle image upload
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
             try {
                 setIsLoading(true);
-                // Reset all relevant states when new image is uploaded
-                setNote('');
-                setSelectedRegions([]);
-                setProcessedRegions([]);
-                setRegionNotes({});
-                setRegionData([]);
-                setCombinedSegmentImage(null);
                 setSelectedNote(null);
                 setIsEditing(false);
-                
-                const formData = new FormData();
-                formData.append('image', file);
-                
-                const response = await axios.post('http://127.0.0.1:8000/upload', formData);
-                const imageUrl = response.data.image_url;
-                
-                setCurrentImageUrl(imageUrl);
                 setImage(file);
+                setCurrentImageUrl(null);
+                setCurrentImageId(null);
+                setCurrentImageDimensions({ width: 0, height: 0 });
+                setSelectedRegions([]);
+                setSegmentationResults([]);
+                setRegionNotes({});
+
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await axios.post('http://127.0.0.1:8000/upload_image', formData);
+
+                setCurrentImageUrl(response.data.image_url);
+                setCurrentImageId(response.data.image_id);
+                setCurrentImageDimensions({ width: response.data.width, height: response.data.height });
+
                 setIsSelectingRegions(true);
             } catch (error) {
                 console.error('Failed to upload image:', error);
@@ -136,7 +130,6 @@ const NotesMode = () => {
         }
     };
 
-    // Handle region selection
     const handleSelectRegion = () => {
         if (cropperRef.current) {
             const cropData = cropperRef.current.cropper.getData();
@@ -152,40 +145,70 @@ const NotesMode = () => {
         }
     };
 
-    // Handle segmentation
     const handleDoneSelecting = async () => {
+        if (!currentImageId) {
+            alert('Image ID is missing. Please upload the image again.');
+            return;
+        }
+        if (selectedRegions.length === 0) {
+            alert('Please select at least one region.');
+            return;
+        }
+
         try {
-            if (!currentImageUrl) {
-                throw new Error('No image URL available');
-            }
-    
             setIsLoading(true);
             console.log('Processing regions:', selectedRegions);
-    
-            const response = await axios.post('http://127.0.0.1:8000/segment-all', {
-                image_url: currentImageUrl,
-                bounding_boxes: selectedRegions
+            const allSegmentedRegions = [];
+            let lessonId = null;
+
+            for (const region of selectedRegions) {
+                const box = [
+                    Math.round(region.x),
+                    Math.round(region.y),
+                    Math.round(region.x + region.width),
+                    Math.round(region.y + region.height)
+                ];
+
+                const response = await axios.post('http://127.0.0.1:8000/segment', {
+                    image_id: currentImageId,
+                    box: box,
+                });
+
+                if (response.data.regions && response.data.regions.length > 0) {
+                    const regionData = {
+                        ...response.data.regions[0],
+                        originalSelectionIndex: allSegmentedRegions.length
+                    };
+                    allSegmentedRegions.push(regionData);
+                    if (!lessonId) {
+                        lessonId = response.data.lesson_id;
+                    }
+                } else {
+                     console.warn(`Segmentation for region ${allSegmentedRegions.length} returned no regions.`);
+                }
+            }
+
+            setSegmentationResults(allSegmentedRegions);
+            const initialNotes = {};
+            allSegmentedRegions.forEach((_, index) => {
+                initialNotes[index] = '';
             });
-    
-            setCombinedSegmentImage(response.data.combined_image);
-            setRegionData(response.data.regions || []); // Ensure regionData is at least an empty array
+            setRegionNotes(initialNotes);
+
             setIsSelectingRegions(false);
-    
+
         } catch (error) {
-            console.error('Error:', error);
-            alert('Error processing image: ' + (error.response?.data?.error || error.message));
+            console.error('Error during segmentation:', error);
+            alert('Error processing regions: ' + (error.response?.data?.detail || error.message));
         } finally {
             setIsLoading(false);
         }
     };
     
-
-    // Add this function to check if any region has notes
     const hasAnyNotes = () => {
         return Object.values(regionNotes).some(note => note.trim() !== '');
     };
 
-    // Modify the handleSaveNote function
     const handleSaveNote = async () => {
         if (!currentImageUrl) {
             alert('Please select an image first');
@@ -207,45 +230,46 @@ const NotesMode = () => {
 
         try {
             setIsLoading(true);
-            // Create region data array from regionData and regionNotes
-            const regions = regionData.map(region => ({
-                index: region.index,
-                bbox: region.bbox,
-                notes: regionNotes[region.index] || ''  // Use region.index to get correct notes
+            const regionsToSave = segmentationResults.map(region => ({
+                region_id: region.region_id,
+                lesson_id: region.lesson_id,
+                mask_url: region.mask_url,
+                cutout_url: region.cutout_url,
+                position: region.position,
+                score: region.score,
+                notes: regionNotes[region.originalSelectionIndex] || ''
             }));
 
             const noteData = {
                 userId: user.uid,
+                imageId: currentImageId,
                 imageUrl: currentImageUrl,
+                imageWidth: currentImageDimensions.width,
+                imageHeight: currentImageDimensions.height,
                 createdAt: new Date().toISOString(),
-                regions: regions,
-                combinedImage: combinedSegmentImage
+                regions: regionsToSave,
             };
 
             if (isEditing && selectedNote) {
-                // Update existing note
                 await updateDoc(doc(db, 'notes', selectedNote.id), noteData);
                 setSavedNotes(savedNotes.map(note => 
                     note.id === selectedNote.id ? {...noteData, id: selectedNote.id} : note
                 ));
                 alert('Note updated successfully!');
             } else {
-                // Create new note
                 const docRef = await addDoc(collection(db, 'notes'), noteData);
                 setSavedNotes([...savedNotes, { ...noteData, id: docRef.id }]);
                 alert('Note saved successfully!');
             }
 
-            // Reset states
-            setNote('');
             setImage(null);
             setCurrentImageUrl(null);
-            setProcessedRegions([]);
-            setRegionNotes({});
+            setCurrentImageId(null);
+            setCurrentImageDimensions({ width: 0, height: 0 });
             setSelectedRegions([]);
+            setSegmentationResults([]);
+            setRegionNotes({});
             setIsSelectingRegions(true);
-            setCombinedSegmentImage(null);
-            setRegionData([]);
             setSelectedNote(null);
             setIsEditing(false);
             
@@ -258,7 +282,6 @@ const NotesMode = () => {
         }
     };
 
-    // Handle note deletion
     const handleDeleteNote = async (noteId, imageUrl) => {
         try {
             const publicId = imageUrl.split('/').pop().split('.')[0];
@@ -271,7 +294,7 @@ const NotesMode = () => {
             });
 
             await deleteDoc(doc(db, 'notes', noteId));
-            setSavedNotes(savedNotes.filter(note => note.id !== noteId)); // Remove deleted note from savedNotes
+            setSavedNotes(savedNotes.filter(note => note.id !== noteId));
             alert('Note deleted successfully!');
         } catch (error) {
             console.error("Error deleting note:", error);
@@ -281,109 +304,83 @@ const NotesMode = () => {
         }
     };
 
-    // Cancel deletion of a note
     const cancelDelete = () => {
         setNoteToDelete(null);
     };
 
-    // Update handleNoteSelection function
     const handleNoteSelection = (note) => {
         setSelectedNote(note);
         setCurrentImageUrl(note.imageUrl);
-        setCombinedSegmentImage(note.combinedImage);
+        setCurrentImageId(note.imageId);
+        setCurrentImageDimensions({ width: note.imageWidth || 0, height: note.imageHeight || 0 });
         setIsSelectingRegions(false);
-        setIsEditing(true); // Set editing mode when note is selected
-        
-        // Set region data and notes
-        setRegionData(note.regions.map(region => ({
-            index: region.index,
-            bbox: region.bbox
-        })));
-        
-        // Convert regions array to regionNotes object
-        const notesObj = note.regions.reduce((acc, region) => {
-            acc[region.index] = region.notes;
+        setIsEditing(true);
+
+        setSegmentationResults(note.regions || []);
+
+        const notesObj = (note.regions || []).reduce((acc, region, index) => {
+            acc[index] = region.notes || '';
             return acc;
         }, {});
         setRegionNotes(notesObj);
+
+        setSelectedRegions([]);
     };
 
-    // Handle note update
-    const handleUpdateNote = async () => {
-        if (!selectedNote) return;
-
-        try {
-            setIsLoading(true);
-            const noteData = {
-                ...selectedNote,
-                note: note,
-                regions: processedRegions.map((region, index) => ({
-                    ...region,
-                    notes: regionNotes[index] || '',
-                }))
-            };
-
-            await updateDoc(doc(db, 'notes', selectedNote.id), noteData);
-            setSavedNotes(savedNotes.map(n => n.id === selectedNote.id ? noteData : n));
-            alert('Note updated successfully!');
-        } catch (error) {
-            console.error("Error updating note:", error);
-            alert('Error updating note: ' + error.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Handle region click
     const handleRegionClick = (event) => {
-        if (!regionData || regionData.length === 0) {
-            console.warn('No region data available');
+        if (!segmentationResults || segmentationResults.length === 0) {
+            console.warn('No segmentation data available to handle click.');
             return;
         }
-    
-        const rect = event.target.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        
-        const scaleX = event.target.naturalWidth / rect.width;
-        const scaleY = event.target.naturalHeight / rect.height;
-        const clickX = x * scaleX;
-        const clickY = y * scaleY;
-    
-        // Find which region was clicked by checking if the click point is inside any bounding box
-        let clickedRegion = null;
+        if (isSelectingRegions) {
+            console.warn('Cannot select regions for notes while in selection mode.');
+            return;
+        }
+
+        const imageElement = event.target;
+        const rect = imageElement.getBoundingClientRect();
+
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        const scaleX = imageElement.naturalWidth / rect.width;
+        const scaleY = imageElement.naturalHeight / rect.height;
+
+        const originalClickX = clickX * scaleX;
+        const originalClickY = clickY * scaleY;
+
+        console.log(`Click detected at display: (${clickX.toFixed(2)}, ${clickY.toFixed(2)}), original: (${originalClickX.toFixed(2)}, ${originalClickY.toFixed(2)})`);
+
+        let clickedRegionInfo = null;
         let minArea = Infinity;
 
-        regionData.forEach(region => {
-            const [x1, y1, x2, y2] = region.bbox;
-            
-            // Check if click is inside this region
-            if (clickX >= x1 && clickX <= x2 && clickY >= y1 && clickY <= y2) {
-                // Calculate area of this region
+        segmentationResults.forEach((region, index) => {
+            const { x1, y1, x2, y2 } = region.position;
+
+            if (originalClickX >= x1 && originalClickX <= x2 && originalClickY >= y1 && originalClickY <= y2) {
                 const area = (x2 - x1) * (y2 - y1);
-                // If this is the smallest region containing the click point, use it
-                if (area < minArea) {
+                 if (area < minArea) {
                     minArea = area;
-                    clickedRegion = region;
+                    clickedRegionInfo = { region: region, index: index };
                 }
+                console.log(`Click is inside region ${index} (Area: ${area.toFixed(2)}) Box: [${x1.toFixed(2)}, ${y1.toFixed(2)}, ${x2.toFixed(2)}, ${y2.toFixed(2)}]`);
+             } else {
             }
         });
-    
-        if (clickedRegion) {
-            console.log('Clicked region:', clickedRegion);
-            setCurrentRegionForNotes(clickedRegion.index);
+
+        if (clickedRegionInfo) {
+            console.log('Clicked region index:', clickedRegionInfo.index);
+            setCurrentRegionForNotes(clickedRegionInfo.index);
             setIsNotesPopupVisible(true);
         } else {
             console.log('No region found at click location');
         }
     };
 
-    // Handle save notes
     const handleSaveNotes = (index, note) => {
         setRegionNotes({ ...regionNotes, [index]: note });
     };
 
-    // Handle close popup
     const handleClosePopup = () => {
         setIsNotesPopupVisible(false);
         setCurrentRegionForNotes(null);
@@ -391,7 +388,6 @@ const NotesMode = () => {
 
     return (
         <div className="notes-mode">
-            {/* Navigation Bar */}
             <nav className="nav-container">
                 <div className="logo-container">
                     <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
@@ -409,20 +405,20 @@ const NotesMode = () => {
             </nav>
 
             <div className="notes-mode-container">
-                {/* Sidebar for Notes */}
                 <div className={`notes-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                     <h2>Notes List</h2>
                     <button 
                         className="new-note-button"
                         onClick={() => {
                             setSelectedNote(null);
-                            setNote('');
                             setImage(null);
-                            setCurrentImageUrl(null); // Reset image URL
-                            setSelectedRegions([]); // Reset selected regions
-                            setProcessedRegions([]); // Reset processed regions
-                            setRegionNotes({}); // Reset region notes
-                            setIsSelectingRegions(true); // Reset to region selection mode
+                            setCurrentImageUrl(null);
+                            setCurrentImageId(null);
+                            setCurrentImageDimensions({ width: 0, height: 0 });
+                            setSelectedRegions([]);
+                            setSegmentationResults([]);
+                            setRegionNotes({});
+                            setIsSelectingRegions(true);
                         }}
                     >
                         New Note
@@ -440,8 +436,9 @@ const NotesMode = () => {
                                     />
                                     <div 
                                         className="note-content-preview"
-                                        dangerouslySetInnerHTML={{ __html: note.note }}
-                                    />
+                                    >
+                                        {note.regions ? `${note.regions.length} region(s)` : 'No region data'}
+                                    </div>
                                     <p className="note-date">
                                         {new Date(note.createdAt).toLocaleDateString()}
                                     </p>
@@ -450,7 +447,10 @@ const NotesMode = () => {
                                             <p>Are you sure?</p>
                                             <button 
                                                 className="confirm-delete-button"
-                                                onClick={() => handleDeleteNote(note.id, note.imageUrl)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setNoteToDelete({ noteId: note.id, imageUrl: note.imageUrl });
+                                                }}
                                             >
                                                 Yes, Delete
                                             </button>
@@ -480,7 +480,6 @@ const NotesMode = () => {
                     </div>
                 </div>
 
-                {/* Toggle Button */}
                 <div
                     className={`toggle-button-container ${isSidebarOpen ? 'open' : 'closed'}`}
                     onMouseEnter={() => setShowToggleText(true)}
@@ -505,11 +504,9 @@ const NotesMode = () => {
                     {showToggleText && <span className="toggle-text">{isSidebarOpen ? 'Close' : 'Open'}</span>}
                 </div>
 
-                {/* Main Content */}
                 <div className={`main-content ${isSidebarOpen ? '' : 'closed'}`}>
                     <h1>Notes Mode</h1>
 
-                    {/* Image Upload */}
                     <div className="image-upload">
                         <label className="file-upload-label">
                             <input
@@ -523,7 +520,6 @@ const NotesMode = () => {
                         </label>
                     </div>
 
-                    {/* Image Selection Area */}
                     {currentImageUrl && isSelectingRegions && (
                         <div className="cropper-container">
                             <Cropper
@@ -549,48 +545,55 @@ const NotesMode = () => {
                                 minContainerHeight={600}
                             />
                             <div className="region-selection-controls">
-                                <button onClick={handleSelectRegion} className="select-region-button">
-                                    Select Region
+                                <button onClick={handleSelectRegion} className="select-region-button" disabled={isLoading}>
+                                    Add Selection Box
                                 </button>
                                 {selectedRegions.length > 0 && (
-                                    <>
-                                        <button onClick={() => cropperRef.current.cropper.clear()} className="select-another-button">
-                                            Select Another Part
-                                        </button>
-                                        <button onClick={handleDoneSelecting} className="done-selecting-button">
-                                            Done Selecting ({selectedRegions.length} regions)
-                                        </button>
-                                    </>
+                                    <button onClick={() => setSelectedRegions(prev => prev.slice(0, -1))} className="clear-last-button" disabled={isLoading}>
+                                        Clear Last Box ({selectedRegions.length})
+                                    </button>
+                                )}
+                                {selectedRegions.length > 0 && (
+                                    <button onClick={handleDoneSelecting} className="done-selecting-button" disabled={isLoading}>
+                                        Segment Selected Regions ({selectedRegions.length})
+                                    </button>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    {/* Display Segmented Regions */}
-                    {!isSelectingRegions && combinedSegmentImage && (
+                    {!isSelectingRegions && currentImageUrl && segmentationResults.length > 0 && (
                         <div className="combined-segments-container">
-                            <h3>Click on a region to add notes</h3>
+                            <h3>{isEditing ? 'Editing Notes - ' : ''}Click on a region to add/edit notes</h3>
                             <div className="interactive-image-container">
-                                <img 
-                                    src={combinedSegmentImage} 
-                                    alt="All segments" 
-                                    className="combined-segments-image" 
+                                <img
+                                    src={currentImageUrl}
+                                    alt="Segmented document"
+                                    className="combined-segments-image"
                                     onClick={handleRegionClick}
-                                    style={{ cursor: 'pointer' }}
+                                    style={{ cursor: 'pointer', maxWidth: '100%', height: 'auto' }}
+                                    width={currentImageDimensions.width || undefined}
+                                    height={currentImageDimensions.height || undefined}
                                 />
                             </div>
-                            <button 
-                                onClick={handleSaveNote} 
+                            <button
+                                onClick={handleSaveNote}
                                 className="save-all-notes-button"
-                                disabled={!hasAnyNotes()}
+                                disabled={!hasAnyNotes() || isLoading}
                             >
-                                Save All Notes
+                                {isEditing ? 'Update Note' : 'Save Note'}
                             </button>
                         </div>
                     )}
 
-                    {/* Notes Popup */}
-                    {isNotesPopupVisible && (
+                    {!isSelectingRegions && currentImageUrl && segmentationResults.length === 0 && !isLoading && (
+                        <div className="no-regions-message">
+                            <p>Segmentation did not identify any regions from your selections, or there was an error.</p>
+                            <button onClick={() => setIsSelectingRegions(true)}>Try Selecting Again</button>
+                        </div>
+                    )}
+
+                    {isNotesPopupVisible && currentRegionForNotes !== null && (
                         <NotesPopup
                             regionIndex={currentRegionForNotes}
                             regionNotes={regionNotes}
