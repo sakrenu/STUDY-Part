@@ -7,6 +7,8 @@ import { collection, addDoc, getDocs, query, where, doc, deleteDoc, updateDoc } 
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const BACKEND_URL = 'http://127.0.0.1:8000'; // Define this at the top level, after imports
 
@@ -155,7 +157,7 @@ const NotesMode = () => {
                     errorMessage += error.message;
                 }
                 
-                alert(errorMessage);
+                toast.error(errorMessage);
             } finally {
                 setIsLoading(false);
             }
@@ -331,7 +333,7 @@ const NotesMode = () => {
                 errorMessage += error.message;
             }
             
-            alert(errorMessage);
+            toast.error(errorMessage);
             setIsLoading(false);
             setSimulationProgress(0);
             setSimulationMessage('');
@@ -370,7 +372,7 @@ const NotesMode = () => {
             const regions = regionData.map(region => ({
                 index: region.index,
                 bbox: region.bbox,
-                notes: regionNotes[region.index] || ''  // Use region.index to get correct notes
+                notes: regionNotes[region.index] || ''
             }));
 
             const noteData = {
@@ -382,17 +384,15 @@ const NotesMode = () => {
             };
 
             if (isEditing && selectedNote) {
-                // Update existing note
                 await updateDoc(doc(db, 'notes', selectedNote.id), noteData);
                 setSavedNotes(savedNotes.map(note => 
                     note.id === selectedNote.id ? {...noteData, id: selectedNote.id} : note
                 ));
-                alert('Note updated successfully!');
+                toast.success('Note updated successfully!');
             } else {
-                // Create new note
                 const docRef = await addDoc(collection(db, 'notes'), noteData);
                 setSavedNotes([...savedNotes, { ...noteData, id: docRef.id }]);
-                alert('Note saved successfully!');
+                toast.success('Note saved successfully!');
             }
 
             // Reset states
@@ -411,7 +411,7 @@ const NotesMode = () => {
             fetchNotes();
         } catch (error) {
             console.error("Error saving note:", error);
-            alert('Error saving note: ' + error.message);
+            toast.error('Error saving note: ' + error.message);
         } finally {
             setIsLoading(false);
         }
@@ -790,6 +790,7 @@ const NotesMode = () => {
                     )}
                 </div>
             </div>
+            <ToastContainer />
         </div>
     );
 };
