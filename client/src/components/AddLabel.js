@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../firebase';
@@ -292,10 +291,7 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   />
                 </svg>
-                <div
-                  className="addlabel-input-wrapper"
-                  style={{ top: currentLabel.labelY, left: currentLabel.labelX }}
-                >
+                <div className="addlabel-input-wrapper" style={{ top: currentLabel.labelY, left: currentLabel.labelX }}>
                   <input
                     type="text"
                     value={currentLabel.text}
@@ -304,8 +300,10 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
                     disabled={isSaving}
                     autoFocus
                   />
-                  <button onClick={handleLabelSubmit} disabled={isSaving}>Save</button>
-                  <button onClick={handleCancelLabel} disabled={isSaving}>Cancel</button>
+                  <div className="addlabel-button-group">
+                    <button onClick={handleLabelSubmit} disabled={isSaving}>Save</button>
+                    <button onClick={handleCancelLabel} disabled={isSaving}>Cancel</button>
+                  </div>
                   {error && <div className="addlabel-error">{error}</div>}
                 </div>
               </motion.div>

@@ -86,25 +86,28 @@
     padding: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     display: flex;
-    align-items: center;
-    gap: 5px;
-    max-width: 150px;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+    max-width: 250px;
     z-index: 10;
   }
   
   .addlabel-input {
-    flex-grow: 1;
+    width: 100%;
     padding: 5px;
-    background-color: #333;
-    border: 1px solid #555;
+    background-color: #404040;
+    border: 1px solid #666;
     border-radius: 4px;
-    color: #fff;
+    color: #ffffff;
     font-size: 0.9rem;
+    height: 30px;
   }
   
-  .addlabel-input:focus {
-    outline: none;
-    border-color: #7f4ae2;
+  .addlabel-button-group {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
   }
   
   .addlabel-input-wrapper button {
@@ -115,6 +118,7 @@
     color: #fff;
     cursor: pointer;
     font-size: 0.8rem;
+    min-width: 60px;
   }
   
   .addlabel-input-wrapper button:hover {
