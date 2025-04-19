@@ -183,11 +183,18 @@
     color: #ffffff;
 }
 
-.student-checkboxes {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+.student-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    border: 2px solid #64ffda;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
 }
 
 .student-checkboxes p {
@@ -205,19 +212,22 @@
 .student-item {
     display: flex;
     align-items: center;
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    margin: 4px 0;
+    cursor: pointer;
     border-radius: 4px;
+    transition: background-color 0.2s;
 }
 
 .student-item input[type="checkbox"] {
     margin-right: 0.8rem;
 }
 
-.student-item label {
-    color: #D3D3D3;
+.student-label {
+    cursor: pointer;
+    color: #ccd6f6;
     font-size: 0.9rem;
+    user-select: none;
 }
 
 .button-group {
@@ -245,11 +255,29 @@
     background: linear-gradient(90deg, #573688, #520c5b);
     color: #ffffff;
 }
+.student-checkbox:checked {
+    background-color: #64ffda;
+}
+
+.student-checkbox:checked::after {
+    content: "✓";
+    position: absolute;
+    color: #0a192f;
+    font-size: 12px;
+    font-weight: bold;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
 
 .cancel-button:hover,
 .update-button:hover {
     box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
+.student-item:hover {
+    background-color: rgba(100, 255, 218, 0.05);
+}
+
 
 /* Responsive Design */
 @media (max-width: 1024px) {

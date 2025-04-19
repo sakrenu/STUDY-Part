@@ -156,7 +156,8 @@ const EditClassMode = () => {
                                     type="checkbox"
                                     id={`student-${student.id}`}
                                     checked={selectedStudents.includes(student.id)}
-                                    readOnly // Important when using onClick on parent
+                                    onChange={() => handleStudentToggle(student.id)}
+                                    className="student-checkbox"
                                 />
                                 <label htmlFor={`student-${student.id}`} className="student-label">
                                     {student.email}
