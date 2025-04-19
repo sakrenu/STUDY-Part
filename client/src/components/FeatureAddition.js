@@ -1801,6 +1801,7 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
         >
           <AddLabel
             image={image}
+// Zip to file FeatureAddition.js
             lessonId={lessonId}
             regions={regions}
             teacherEmail={teacherEmail}
