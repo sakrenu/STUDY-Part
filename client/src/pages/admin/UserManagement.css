@@ -19,3 +19,27 @@
 .user-table th {
     background-color: #f0f0f0;
 }
+.create-class-form {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+  }
+  
+  .create-class-form input,
+  .create-class-form select,
+  .create-class-form button {
+    display: block;
+    margin: 10px 0;
+    padding: 8px;
+    width: 100%;
+  }
+  
+  .student-checkboxes {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 1rem;
+    border: 1px solid #ccc;
+    padding: 1rem;
+  }
+  
