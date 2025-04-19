@@ -8,10 +8,16 @@ from pptx import Presentation
 import os
 import tempfile
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
+from langchain.llms import Groq
+from langchain.chains import RetrievalQA
 import shutil
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -29,8 +35,14 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
 )
 
-# Initialize embeddings (you'll need to set OPENAI_API_KEY in your environment)
-embeddings = OpenAIEmbeddings()
+# Initialize Groq LLM
+llm = Groq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model_name="mixtral-8x7b-32768"  # You can change this to other available models
+)
+
+# Initialize embeddings using a free alternative (HuggingFace)
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
 
 async def process_text_to_vectors(text: str, user_id: str) -> Dict:
     """Process text into chunks and create vector store"""
@@ -141,7 +153,7 @@ async def process_image(file: UploadFile = File(...), user_id: str = None):
 
 @router.post("/query_notes")
 async def query_notes(user_id: str, query: str):
-    """Query the vector store for relevant information"""
+    """Query the vector store for relevant information using Groq"""
     try:
         logger.info(f"Querying notes for user: {user_id}")
         # Load the vector store
@@ -150,13 +162,22 @@ async def query_notes(user_id: str, query: str):
         
         vectorstore = FAISS.load_local(f"vector_stores/{user_id}/vectors", embeddings)
         
-        # Perform similarity search
-        docs = vectorstore.similarity_search(query, k=3)
+        # Create a retrieval chain with Groq
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
+            return_source_documents=True
+        )
         
-        # Format response
-        response = "\n\n".join([doc.page_content for doc in docs])
+        # Get response from Groq
+        result = qa_chain({"query": query})
         
-        return {"response": response, "status": "success"}
+        return {
+            "response": result["result"],
+            "sources": [doc.page_content for doc in result["source_documents"]],
+            "status": "success"
+        }
     except Exception as e:
         logger.error(f"Error querying notes: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error querying notes: {str(e)}") 
