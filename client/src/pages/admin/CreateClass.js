@@ -49,38 +49,58 @@ const CreateClassMode = () => {
     const students = users.filter(u => u.role === 'student');
 
     return (
-        <div className="user-management-container">
-            <div className="header-container">
-                <h2>Create Class</h2>
-                <button onClick={() => navigate('/admin-dashboard')} className="back-button">Back to Dashboard</button>
-            </div>
-            <form onSubmit={handleSubmit} className="create-class-form">
-                <input type="text" value={courseName} onChange={e => setCourseName(e.target.value)} placeholder="Course Name" required />
-                <select value={professorId} onChange={e => setProfessorId(e.target.value)} required>
-                    <option value="">Select Professor</option>
-                    {professors.map(p => <option key={p.id} value={p.id}>{p.email}</option>)}
-                </select>
-                <div className="student-checkboxes">
-                    <p>Select Students:</p>
-                    <div className="student-list">
-                        {students.map(s => (
-                            <div className="student-item" key={s.id}>
-                                <input
-                                    type="checkbox"
-                                    id={`student-${s.id}`}
-                                    checked={selectedStudents.includes(s.id)}
-                                    onChange={() => handleStudentToggle(s.id)}
-                                />
-                                <label htmlFor={`student-${s.id}`}>
-                                    {s.email}
-                                </label>
-                            </div>
-                        ))}
-                    </div>
+        <div className="admin-dashboard">
+            {/* Top Navigation */}
+            <nav className="top-nav">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
                 </div>
+                <button className="back-btn" onClick={() => navigate('/admin-dashboard')}>Back to Dashboard</button>
+            </nav>
 
-                <button type="submit">Create Class</button>
-            </form>
+            {/* Welcome Section with Centered Heading */}
+            <div className="welcome-section">
+                <h1>Create Class</h1>
+                <h3>Create new classes and assign teachers and students</h3>
+            </div>
+
+            <main className="admin-main-content">
+                <form onSubmit={handleSubmit} className="create-class-form">
+                    <input type="text" value={courseName} onChange={e => setCourseName(e.target.value)} placeholder="Course Name" required />
+                    <select value={professorId} onChange={e => setProfessorId(e.target.value)} required>
+                        <option value="">Select Professor</option>
+                        {professors.map(p => <option key={p.id} value={p.id}>{p.email}</option>)}
+                    </select>
+                    <div className="student-checkboxes">
+                        <p>Select Students:</p>
+                        <div className="student-list">
+                            {students.map(s => (
+                                <div 
+                                    className={`student-item ${selectedStudents.includes(s.id) ? 'selected' : ''}`}
+                                    key={s.id}
+                                    onClick={() => handleStudentToggle(s.id)}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id={`student-${s.id}`}
+                                        checked={selectedStudents.includes(s.id)}
+                                        onChange={() => {}} // Handled by onClick
+                                    />
+                                    <label htmlFor={`student-${s.id}`}>
+                                        <span className="student-email">{s.email}</span>
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <button type="submit">Create Class</button>
+                </form>
+            </main>
         </div>
     );
 };

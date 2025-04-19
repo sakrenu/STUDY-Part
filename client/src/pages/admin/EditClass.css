@@ -1,72 +1,331 @@
-.class-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 250px;
-    padding: 0.8rem 1rem;
-    margin-bottom: 0.5rem;
-    background-color: #112240;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.2); /* white-ish border */
-  }
-  
-  .class-name {
-    color: #ffffff;
-    font-size: 0.95rem;
-    text-shadow: 0 0 6px #ffffff;
-  }
-  
-  .edit-button {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    text-shadow: 0 0 5px #ffffff;
-  }
-  
-  .header-container {
+.admin-dashboard {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding: 0 0 1rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    position: relative;
-    z-index: 1;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #000000, #0f0221, #2b104d);
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+    color: #ffffff;
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
+    padding: 7rem 2rem 2rem;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Top Navigation */
+.top-nav {
+    background-color: #3c2468;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-  }
-  
-  .header-container h2 {
-    margin: 0 0 1.5rem;
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #ffffff;
-    text-shadow: 0 0 6px #ffffff;
-  }
-  
-  .back-button {
-    background: transparent;
-    color: #ffffff;
-    border: 1px solid #ffffff;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.logo {
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-decoration: none;
+}
+
+.logo .study {
+    color: white;
+}
+
+.logo .part {
+    color: pink;
+}
+
+.back-btn {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 9999px;
+    color: #FFFFFF;
     cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
+    transition: box-shadow 0.3s ease;
+}
+
+.back-btn:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Welcome Section */
+.welcome-section {
+    text-align: center;
+    margin-bottom: 3rem;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.welcome-section h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+}
+
+.welcome-section h3 {
+    font-size: 1.2rem;
+    color: #D3D3D3;
+}
+
+/* Main Content */
+.admin-main-content {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.class-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.class-item {
+    background: linear-gradient(135deg, #000000, #1e1440);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     transition: all 0.3s ease;
-    z-index: 1;
-    margin-bottom: 1.5rem;
-    align-self: flex-start;
+}
+
+.class-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 30px rgba(255, 255, 255, 0.15);
+    border-color: #ffffff;
+}
+
+.class-name {
+    color: #ffffff;
+    font-size: 1.1rem;
     text-shadow: 0 0 6px #ffffff;
-  }
-  
-  .back-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  }
+}
+
+.edit-button {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 9999px;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+}
+
+.edit-button:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+.create-class-form {
+    background: linear-gradient(135deg, #000000, #1e1440);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+}
+
+.create-class-form input,
+.create-class-form select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.create-class-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.create-class-form select option {
+    background: #1e1440;
+    color: #ffffff;
+}
+
+.student-checkboxes {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.student-checkboxes p {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.student-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.student-item input[type="checkbox"] {
+    margin-right: 0.8rem;
+}
+
+.student-item label {
+    color: #D3D3D3;
+    font-size: 0.9rem;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.cancel-button,
+.update-button {
+    flex: 1;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.update-button {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    color: #ffffff;
+}
+
+.cancel-button:hover,
+.update-button:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .admin-dashboard {
+        padding: 6rem 1.5rem 2rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 2.2rem;
+    }
+
+    .welcome-section h3 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard {
+        padding: 5rem 1rem 2rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 2rem;
+    }
+
+    .welcome-section h3 {
+        font-size: 1rem;
+    }
+
+    .create-class-form {
+        padding: 1.5rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-nav {
+        padding: 0.6rem 1rem;
+    }
+
+    .logo {
+        font-size: 1.5rem;
+    }
+
+    .logo-image {
+        width: 30px;
+        height: 30px;
+    }
+
+    .admin-dashboard {
+        padding: 4rem 0.8rem 1.5rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 1.8rem;
+    }
+
+    .welcome-section h3 {
+        font-size: 0.9rem;
+    }
+
+    .create-class-form {
+        padding: 1rem;
+    }
+
+    .student-checkboxes {
+        padding: 1rem;
+    }
+
+    .cancel-button,
+    .update-button {
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+}
   

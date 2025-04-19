@@ -65,78 +65,94 @@ const EditClassMode = () => {
     };
 
     return (
-        <div className="user-management-container">
-            <div className="header-container">
-                <h2>Edit Class</h2>
-                <button onClick={() => navigate('/admin-dashboard')} className="back-button">Back to Dashboard</button>
-            </div>
-            <div className="class-list">
-            {classes.map(cls => (
-                <div key={cls.id} className="class-item">
-                <span className="class-name">{cls.courseName}</span>
-                <button className="edit-button" onClick={() => loadClass(cls)}>
-                    Edit
-                </button>
+        <div className="admin-dashboard">
+            {/* Top Navigation */}
+            <nav className="top-nav">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
                 </div>
-            ))}
+                <button className="back-btn" onClick={() => navigate('/admin-dashboard')}>Back to Dashboard</button>
+            </nav>
+
+            {/* Welcome Section with Centered Heading */}
+            <div className="welcome-section">
+                <h1>Edit Class</h1>
+                <h3>Modify existing classes and update assignments</h3>
             </div>
 
-            {editing && (
-                <form onSubmit={handleUpdate} className="create-class-form">
-                    <input 
-                        type="text" 
-                        value={courseName} 
-                        onChange={e => setCourseName(e.target.value)} 
-                        placeholder="Course Name"
-                        required 
-                    />
-                    <select 
-                        value={professorId} 
-                        onChange={e => setProfessorId(e.target.value)} 
-                        required
-                    >
-                        <option value="">Select Professor</option>
-                        {professors.map(p => (
-                            <option key={p.id} value={p.id}>{p.email}</option>
-                        ))}
-                    </select>
-                    <div className="student-checkboxes">
-                        <p>Select Students:</p>
-                        <div className="student-list">
-                            {students.map(s => (
-                                <div className="student-item" key={s.id}>
-                                    <input
-                                        type="checkbox"
-                                        id={`student-${s.id}`}
-                                        checked={selectedStudents.includes(s.id)}
-                                        onChange={() => handleStudentToggle(s.id)}
-                                    />
-                                    <label htmlFor={`student-${s.id}`}>
-                                        {s.email}
-                                    </label>
-                                </div>
-                            ))}
+            <main className="admin-main-content">
+                <div className="class-list">
+                    {classes.map(cls => (
+                        <div key={cls.id} className="class-item">
+                            <span className="class-name">{cls.courseName}</span>
+                            <button className="edit-button" onClick={() => loadClass(cls)}>
+                                Edit
+                            </button>
                         </div>
-                    </div>
-                    <div className="form-actions">
-                        <button 
-                            type="button" 
-                            className="cancel-button"
-                            onClick={() => {
-                                setEditing(null);
-                                setCourseName('');
-                                setProfessorId('');
-                                setSelectedStudents([]);
-                            }}
+                    ))}
+                </div>
+
+                {editing && (
+                    <form onSubmit={handleUpdate} className="create-class-form">
+                        <input 
+                            type="text" 
+                            value={courseName} 
+                            onChange={e => setCourseName(e.target.value)} 
+                            placeholder="Course Name"
+                            required 
+                        />
+                        <select 
+                            value={professorId} 
+                            onChange={e => setProfessorId(e.target.value)} 
+                            required
                         >
-                            Cancel
-                        </button>
-                        <button type="submit" className="update-button">
-                            Update Class
-                        </button>
-                    </div>
-                </form>
-            )}
+                            <option value="">Select Professor</option>
+                            {professors.map(p => (
+                                <option key={p.id} value={p.id}>{p.email}</option>
+                            ))}
+                        </select>
+                        <div className="student-checkboxes">
+                            <p>Select Students:</p>
+                            <div className="student-list">
+                                {students.map(s => (
+                                    <div className="student-item" key={s.id}>
+                                        <input
+                                            type="checkbox"
+                                            id={`student-${s.id}`}
+                                            checked={selectedStudents.includes(s.id)}
+                                            onChange={() => handleStudentToggle(s.id)}
+                                        />
+                                        <label htmlFor={`student-${s.id}`}>
+                                            {s.email}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="button-group">
+                            <button 
+                                type="button" 
+                                className="cancel-button"
+                                onClick={() => {
+                                    setEditing(null);
+                                    setCourseName('');
+                                    setProfessorId('');
+                                    setSelectedStudents([]);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button type="submit" className="update-button">
+                                Update Class
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </main>
         </div>
     );
 };

@@ -19,16 +19,25 @@ const AdminDashboard = () => {
 
     return (
         <div className="admin-dashboard">
-            <header className="admin-header">
-                <h1>Admin Dashboard</h1>
-                <button onClick={handleLogout} className="logout-button">
-                    Logout
-                </button>
-            </header>
-            <main className="admin-main-content">
-                <h2>Welcome, Admin!</h2>
-                <p>This is your central control panel. Manage users, content, and settings from here.</p>
+            {/* Top Navigation */}
+            <nav className="top-nav">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
+                </div>
+                <button className="logout-btn" onClick={handleLogout}>Logout</button>
+            </nav>
 
+            {/* Welcome Section with Centered Heading */}
+            <div className="welcome-section">
+                <h1>Admin Dashboard</h1>
+                <h3>Manage your educational platform</h3>
+            </div>
+
+            <main className="admin-main-content">
                 <div className="admin-widgets">
                     <div className="widget" onClick={() => navigate('/Create-Class')}>
                         <h3>Create Class</h3>

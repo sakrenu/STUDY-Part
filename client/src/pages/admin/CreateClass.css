@@ -1,113 +1,306 @@
-.back-button {
-    background: transparent;
-    color: #64ffda;
-    border: 1px solid #64ffda;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    z-index: 1;
-    margin-top: 1.5rem; /* Adds some spacing below the title */
-}
-.back-button:hover {
-    background-color: rgba(100, 255, 218, 0.1);
-}
-
-.header-container {
+.admin-dashboard {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding: 0 0 1rem 0;
-    border-bottom: 1px solid rgba(100, 255, 218, 0.2);
-    position: relative;
-    z-index: 1;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #000000, #0f0221, #2b104d);
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+    color: #ffffff;
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
+    padding: 7rem 2rem 2rem;
 }
 
-.header-container h2 {
-    margin: 0;
-    margin-bottom: 1rem;
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #64ffda;
-    z-index: 1;
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
-.student-checkboxes {
-    max-height: 300px;
-    overflow-y: auto;
-    margin-top: 1rem;
-    padding: 0.5rem;
-    background-color: #112240;
+
+/* Top Navigation */
+.top-nav {
+    background-color: #3c2468;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.logo {
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-decoration: none;
+}
+
+.logo .study {
+    color: white;
+}
+
+.logo .part {
+    color: pink;
+}
+
+.back-btn {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 9999px;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+}
+
+.back-btn:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Welcome Section */
+.welcome-section {
+    text-align: center;
+    margin-bottom: 3rem;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.welcome-section h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+}
+
+.welcome-section h3 {
+    font-size: 1.2rem;
+    color: #D3D3D3;
+}
+
+/* Main Content */
+.admin-main-content {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.create-class-form {
+    background: linear-gradient(135deg, #000000, #1e1440);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+}
+
+.create-class-form input,
+.create-class-form select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    border: 1px solid rgba(100, 255, 218, 0.2);
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.create-class-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.create-class-form select option {
+    background: #1e1440;
+    color: #ffffff;
+}
+
+.student-checkboxes {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .student-checkboxes p {
-    margin-bottom: 0.8rem;
-    color: #64ffda;
-    font-weight: 500;
-    font-size: 0.9rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    text-align: left;
 }
 
 .student-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 1rem;
 }
 
 .student-item {
     display: flex;
     align-items: center;
-    padding: 0.3rem 0.5rem;
-    background-color: rgba(10, 25, 47, 0.5);
-    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    padding: 0.8rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid transparent;
-    font-size: 0.85rem;
 }
 
 .student-item:hover {
-    background-color: rgba(100, 255, 218, 0.05);
-    border-color: rgba(100, 255, 218, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.student-item.selected {
+    background: rgba(87, 54, 136, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .student-item input[type="checkbox"] {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 14px;
-    height: 14px;
-    margin-right: 8px;
-    border: 1.5px solid #64ffda;
-    border-radius: 3px;
-    outline: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    flex-shrink: 0;
-}
-
-.student-item input[type="checkbox"]:checked {
-    background-color: #64ffda;
-}
-
-.student-item input[type="checkbox"]:checked::after {
-    content: "✓";
-    position: absolute;
-    color: #0a192f;
-    font-size: 10px;
-    font-weight: bold;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    display: none;
 }
 
 .student-item label {
+    color: #D3D3D3;
+    font-size: 0.95rem;
     cursor: pointer;
-    color: #ccd6f6;
-    user-select: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.student-item label::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    margin-right: 12px;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+}
+
+.student-item.selected label::before {
+    background-color: #573688;
+    border-color: #573688;
+    box-shadow: 0 0 8px rgba(87, 54, 136, 0.6);
+}
+
+.student-email {
+    flex-grow: 1;
+    text-align: left;
+    margin-left: 12px;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(90deg, #573688, #520c5b);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .admin-dashboard {
+        padding: 6rem 1.5rem 2rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 2.2rem;
+    }
+
+    .welcome-section h3 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard {
+        padding: 5rem 1rem 2rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 2rem;
+    }
+
+    .welcome-section h3 {
+        font-size: 1rem;
+    }
+
+    .create-class-form {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-nav {
+        padding: 0.6rem 1rem;
+    }
+
+    .logo {
+        font-size: 1.5rem;
+    }
+
+    .logo-image {
+        width: 30px;
+        height: 30px;
+    }
+
+    .admin-dashboard {
+        padding: 4rem 0.8rem 1.5rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 1.8rem;
+    }
+
+    .welcome-section h3 {
+        font-size: 0.9rem;
+    }
+
+    .create-class-form {
+        padding: 1rem;
+    }
+
+    .student-checkboxes {
+        padding: 1rem;
+    }
+
+    button[type="submit"] {
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
 }
