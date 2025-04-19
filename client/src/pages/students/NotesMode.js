@@ -464,16 +464,33 @@ const NotesMode = () => {
                     </div>
                 </div>
 
-                {/* Toggle Button */}
+                {/* Toggle Button with Arrow */}
                 <div
                     className={`toggle-button-container ${isSidebarOpen ? 'open' : 'closed'}`}
                     onMouseEnter={() => setShowToggleText(true)}
                     onMouseLeave={() => setShowToggleText(false)}
                 >
                     <button className="toggle-button" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                        <img src={`${process.env.PUBLIC_URL}/toggle-icon.svg`} alt="Toggle" className="toggle-icon" />
+                        <span
+                            className={`sidebar-arrow ${isSidebarOpen ? 'arrow-left' : 'arrow-right'}`}
+                            aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+                        >
+                            {/* SVG Arrow: points left when open, right when closed */}
+                            <svg width="28" height="28" viewBox="0 0 28 28">
+                                <polyline
+                                    points="18,6 10,14 18,22"
+                                    fill="none"
+                                    stroke="#4A90E2"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        </span>
                     </button>
-                    {showToggleText && <span className="toggle-text">{isSidebarOpen ? 'Close' : 'Open'}</span>}
+                    {showToggleText && (
+                        <span className="toggle-text">{isSidebarOpen ? 'Close' : 'Open'}</span>
+                    )}
                 </div>
 
                 {/* Main Content */}
