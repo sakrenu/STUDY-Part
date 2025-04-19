@@ -1,61 +1,58 @@
-/* Class List Item Styling */
 .class-item {
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Re-adding this to push content apart */
-    width: 250px; /* Fixed moderate width - adjust this value as needed */
+    justify-content: space-between;
+    width: 250px;
     padding: 0.8rem 1rem;
     margin-bottom: 0.5rem;
     background-color: #112240;
     border-radius: 6px;
-    border: 1px solid rgba(100, 255, 218, 0.1);
-}
-
-.class-name {
-    color: #ccd6f6;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* white-ish border */
+  }
+  
+  .class-name {
+    color: #ffffff;
     font-size: 0.95rem;
-    /* Removed margin-right since we're using justify-content: space-between */
-}
-
-.edit-button {
-    background-color: rgba(100, 255, 218, 0.1);
-    color: #64ffda;
-    border: 1px solid rgba(100, 255, 218, 0.3);
+    text-shadow: 0 0 6px #ffffff;
+  }
+  
+  .edit-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 4px;
     padding: 0.4rem 0.8rem;
     font-size: 0.85rem;
     cursor: pointer;
     white-space: nowrap;
-    flex-shrink: 0; /* Prevents button from shrinking */
-}
-
-/* Header Container Styling */
-.header-container {
+    flex-shrink: 0;
+    text-shadow: 0 0 5px #ffffff;
+  }
+  
+  .header-container {
     display: flex;
-    flex-direction: column; /* This is crucial - ensures vertical stacking */
+    flex-direction: column;
     align-items: flex-start;
     margin-bottom: 2rem;
     padding: 0 0 1rem 0;
-    border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     position: relative;
     z-index: 1;
-    width: 100%; /* Ensure it takes full width */
-}
-
-.header-container h2 {
-    margin: 0;
-    margin-bottom: 1rem;
-    font-size: 1.8rem;  
+    width: 100%;
+  }
+  
+  .header-container h2 {
+    margin: 0 0 1rem;
+    font-size: 1.8rem;
     font-weight: 600;
-    color: #64ffda;
-    z-index: 1;
-}
-
-
-.back-button {
+    color: #ffffff;
+    text-shadow: 0 0 6px #ffffff;
+  }
+  
+  .back-button {
     background: transparent;
-    color: #64ffda;
-    border: 1px solid #64ffda;
+    color: #ffffff;
+    border: 1px solid #ffffff;
     padding: 0.6rem 1.2rem;
     border-radius: 6px;
     cursor: pointer;
@@ -63,9 +60,13 @@
     font-weight: 500;
     transition: all 0.3s ease;
     z-index: 1;
-    margin-bottom: 1rem; /* Space between button and border line */
-    align-self: flex-start; /* Align to left side instead of stretching */
-}
-.back-button:hover {
-    background-color: rgba(100, 255, 218, 0.1);
-}
+    margin-bottom: 1rem;
+    align-self: flex-start;
+    text-shadow: 0 0 6px #ffffff;
+  }
+  
+  .back-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  }
+  
