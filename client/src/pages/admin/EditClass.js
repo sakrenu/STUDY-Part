@@ -7,8 +7,10 @@ import {
     updateDoc,
     doc
 } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const EditClassMode = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [classes, setClasses] = useState([]);
     const [editing, setEditing] = useState(null);
@@ -64,7 +66,10 @@ const EditClassMode = () => {
 
     return (
         <div className="user-management-container">
-            <h2>Edit Class</h2>
+            <div className="header-container">
+                <h2>Edit Class</h2>
+                <button onClick={() => navigate('/admin-dashboard')} className="back-button">Back to Dashboard</button>
+            </div>
             <div className="class-list">
             {classes.map(cls => (
                 <div key={cls.id} className="class-item">
