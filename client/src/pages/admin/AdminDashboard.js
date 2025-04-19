@@ -30,28 +30,19 @@ const AdminDashboard = () => {
                 <p>This is your central control panel. Manage users, content, and settings from here.</p>
 
                 <div className="admin-widgets">
-                    <div className="widget">
+                    <div className="widget" onClick={() => navigate('/Create-Class')}>
                         <h3>Create Class</h3>
                         <p>Create Classes with this mode, assign teachers and students to classes</p>
-                        <button onClick={() => navigate('/Create-Class')} className="widget-button">
-                            Go to Create Class Mode
-                        </button>
                     </div>
 
-                    <div className="widget">
+                    <div className="widget" onClick={() => navigate('/Edit-Class')}>
                         <h3>Edit Class</h3>
                         <p>Edit Classes with this mode, change teachers and add students to classes</p>
-                        <button onClick={() => navigate('/Edit-Class')} className="widget-button">
-                            Go to Edit Class Mode
-                        </button>
                     </div>
 
-                    <div className="widget">
+                    <div className="widget" onClick={() => navigate('/View-Class')}>
                         <h3>View Class</h3>
                         <p>View Classes with this mode, view teachers and students in classes</p>
-                        <button onClick={() => navigate('/View-Class')} className="widget-button">
-                            Go to View Class Mode
-                        </button>
                     </div>
                 </div>
             </main>

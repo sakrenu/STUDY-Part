@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './CreateClass.css';
 import {
     getFirestore,
@@ -8,6 +9,7 @@ import {
 } from 'firebase/firestore';
 
 const CreateClassMode = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [courseName, setCourseName] = useState('');
     const [professorId, setProfessorId] = useState('');
@@ -48,7 +50,10 @@ const CreateClassMode = () => {
 
     return (
         <div className="user-management-container">
-            <h2>Create Class</h2>
+            <div className="header-container">
+                <h2>Create Class</h2>
+                <button onClick={() => navigate('/admin-dashboard')} className="back-button">Back to Dashboard</button>
+            </div>
             <form onSubmit={handleSubmit} className="create-class-form">
                 <input type="text" value={courseName} onChange={e => setCourseName(e.target.value)} placeholder="Course Name" required />
                 <select value={professorId} onChange={e => setProfessorId(e.target.value)} required>
@@ -56,25 +61,23 @@ const CreateClassMode = () => {
                     {professors.map(p => <option key={p.id} value={p.id}>{p.email}</option>)}
                 </select>
                 <div className="student-checkboxes">
-    <p>Select Students:</p>
-    <div className="student-list">
-        {students.map(s => (
-            <div className="student-item" key={s.id}>
-                <input
-                    type="checkbox"
-                    id={`student-${s.id}`}
-                    checked={selectedStudents.includes(s.id)}
-                    onChange={() => handleStudentToggle(s.id)}
-                />
-                <label htmlFor={`student-${s.id}`}>
-                    {s.email}
-                </label>
-            </div>
-        ))}
-    </div>
-</div>
-
-
+                    <p>Select Students:</p>
+                    <div className="student-list">
+                        {students.map(s => (
+                            <div className="student-item" key={s.id}>
+                                <input
+                                    type="checkbox"
+                                    id={`student-${s.id}`}
+                                    checked={selectedStudents.includes(s.id)}
+                                    onChange={() => handleStudentToggle(s.id)}
+                                />
+                                <label htmlFor={`student-${s.id}`}>
+                                    {s.email}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
                 <button type="submit">Create Class</button>
             </form>

@@ -1,3 +1,39 @@
+.back-button {
+    background: transparent;
+    color: #64ffda;
+    border: 1px solid #64ffda;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    z-index: 1;
+    margin-top: 1.5rem; /* Adds some spacing below the title */
+}
+.back-button:hover {
+    background-color: rgba(100, 255, 218, 0.1);
+}
+
+.header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding: 0 0 1rem 0;
+    border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.header-container h2 {
+    margin: 0;
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #64ffda;
+    z-index: 1;
+}
 .student-checkboxes {
     max-height: 300px;
     overflow-y: auto;
