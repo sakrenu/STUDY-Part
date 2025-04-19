@@ -104,7 +104,7 @@
 .notes-mode .upload-section {
     background-color: #1E1E3A;
     border-radius: 8px;
-    padding: 2rem;
+    padding: 0;
     margin-bottom: 2rem;
     text-align: center;
     border: none;
@@ -123,6 +123,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
+    padding: 2rem;
     height: 250px;
     background-color: #131337;
     border-radius: 8px;
@@ -226,11 +227,11 @@
     flex-direction: column;
     align-items: center;
     gap: 20px;
-    background-color: #1E1E3A;
+    background-color: transparent;
     border: none;
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 20px;
+    padding: 0;
+    border-radius: 0;
+    margin-top: 0;
     box-shadow: none;
     width: 100%;
     max-width: 800px;
