@@ -93,54 +93,16 @@ const TeachingMode = () => {
   };
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return <Home />;
-      case 'manage':
-        return <ManageStudents />;
-      case 'library':
-        return <Library teacherEmail={teacherEmail} />;
-      case 'basicversion':
-        return <BasicVersion />;
-      case 'label':
-        return <Label teacherEmail={teacherEmail} />;
-      case 'teachbypart':
-        return <TeachByPart teacherEmail={teacherEmail} />;
-      default:
-        return null;
-    }
+    return <TeachByPart teacherEmail={teacherEmail} />;
   };
+  
 
   return (
     <div className="teachers-dashboard">
-      <nav className="navbar">
-        <ul>
-          <li className={activeTab === 'home' ? 'active' : ''} onClick={() => setActiveTab('home')}>
-            Home
-          </li>
-          <li className={activeTab === 'tutorial' ? 'active' : ''} onClick={() => setActiveTab('tutorial')}>
-            Tutorial
-          </li>
-          <li className={activeTab === 'manage' ? 'active' : ''} onClick={() => setActiveTab('manage')}>
-            Manage Students
-          </li>
-          <li className={activeTab === 'library' ? 'active' : ''} onClick={() => setActiveTab('library')}>
-            Library
-          </li>
-          <li className={activeTab === 'basicversion' ? 'active' : ''} onClick={() => setActiveTab('basicversion')}>
-            Basic Version
-          </li>
-          <li className={activeTab === 'label' ? 'active' : ''} onClick={() => setActiveTab('label')}>
-            Label
-          </li>
-          <li className={activeTab === 'teachbypart' ? 'active' : ''} onClick={() => setActiveTab('teachbypart')}>
-            TeachByPart
-          </li>
-        </ul>
-      </nav>
-      {renderContent()}
+      {activeTab === 'teachbypart' && renderContent()}
     </div>
   );
+  
 };
 
 export default TeachingMode;
