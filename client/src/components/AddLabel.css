@@ -1,0 +1,174 @@
+.addlabel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+  
+  .addlabel-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .addlabel-header h2 {
+    font-size: 1.8rem;
+    color: #b3c6d9;
+  }
+  
+  .addlabel-header p {
+    font-size: 1rem;
+    color: #7f8c8d;
+  }
+  
+  .addlabel-image-container {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  
+  .addlabel-base-image {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    display: block;
+  }
+  
+  .addlabel-regions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  
+  .addlabel-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  
+  .addlabel-label-wrapper {
+    position: absolute;
+    pointer-events: auto;
+  }
+  
+  .addlabel-line {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    stroke-dasharray: 120;
+    stroke-dashoffset: 120;
+    animation: drawLine 0.7s ease-in-out forwards;
+  }
+  
+  @keyframes drawLine {
+    0% {
+      stroke-dashoffset: 120;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+  
+  .addlabel-input-wrapper {
+    position: absolute;
+    background-color: #2c2c2c;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 150px;
+    z-index: 10;
+  }
+  
+  .addlabel-input {
+    flex-grow: 1;
+    padding: 5px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.9rem;
+  }
+  
+  .addlabel-input:focus {
+    outline: none;
+    border-color: #7f4ae2;
+  }
+  
+  .addlabel-input-wrapper button {
+    padding: 5px 10px;
+    background-color: #7f4ae2;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+  
+  .addlabel-input-wrapper button:hover {
+    background-color: #9b4ae2;
+  }
+  
+  .addlabel-input-wrapper button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+  }
+  
+  .addlabel-error {
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin-top: 5px;
+  }
+  
+  .addlabel-text {
+    position: absolute;
+    background-color: #2c2c2c;
+    padding: 5px 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    font-size: 0.9rem;
+    color: #fff;
+    white-space: nowrap;
+  }
+  
+  .addlabel-footer {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .addlabel-back-button,
+  .addlabel-done-button {
+    padding: 10px 20px;
+    background-color: #4a545e;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .addlabel-done-button {
+    background-color: #7f4ae2;
+  }
+  
+  .addlabel-back-button:hover,
+  .addlabel-done-button:hover {
+    opacity: 0.9;
+  }
+  
+  .addlabel-svg {
+    pointer-events: none;
+    overflow: visible !important;
+  }
