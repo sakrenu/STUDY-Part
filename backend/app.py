@@ -152,7 +152,7 @@ async def segment(request: SegmentRequest):
         regions = []
         lesson_id = str(uuid.uuid4())
         for i, mask in enumerate(masks):
-            # Define color palette (you can extend this)
+            # Define color palette
             colors = [
                 (255, 0, 0),     # Red
                 (0, 255, 0),     # Green
@@ -183,8 +183,7 @@ async def segment(request: SegmentRequest):
                 resource_type="image"
             )
 
-
-            # Create cutout (for future steps)
+            # Create cutout
             cutout = image_np.copy()
             cutout[~mask] = 0
             cutout_img = Image.fromarray(cutout)
@@ -192,28 +191,31 @@ async def segment(request: SegmentRequest):
             cutout_img.save(cutout_buffer, format="PNG")
             cutout_buffer.seek(0)
 
-            # Upload cutout to Cloudinary
-            logger.info(f"Uploading cutout {i} for lesson_id: {lesson_id}")
             cutout_upload = cloudinary.uploader.upload(
                 cutout_buffer,
                 public_id=f"lessons/{image_id}/cutouts/{lesson_id}_{i}",
                 resource_type="image"
             )
 
-            # Calculate position
+            # Calculate position in expected format
             if box:
-                position = {"x1": box[0], "y1": box[1], "x2": box[2], "y2": box[3]}
+                position = {
+                    "x": box[0],
+                    "y": box[1],
+                    "width": box[2] - box[0],
+                    "height": box[3] - box[1]
+                }
             else:
                 coords = np.where(mask)
                 if len(coords[0]) > 0:
                     position = {
-                        "x1": float(coords[1].min()),
-                        "y1": float(coords[0].min()),
-                        "x2": float(coords[1].max()),
-                        "y2": float(coords[0].max())
+                        "x": float(coords[1].min()),
+                        "y": float(coords[0].min()),
+                        "width": float(coords[1].max() - coords[1].min()),
+                        "height": float(coords[0].max() - coords[0].min())
                     }
                 else:
-                    position = {"x1": 0, "y1": 0, "x2": 0, "y2": 0}
+                    position = {"x": 0, "y": 0, "width": 0, "height": 0}
 
             regions.append({
                 "region_id": f"{lesson_id}_{i}",
