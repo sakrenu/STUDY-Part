@@ -9,7 +9,12 @@ const NotesMode = () => {
     const [imageData, setImageData] = useState(null);
     const [simulationProgress, setSimulationProgress] = useState(0);
     const [simulationMessage, setSimulationMessage] = useState('');
+    const [labels, setLabels] = useState([]);
+    const [selectionMode, setSelectionMode] = useState('foreground');
+    const [maskUrl, setMaskUrl] = useState('');
+    const [segmentationInProgress, setSegmentationInProgress] = useState(false);
     const fileInputRef = useRef(null);
+    const canvasRef = useRef(null);
 
     // Function to handle file selection
     const handleFileSelect = (event) => {
@@ -116,6 +121,100 @@ const NotesMode = () => {
         fileInputRef.current.click();
     };
 
+    // Handle canvas click to add points
+    const handleCanvasClick = (e) => {
+        if (!imageData?.image_id) {
+            setError("Please upload an image first.");
+            return;
+        }
+        
+        const rect = canvasRef.current.getBoundingClientRect();
+        const scaleX = imageData.width / rect.width;
+        const scaleY = imageData.height / rect.height;
+        
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        
+        setPoints([...points, [x, y]]);
+        setLabels([...labels, selectionMode === 'foreground' ? 1 : 0]);
+    };
+
+    // Reset points and clear current segmentation
+    const handleResetPoints = () => {
+        setPoints([]);
+        setLabels([]);
+        setMaskUrl('');
+    };
+
+    // Handle point segmentation
+    const handleSegment = async () => {
+        if (!imageData?.image_id || points.length === 0) {
+            setError("Please upload an image and add some points first.");
+            return;
+        }
+
+        try {
+            setSegmentationInProgress(true);
+            setError(null);
+
+            const response = await fetch('http://localhost:8000/segment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image_id: imageData.image_id,
+                    points: points,
+                    labels: labels
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Segmentation failed');
+            }
+
+            const data = await response.json();
+            // Use the first mask URL from the response
+            if (data.regions && data.regions.length > 0) {
+                setMaskUrl(data.regions[0].mask_url);
+            }
+        } catch (err) {
+            setError('Failed to segment: ' + err.message);
+        } finally {
+            setSegmentationInProgress(false);
+        }
+    };
+
+    // Draw points on canvas
+    const drawPoints = useEffect(() => {
+        if (!canvasRef.current || !imageData) return;
+        
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        points.forEach((point, index) => {
+            const scaleX = canvas.width / imageData.width;
+            const scaleY = canvas.height / imageData.height;
+            
+            ctx.beginPath();
+            ctx.arc(point[0] * scaleX, point[1] * scaleY, 7, 0, 2 * Math.PI);
+            ctx.fillStyle = labels[index] === 1 ? '#00ff00' : '#ff0000';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.fillText(index + 1, point[0] * scaleX + 10, point[1] * scaleY + 10);
+        });
+    }, [points, labels, imageData]);
+
     return (
         <div className="notes-mode">
             <div className="notes-container">
@@ -150,6 +249,34 @@ const NotesMode = () => {
                                     src={selectedImage}
                                     alt="Preview"
                                     className={`preview-image ${isProcessing ? 'dull-image' : ''}`}
+                                />
+                                {maskUrl && !isProcessing && (
+                                    <img
+                                        src={maskUrl}
+                                        alt="Segmentation mask"
+                                        className="mask-overlay"
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            opacity: 0.5,
+                                            pointerEvents: 'none',
+                                        }}
+                                    />
+                                )}
+                                <canvas
+                                    ref={canvasRef}
+                                    onClick={handleCanvasClick}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        cursor: 'crosshair',
+                                    }}
                                 />
                                 {isProcessing && (
                                     <>
@@ -194,6 +321,33 @@ const NotesMode = () => {
                             </div>
                             {isProcessing && (
                                 <p className="processing-text">Processing your image...</p>
+                            )}
+                            {imageData && (
+                                <div className="segmentation-controls">
+                                    <div className="mode-buttons">
+                                        <button
+                                            className={`mode-button ${selectionMode === 'foreground' ? 'active' : ''}`}
+                                            onClick={() => setSelectionMode('foreground')}
+                                        >
+                                            Keep (Green)
+                                        </button>
+                                        <button
+                                            className={`mode-button ${selectionMode === 'background' ? 'active' : ''}`}
+                                            onClick={() => setSelectionMode('background')}
+                                        >
+                                            Remove (Red)
+                                        </button>
+                                    </div>
+                                    <div className="control-buttons">
+                                        <button onClick={handleResetPoints}>Reset Points</button>
+                                        <button 
+                                            onClick={handleSegment}
+                                            disabled={segmentationInProgress || points.length === 0}
+                                        >
+                                            {segmentationInProgress ? 'Segmenting...' : 'Segment'}
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                             {imageData && (
                                 <div className="image-info">
