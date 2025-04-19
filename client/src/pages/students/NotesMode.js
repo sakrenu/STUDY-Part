@@ -33,6 +33,10 @@ const NotesMode = () => {
     const auth = getAuth();
     const user = auth.currentUser;
     const [isEditing, setIsEditing] = useState(false);
+    const [simulationProgress, setSimulationProgress] = useState(0);
+    const [simulationMessage, setSimulationMessage] = useState('');
+    const [error, setError] = useState(null);
+    const fileInputRef = useRef(null);
 
     const NotesPopup = ({ regionIndex, regionNotes, setRegionNotes, onSave, onClose }) => {
         const [noteText, setNoteText] = useState(regionNotes[regionIndex] || '');
@@ -103,8 +107,7 @@ const NotesMode = () => {
     }, []); // Empty dependency array means this runs once on mount
 
     // Handle image upload
-    const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
+    const handleImageUpload = async (file) => {
         if (file) {
             try {
                 setIsLoading(true);
@@ -136,6 +139,67 @@ const NotesMode = () => {
                 console.error('Failed to upload image:', error);
                 alert('Error uploading image: ' + error.message);
             } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    const handleFileSelect = (event) => {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            try {
+                setIsLoading(true);
+                setError(null);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    setCurrentImageUrl(e.target.result);
+                };
+                reader.readAsDataURL(file);
+
+                // Start simulation progress
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    if (progress < 85) {
+                        progress += progress < 25 ? 1 : 0.5;
+                        setSimulationProgress(progress);
+                        setSimulationMessage(
+                            progress < 25 ? 
+                            `Loading your image... (${Math.round(progress)}%)` :
+                            progress < 50 ?
+                            `Processing image... (${Math.round(progress)}%)` :
+                            `Almost there (${Math.round(progress)}%)`
+                        );
+                    }
+                }, 100);
+
+                // Handle file upload
+                const formData = new FormData();
+                formData.append('file', file);
+
+                handleImageUpload(file);
+                clearInterval(progressInterval);
+
+                // Complete the progress animation
+                const finishProgress = () => {
+                    progress = Math.min(100, progress + 5);
+                    setSimulationProgress(progress);
+                    setSimulationMessage(`Finishing up (${Math.round(progress)}%)`);
+                    
+                    if (progress < 100) {
+                        setTimeout(finishProgress, 50);
+                    } else {
+                        setTimeout(() => {
+                            setIsLoading(false);
+                            setSimulationProgress(0);
+                            setSimulationMessage('');
+                        }, 500);
+                    }
+                };
+                finishProgress();
+
+            } catch (error) {
+                console.error('Error handling file:', error);
+                setError('Failed to process image. Please try again.');
                 setIsLoading(false);
             }
         }
@@ -392,8 +456,9 @@ const NotesMode = () => {
 
     return (
         <div className="notes-mode">
-            <div className="notes-mode-container">
-                {/* Sidebar for Notes */}
+            <div className="notes-container">
+                <h1 className="notes-title">Notes Mode</h1>
+
                 <div className={`notes-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                     <h2>Notes List</h2>
                     <button 
@@ -495,8 +560,6 @@ const NotesMode = () => {
 
                 {/* Main Content */}
                 <div className={`main-content ${isSidebarOpen ? '' : 'closed'}`}>
-                    <h1>Notes Mode</h1>
-
                     <button 
                         onClick={() => navigate('/student-dashboard')} 
                         className="back-button"
@@ -504,18 +567,71 @@ const NotesMode = () => {
                         ← Back to Dashboard
                     </button>
 
-                    {/* Image Upload */}
-                    <div className="image-upload">
-                        <label className="file-upload-label">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="file-input"
-                                disabled={isLoading}
-                            />
-                            <span className="upload-button">Choose Image</span>
-                        </label>
+                    <div className="upload-section">
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            disabled={isLoading}
+                        />
+                        <button 
+                            className="upload-button" 
+                            onClick={() => fileInputRef.current.click()}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Processing...' : 'Choose Image'}
+                        </button>
+
+                        {currentImageUrl && (
+                            <div className="image-preview">
+                                <div className="processing-animation">
+                                    <img
+                                        src={currentImageUrl}
+                                        alt="Preview"
+                                        className={`preview-image ${isLoading ? 'dull-image' : ''}`}
+                                    />
+                                    {isLoading && (
+                                        <>
+                                            <div className="processing-overlay" />
+                                            <div className="simulation-overlay">
+                                                <div className="simulation-bar-container">
+                                                    <div className="simulation-bar">
+                                                        <div 
+                                                            className="simulation-progress"
+                                                            style={{ width: `${simulationProgress}%` }}
+                                                        />
+                                                        <div className="simulation-glow" />
+                                                    </div>
+                                                </div>
+                                                <div className="simulation-percentage">
+                                                    {Math.round(simulationProgress)}%
+                                                </div>
+                                                <div className="simulation-message">
+                                                    {simulationMessage}
+                                                </div>
+                                            </div>
+                                            <div className="neural-animation-overlay">
+                                                <div className="neural-particles" />
+                                                <div className="neural-particles" />
+                                                <div className="neural-particles" />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {!currentImageUrl && !isLoading && (
+                            <div className="no-image-message">
+                                <p>Please select an image to upload</p>
+                            </div>
+                        )}
+
+                        {isLoading && (
+                            <p className="processing-text">Processing your image...</p>
+                        )}
                     </div>
 
                     {/* Image Selection Area */}
