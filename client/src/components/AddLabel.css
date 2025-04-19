@@ -1,0 +1,205 @@
+.addlabel-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1400px;
+    margin: 20px auto;
+    background-color: #1a1a1a;
+    padding: 24px;
+    border-radius: 12px;
+  }
+  
+  .addlabel-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .addlabel-header h2 {
+    font-size: 2rem;
+    color: #cab7ce;
+    font-weight: 600;
+  }
+  
+  .addlabel-header p {
+    font-size: 1rem;
+    color: #dde7e8;
+    opacity: 0.8;
+  }
+  
+  .addlabel-image-container {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #2a2a2a;
+    padding: 10px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .addlabel-base-image {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+  }
+  
+  .addlabel-regions-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    pointer-events: none;
+  }
+  
+  .addlabel-region {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+    cursor: crosshair;
+  }
+  
+  .addlabel-region:hover {
+    border: 2px solid #e982c8;
+  }
+  
+  .addlabel-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointerEvents: none;
+  }
+  
+  .addlabel-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+  
+  .addlabel-line {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: drawLine 0.5s ease-in-out forwards;
+  }
+  
+  @keyframes drawLine {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  
+  .addlabel-text {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+  }
+  
+  .addlabel-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    pointer-events: auto;
+  }
+  
+  .addlabel-input {
+    padding: 5px;
+    background-color: #3a3a3a;
+    border: none;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    width: 150px;
+  }
+  
+  .addlabel-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .addlabel-error {
+    color: #ff4444;
+    font-size: 0.8rem;
+    background-color: #3a3a3a;
+    padding: 5px;
+    border-radius: 5px;
+  }
+  
+  .addlabel-input-buttons {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .addlabel-submit-button,
+  .addlabel-cancel-button {
+    padding: 5px 10px;
+    background-color: #00ffcc;
+    border: none;
+    border-radius: 5px;
+    color: #1a1a1a;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  
+  .addlabel-submit-button:hover,
+  .addlabel-cancel-button:hover {
+    background-color: #00ccaa;
+  }
+  
+  .addlabel-submit-button:disabled,
+  .addlabel-cancel-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .addlabel-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #1a1a1a;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .addlabel-footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+  }
+  
+  .addlabel-done-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #3e2663, #520c5b);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .addlabel-done-button:hover {
+    background: linear-gradient(90deg, #4e3673, #621c6b);
+  }
+  
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
