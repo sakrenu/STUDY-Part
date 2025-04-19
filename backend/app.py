@@ -14,6 +14,7 @@ import logging
 from typing import List, Optional
 from sam import Segmenter
 from dotenv import load_dotenv
+from deprecated_app import deprecated_router
 
 load_dotenv()
 
@@ -31,6 +32,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include deprecated router with proper prefix 
+app.include_router(
+    deprecated_router,
+    prefix="/v1",  # This combines with the router's prefix to make /v1/deprecated
+    tags=["deprecated"],
+    responses={404: {"description": "Not found"}}
+)
+
+# Add deprecation warning middleware
+@app.middleware("http")
+async def add_deprecation_header(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/v1/deprecated"):
+        response.headers["Warning"] = '299 - "This endpoint is deprecated and will be removed in future versions"'
+    return response
 
 # Initialize SAM segmenter
 try:

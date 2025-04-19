@@ -2,6 +2,7 @@
   "dependencies": {
     "cloudinary-core": "^2.13.1",
     "cloudinary-react": "^1.8.1",
-    "react-quill": "^2.0.0"
+    "react-quill": "^2.0.0",
+    "react-toastify": "^11.0.5"
   }
 }
