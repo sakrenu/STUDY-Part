@@ -14,7 +14,7 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
   const inputRef = useRef(null);
 
   const handleRegionClick = (region, e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
+    e.stopPropagation();
     
     const rect = imageRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -103,51 +103,45 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
           }}
         />
         <div className="addlabel-regions-overlay">
-          {regions.map((region, index) => {
-            // Assign a distinct color to each region
-            const colors = [
-              'rgba(255, 0, 0, 0.5)',     // Red
-              'rgba(0, 255, 0, 0.5)',     // Green
-              'rgba(0, 0, 255, 0.5)',     // Blue
-              'rgba(255, 255, 0, 0.5)',   // Yellow
-              'rgba(255, 0, 255, 0.5)',   // Magenta
-              'rgba(0, 255, 255, 0.5)',   // Cyan
-              'rgba(255, 165, 0, 0.5)',   // Orange
-              'rgba(128, 0, 128, 0.5)'    // Purple
-            ];
-            const color = colors[index % colors.length];
-            
-            return (
-              <div
-                key={region.region_id}
-                className="addlabel-region"
-                onClick={(e) => handleRegionClick(region, e)}
-              >
-                <img
-                  src={region.mask_url}
-                  alt={`Region ${region.region_id}`}
-                  className="addlabel-mask"
-                  style={{ 
-                    opacity: 0.7, 
-                    backgroundColor: color,
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    cursor: 'pointer'
-                  }}
-                  onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
-                />
-                {labels[region.region_id] && (
-                  <div className="addlabel-has-label-indicator">
-                    <span>✓</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {regions.map((region) => (
+            <div
+              key={region.region_id}
+              className="addlabel-region"
+              onClick={(e) => handleRegionClick(region, e)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%', 
+                cursor: 'pointer',
+                zIndex: 5
+              }}
+            >
+              <img
+                src={region.mask_url}
+                alt={`Region ${region.region_id}`}
+                className="addlabel-mask"
+                style={{ 
+                  opacity: 0.7,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  pointerEvents: 'auto'
+                }}
+                onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
+              />
+              {labels[region.region_id] && (
+                <div className="addlabel-has-label-indicator">
+                  <span>✓</span>
+                </div>
+              )}
+            </div>
+          ))}
+          
           {Object.entries(labels).map(([regionId, text]) => {
             const coords = clickCoordinates[regionId];
             if (!coords) return null;
