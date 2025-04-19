@@ -59,21 +59,25 @@
 }
 
 .notes-mode .toggle-button-container {
-    background-color: #3c2468;
-    border: none;
-    box-shadow: none;
+    background-color: rgba(60, 36, 104, 0.8);
     position: fixed;
     top: 50%;
     left: 280px;
+    transform: translateY(-50%);
     z-index: 1000;
-    transition: left 0.3s ease;
+    transition: left 0.3s ease, background-color 0.3s ease;
     display: flex;
     justify-content: center;
     align-items: center;
     width: 24px;
     height: 40px;
-    border-radius: 0 5px 5px 0;
+    border-radius: 0 4px 4px 0;
     cursor: pointer;
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.2);
+}
+
+.notes-mode .toggle-button-container:hover {
+    background-color: rgba(75, 46, 131, 0.9);
 }
 
 .notes-mode .toggle-button-container.closed {
@@ -809,21 +813,12 @@ button:disabled {
     opacity: 0.7;
 }
 
-.sidebar-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.3s;
-    width: 100%;
-    height: 100%;
-}
-
-.arrow-left {
-    transform: rotate(0deg);
-}
-
-.arrow-right {
-    transform: rotate(180deg);
+.sidebar-arrow,
+.arrow-left,
+.arrow-right,
+.toggle-text,
+.toggle-button {
+    display: none;
 }
 
 .neural-animation-overlay {

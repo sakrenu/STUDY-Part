@@ -631,33 +631,22 @@ const NotesMode = () => {
                     </div>
                 </div>
 
-                {/* Toggle Button with Arrow */}
+                {/* Toggle Button with Arrow - Simplified and Elegant */}
                 <div
                     className={`toggle-button-container ${isSidebarOpen ? 'open' : 'closed'}`}
-                    onMouseEnter={() => setShowToggleText(true)}
-                    onMouseLeave={() => setShowToggleText(false)}
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
                 >
-                    <button 
-                        className="toggle-button" 
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-                    >
-                        <span className={`sidebar-arrow ${isSidebarOpen ? 'arrow-left' : 'arrow-right'}`}>
-                            <svg width="28" height="28" viewBox="0 0 28 28">
-                                <polyline
-                                    points="18,6 10,14 18,22"
-                                    fill="none"
-                                    stroke="#4A90E2"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            </svg>
-                        </span>
-                    </button>
-                    {showToggleText && (
-                        <span className="toggle-text">{isSidebarOpen ? 'Close' : 'Open'}</span>
-                    )}
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path
+                            d={isSidebarOpen ? "M12,3 L5,10 L12,17" : "M8,3 L15,10 L8,17"}
+                            fill="none"
+                            stroke="#FFFFFF"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
                 </div>
 
                 {/* Main Content */}

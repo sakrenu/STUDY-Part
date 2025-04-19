@@ -7,6 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from fastapi import FastAPI, Request, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from PIL import Image
