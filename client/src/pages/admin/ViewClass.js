@@ -46,6 +46,7 @@ const ViewClassMode = () => {
                     <thead>
                         <tr>
                             <th>Course Name</th>
+                            <th>Class Name</th>
                             <th>Professor</th>
                             <th>Students</th>
                             <th>Number of Students</th>
@@ -56,6 +57,7 @@ const ViewClassMode = () => {
                         {classes.map(cls => (
                             <tr key={cls.id}>
                                 <td>{cls.courseName}</td>
+                                <td>{cls.className || '—'}</td>
                                 <td>{getEmail(cls.professor)}</td>
                                 <td>{cls.students?.map(getEmail).join(', ')}</td>
                                 <td>{cls.students?.length ?? 0}</td>

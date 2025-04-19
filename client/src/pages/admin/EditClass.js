@@ -15,6 +15,7 @@ const EditClassMode = () => {
     const [classes, setClasses] = useState([]);
     const [editing, setEditing] = useState(null);
     const [courseName, setCourseName] = useState('');
+    const [className, setClassName] = useState('');
     const [professorId, setProfessorId] = useState('');
     const [selectedStudents, setSelectedStudents] = useState([]);
     const db = getFirestore();
@@ -36,6 +37,7 @@ const EditClassMode = () => {
 
     const loadClass = (cls) => {
         setEditing(cls.id);
+        setClassName(cls.className); 
         setCourseName(cls.courseName);
         setProfessorId(cls.professor);
         setSelectedStudents(cls.students || []);
@@ -52,6 +54,7 @@ const EditClassMode = () => {
         const ref = doc(db, 'classes', editing);
         await updateDoc(ref, {
             courseName,
+            className,
             professor: professorId,
             students: selectedStudents
         });
@@ -105,6 +108,14 @@ const EditClassMode = () => {
                             placeholder="Course Name"
                             required 
                         />
+                        <input 
+                            type="text" 
+                            value={className} 
+                            onChange={e => setClassName(e.target.value)} 
+                            placeholder="Class Name"
+                            required 
+                        />
+
                         <select 
                             value={professorId} 
                             onChange={e => setProfessorId(e.target.value)} 

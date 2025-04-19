@@ -12,6 +12,7 @@ const CreateClassMode = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [courseName, setCourseName] = useState('');
+    const [className, setClassName] = useState('');
     const [professorId, setProfessorId] = useState('');
     const [selectedStudents, setSelectedStudents] = useState([]);
     const db = getFirestore();
@@ -35,6 +36,7 @@ const CreateClassMode = () => {
         e.preventDefault();
         await addDoc(collection(db, 'classes'), {
             courseName,
+            className,
             professor: professorId,
             students: selectedStudents,
             createdAt: new Date()
@@ -71,6 +73,7 @@ const CreateClassMode = () => {
             <main className="admin-main-content">
                 <form onSubmit={handleSubmit} className="create-class-form">
                     <input type="text" value={courseName} onChange={e => setCourseName(e.target.value)} placeholder="Course Name" required />
+                    <input type="text" value={className} onChange={e => setClassName(e.target.value)} placeholder="Class Name"required/>
                     <select value={professorId} onChange={e => setProfessorId(e.target.value)} required>
                         <option value="">Select Professor</option>
                         {professors.map(p => <option key={p.id} value={p.id}>{p.email}</option>)}
