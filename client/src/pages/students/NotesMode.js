@@ -121,7 +121,12 @@ const NotesMode = () => {
                 const formData = new FormData();
                 formData.append('image', file);
                 
-                const response = await axios.post('http://127.0.0.1:8000/upload', formData);
+                const response = await axios.post('http://127.0.0.1:8000/v1/deprecated/upload', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    }
+                });
+                
                 const imageUrl = response.data.image_url;
                 
                 setCurrentImageUrl(imageUrl);
@@ -162,7 +167,7 @@ const NotesMode = () => {
             setIsLoading(true);
             console.log('Processing regions:', selectedRegions);
     
-            const response = await axios.post('http://127.0.0.1:8000/segment-all', {
+            const response = await axios.post('http://127.0.0.1:8000/v1/deprecated/segment-all', {
                 image_url: currentImageUrl,
                 bounding_boxes: selectedRegions
             });
@@ -262,12 +267,8 @@ const NotesMode = () => {
     const handleDeleteNote = async (noteId, imageUrl) => {
         try {
             const publicId = imageUrl.split('/').pop().split('.')[0];
-            await fetch('/delete-image', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ publicId }),
+            await axios.delete('http://127.0.0.1:8000/v1/deprecated/delete-image', {
+                data: { public_id: publicId }
             });
 
             await deleteDoc(doc(db, 'notes', noteId));
