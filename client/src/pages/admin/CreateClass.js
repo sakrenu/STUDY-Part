@@ -85,13 +85,13 @@ const CreateClassMode = () => {
                                 <div 
                                     className={`student-item ${selectedStudents.includes(s.id) ? 'selected' : ''}`}
                                     key={s.id}
-                                    onClick={() => handleStudentToggle(s.id)}
+                                    // onClick={() => handleStudentToggle(s.id)}
                                 >
                                     <input
                                         type="checkbox"
                                         id={`student-${s.id}`}
                                         checked={selectedStudents.includes(s.id)}
-                                        onChange={() => {}} // Handled by onClick
+                                        onChange={() => handleStudentToggle(s.id)}
                                     />
                                     <label htmlFor={`student-${s.id}`}>
                                         <span className="student-email">{s.email}</span>
