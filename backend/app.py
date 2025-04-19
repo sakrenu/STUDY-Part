@@ -152,21 +152,38 @@ async def segment(request: SegmentRequest):
         regions = []
         lesson_id = str(uuid.uuid4())
         for i, mask in enumerate(masks):
-            # Convert mask to image
-            mask_img = Image.fromarray((mask * 255).astype(np.uint8))
+            # Define color palette
+            colors = [
+                (255, 0, 0),     # Red
+                (0, 255, 0),     # Green
+                (0, 0, 255),     # Blue
+                (255, 255, 0),   # Yellow
+                (255, 0, 255),   # Magenta
+                (0, 255, 255),   # Cyan
+                (255, 165, 0),   # Orange
+                (128, 0, 128)    # Purple
+            ]
+            color = colors[i % len(colors)]
+
+            # Generate RGBA mask image
+            rgba_mask = np.zeros((*mask.shape, 4), dtype=np.uint8)
+            rgba_mask[:, :, 0] = mask.astype(np.uint8) * color[0]  # R
+            rgba_mask[:, :, 1] = mask.astype(np.uint8) * color[1]  # G
+            rgba_mask[:, :, 2] = mask.astype(np.uint8) * color[2]  # B
+            rgba_mask[:, :, 3] = mask.astype(np.uint8) * 255       # A (fully opaque where mask=1)
+
+            mask_img = Image.fromarray(rgba_mask, mode='RGBA')
             mask_buffer = BytesIO()
             mask_img.save(mask_buffer, format="PNG")
             mask_buffer.seek(0)
 
-            # Upload mask to Cloudinary
-            logger.info(f"Uploading mask {i} for lesson_id: {lesson_id}")
             mask_upload = cloudinary.uploader.upload(
                 mask_buffer,
                 public_id=f"lessons/{image_id}/masks/{lesson_id}_{i}",
                 resource_type="image"
             )
 
-            # Create cutout (for future steps)
+            # Create cutout
             cutout = image_np.copy()
             cutout[~mask] = 0
             cutout_img = Image.fromarray(cutout)
@@ -174,32 +191,31 @@ async def segment(request: SegmentRequest):
             cutout_img.save(cutout_buffer, format="PNG")
             cutout_buffer.seek(0)
 
-            # Upload cutout to Cloudinary
-            logger.info(f"Uploading cutout {i} for lesson_id: {lesson_id}")
             cutout_upload = cloudinary.uploader.upload(
                 cutout_buffer,
                 public_id=f"lessons/{image_id}/cutouts/{lesson_id}_{i}",
                 resource_type="image"
             )
 
-            # Calculate bounding box from the mask
-            coords = np.where(mask)
-            if len(coords[0]) > 0 and len(coords[1]) > 0:
+            # Calculate position in expected format
+            if box:
                 position = {
-                    "x1": float(coords[1].min()),
-                    "y1": float(coords[0].min()),
-                    "x2": float(coords[1].max()),
-                    "y2": float(coords[0].max())
+                    "x": box[0],
+                    "y": box[1],
+                    "width": box[2] - box[0],
+                    "height": box[3] - box[1]
                 }
             else:
-                # Fallback if mask is empty or invalid, maybe use input box if available?
-                # Or just set to zero / raise error
-                if box:
-                    logger.warning(f"Mask {i} for lesson_id {lesson_id} resulted in empty coordinates. Falling back to input box.")
-                    position = {"x1": box[0], "y1": box[1], "x2": box[2], "y2": box[3]}
+                coords = np.where(mask)
+                if len(coords[0]) > 0:
+                    position = {
+                        "x": float(coords[1].min()),
+                        "y": float(coords[0].min()),
+                        "width": float(coords[1].max() - coords[1].min()),
+                        "height": float(coords[0].max() - coords[0].min())
+                    }
                 else:
-                    logger.warning(f"Mask {i} for lesson_id {lesson_id} resulted in empty coordinates and no input box provided.")
-                    position = {"x1": 0, "y1": 0, "x2": 0, "y2": 0}
+                    position = {"x": 0, "y": 0, "width": 0, "height": 0}
 
             regions.append({
                 "region_id": f"{lesson_id}_{i}",
