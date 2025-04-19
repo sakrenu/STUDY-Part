@@ -10,14 +10,19 @@ import tempfile
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
-from langchain.llms import Groq
+import groq
 from langchain.chains import RetrievalQA
+from langchain.llms.base import LLM
 import shutil
 import logging
 from dotenv import load_dotenv
+from pathlib import Path
+from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional, Mapping
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from backend/.env
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -35,11 +40,47 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
 )
 
-# Initialize Groq LLM
-llm = Groq(
-    api_key=os.getenv("GROQ_API_KEY"),
-    model_name="mistral-saba-24b"
-)
+# Updated GroqLLM class
+class GroqLLM(LLM):
+    model_name: str = "mixtral-8x7b-32768"
+    temperature: float = 0.7
+    groq_api_key: str = Field(default="", exclude=True)
+    
+    # Properly declare the client field
+    client: Any = Field(default=None, exclude=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        api_key = os.getenv("GROQ_API_KEY") or self.groq_api_key
+        if not api_key:
+            raise ValueError("GROQ_API_KEY must be set via environment or constructor")
+        
+        # Initialize the client properly
+        self.client = groq.Groq(api_key=api_key)
+
+    def _call(self, prompt: str, **kwargs) -> str:
+        try:
+            completion = self.client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.model_name,
+                temperature=self.temperature,
+                **kwargs
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Groq API Error: {str(e)}")
+            raise
+
+    @property
+    def _llm_type(self) -> str:
+        return "groq"
+
+    @property
+    def _identifying_params(self) -> Dict[str, Any]:
+        return {"model_name": self.model_name, "temperature": self.temperature}
+
+# Initialize our custom Groq LLM
+llm = GroqLLM(model_name="mistral-saba-24b", temperature=0.7)
 
 # Initialize embeddings using a lightweight model suitable for CPU
 embeddings = HuggingFaceEmbeddings(
@@ -166,20 +207,26 @@ async def query_notes(user_id: str, query: str):
         
         vectorstore = FAISS.load_local(f"vector_stores/{user_id}/vectors", embeddings)
         
-        # Create a retrieval chain with Groq
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
-            return_source_documents=True
-        )
+        # First get relevant documents
+        docs = vectorstore.similarity_search(query, k=3)
+        context = "\n\n".join([doc.page_content for doc in docs])
+        
+        # Format a prompt for the LLM
+        prompt = f"""Answer the following question based only on the provided context:
+
+Context:
+{context}
+
+Question: {query}
+
+Answer:"""
         
         # Get response from Groq
-        result = qa_chain({"query": query})
+        response = llm(prompt)
         
         return {
-            "response": result["result"],
-            "sources": [doc.page_content for doc in result["source_documents"]],
+            "response": response,
+            "sources": [doc.page_content for doc in docs],
             "status": "success"
         }
     except Exception as e:

@@ -1,13 +1,22 @@
-blinker==1.9.0
-click==8.1.7
-colorama==0.4.6
-Flask==3.1.0
-Flask-Cors==5.0.0
-itsdangerous==2.2.0
-Jinja2==3.1.4
-MarkupSafe==3.0.2
-Werkzeug==3.1.3
-pycocotools==2.0.8
-cloudinary==1.41.0
-ultralytics==8.3.55
-segment-anything==1.0.0
+# Core requirements for RAG application
+fastapi==0.109.1
+uvicorn==0.27.0
+PyPDF2==3.0.1
+pytesseract==0.3.10
+pillow==10.2.0
+python-pptx==0.6.23
+langchain==0.1.13
+faiss-cpu==1.7.4
+groq==0.6.0
+
+# HuggingFace ecosystem with compatible versions
+sentence-transformers==2.2.2
+huggingface-hub==0.7.0
+transformers==4.38.2
+torch==2.2.1
+
+# Additional dependencies
+python-dotenv==1.0.1
+numpy==1.26.4
+tqdm==4.66.2
+
