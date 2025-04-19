@@ -38,11 +38,15 @@ text_splitter = RecursiveCharacterTextSplitter(
 # Initialize Groq LLM
 llm = Groq(
     api_key=os.getenv("GROQ_API_KEY"),
-    model_name="mixtral-8x7b-32768"  # You can change this to other available models
+    model_name="mistral-saba-24b"
 )
 
-# Initialize embeddings using a free alternative (HuggingFace)
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+# Initialize embeddings using a lightweight model suitable for CPU
+embeddings = HuggingFaceEmbeddings(
+    model_name="paraphrase-MiniLM-L3-v2",
+    model_kwargs={'device': 'cpu'},
+    encode_kwargs={'normalize_embeddings': True}
+)
 
 async def process_text_to_vectors(text: str, user_id: str) -> Dict:
     """Process text into chunks and create vector store"""
