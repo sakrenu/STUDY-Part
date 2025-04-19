@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './ViewClass.css';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
-
+import { useNavigate } from 'react-router-dom';
 const ViewClassMode = () => {
+    const navigate = useNavigate(); 
     const [users, setUsers] = useState([]);
     const [classes, setClasses] = useState([]);
     const db = getFirestore();
@@ -21,7 +22,10 @@ const ViewClassMode = () => {
 
     return (
         <div className="user-management-container">
-            <h2>All Classes</h2>
+             <div className="header-container">
+                <h2>All Classes</h2>
+                <button onClick={() => navigate('/admin-dashboard')} className="back-button">Back to Dashboard</button>
+            </div>
             <table className="user-table">
                 <thead>
                     <tr>
