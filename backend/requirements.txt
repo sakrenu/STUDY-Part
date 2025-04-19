@@ -6,17 +6,25 @@ pytesseract==0.3.10
 pillow==10.2.0
 python-pptx==0.6.23
 langchain==0.1.13
+langchain-community==0.0.24
 faiss-cpu==1.7.4
-groq==0.6.0
 
-# HuggingFace ecosystem with compatible versions
-sentence-transformers==2.2.2
-huggingface-hub==0.7.0
-transformers==4.38.2
-torch==2.2.1
+# Google Gemini integration
+google-generativeai==0.3.2
+langchain-google-genai==0.0.9
+
+# HuggingFace ecosystem for embeddings (minimal)
+transformers==4.37.2
+torch==2.2.1 --index-url https://download.pytorch.org/whl/cpu  # CPU-only version
+sentence-transformers==2.2.2  # Required for HuggingFaceEmbeddings
 
 # Additional dependencies
 python-dotenv==1.0.1
 numpy==1.26.4
 tqdm==4.66.2
-
+cloudinary==1.44.0
+segment-anything==1.0
+firebase-admin==6.7.0
+opencv-python==4.11.0
+ultralytics==8.3.111
+python-multipart==0.0.20

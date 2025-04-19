@@ -20,8 +20,8 @@ import pytesseract
 from pptx import Presentation
 import tempfile
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 import shutil
 
 load_dotenv()
@@ -49,8 +49,15 @@ app.include_router(
     responses={404: {"description": "Not found"}}
 )
 
-# Include the RAG router
-app.include_router(rag_router)
+# Include the RAG router with proper configuration
+app.include_router(
+    rag_router,
+    tags=["RAG"],
+    responses={
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"}
+    }
+)
 
 # Add deprecation warning middleware
 @app.middleware("http")
@@ -87,8 +94,19 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
 )
 
-# Initialize embeddings (you'll need to set OPENAI_API_KEY in your environment)
-embeddings = OpenAIEmbeddings()
+# Initialize embeddings using HuggingFace
+cache_dir = os.path.join(os.path.dirname(__file__), 'model_cache')
+os.makedirs(cache_dir, exist_ok=True)
+
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    model_kwargs={'device': 'cpu'},
+    encode_kwargs={
+        'normalize_embeddings': True,
+        'batch_size': 32
+    },
+    cache_folder=cache_dir
+)
 
 @app.get("/health")
 async def health_check():

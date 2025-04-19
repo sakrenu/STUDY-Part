@@ -8,17 +8,14 @@ from pptx import Presentation
 import os
 import tempfile
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
-import groq
-from langchain.chains import RetrievalQA
-from langchain.llms.base import LLM
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_google_genai import ChatGoogleGenerativeAI
 import shutil
 import logging
 from dotenv import load_dotenv
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import Any, Dict, List, Optional, Mapping
+from typing import Any, List, Optional, Mapping
 
 # Load environment variables from backend/.env
 env_path = Path(__file__).parent.parent / '.env'
@@ -40,53 +37,32 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
 )
 
-# Updated GroqLLM class
-class GroqLLM(LLM):
-    model_name: str = "mixtral-8x7b-32768"
-    temperature: float = 0.7
-    groq_api_key: str = Field(default="", exclude=True)
-    
-    # Properly declare the client field
-    client: Any = Field(default=None, exclude=True)
+# Initialize Google Gemini LLM
+try:
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-pro", 
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+        temperature=0.7,
+        convert_system_message_to_human=True
+    )
+    logger.info("Successfully initialized Google Gemini LLM")
+except Exception as e:
+    logger.error(f"Failed to initialize Google Gemini LLM: {str(e)}")
+    raise
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        api_key = os.getenv("GROQ_API_KEY") or self.groq_api_key
-        if not api_key:
-            raise ValueError("GROQ_API_KEY must be set via environment or constructor")
-        
-        # Initialize the client properly
-        self.client = groq.Groq(api_key=api_key)
+# Initialize embeddings using a smaller, non-gated model
+cache_dir = os.path.join(os.path.dirname(__file__), 'model_cache')
+os.makedirs(cache_dir, exist_ok=True)
 
-    def _call(self, prompt: str, **kwargs) -> str:
-        try:
-            completion = self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model_name,
-                temperature=self.temperature,
-                **kwargs
-            )
-            return completion.choices[0].message.content
-        except Exception as e:
-            logger.error(f"Groq API Error: {str(e)}")
-            raise
-
-    @property
-    def _llm_type(self) -> str:
-        return "groq"
-
-    @property
-    def _identifying_params(self) -> Dict[str, Any]:
-        return {"model_name": self.model_name, "temperature": self.temperature}
-
-# Initialize our custom Groq LLM
-llm = GroqLLM(model_name="mistral-saba-24b", temperature=0.7)
-
-# Initialize embeddings using a lightweight model suitable for CPU
+# Replace the existing embeddings code with:
 embeddings = HuggingFaceEmbeddings(
-    model_name="paraphrase-MiniLM-L3-v2",
+    model_name="sentence-transformers/all-MiniLM-L6-v2",  # Public model, no auth required
     model_kwargs={'device': 'cpu'},
-    encode_kwargs={'normalize_embeddings': True}
+    encode_kwargs={
+        'normalize_embeddings': True,
+        'batch_size': 32
+    },
+    cache_folder=cache_dir
 )
 
 async def process_text_to_vectors(text: str, user_id: str) -> Dict:
@@ -123,7 +99,9 @@ async def process_pdf(file: UploadFile = File(...), user_id: str = None):
         # Extract text from all pages
         text = ""
         for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
+            page_text = page.extract_text()
+            if page_text: # Add check for None
+                text += page_text + "\n"
         
         # Process text to vectors
         if user_id:
@@ -198,17 +176,25 @@ async def process_image(file: UploadFile = File(...), user_id: str = None):
 
 @router.post("/query_notes")
 async def query_notes(user_id: str, query: str):
-    """Query the vector store for relevant information using Groq"""
+    """Query the vector store for relevant information using Google Gemini"""
     try:
-        logger.info(f"Querying notes for user: {user_id}")
+        logger.info(f"Querying notes for user: {user_id} with Gemini")
         # Load the vector store
-        if not os.path.exists(f"vector_stores/{user_id}/vectors"):
-            raise HTTPException(status_code=404, detail="No notes found for this user")
+        vector_store_path = f"vector_stores/{user_id}/vectors"
+        if not os.path.exists(vector_store_path):
+            raise HTTPException(status_code=404, detail="No notes found for this user. Please upload some notes first.")
         
-        vectorstore = FAISS.load_local(f"vector_stores/{user_id}/vectors", embeddings)
+        vectorstore = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
         
         # First get relevant documents
         docs = vectorstore.similarity_search(query, k=3)
+        if not docs:
+             return {
+                "response": "Could not find relevant information in your notes for this query.",
+                "sources": [],
+                "status": "success"
+            }
+
         context = "\n\n".join([doc.page_content for doc in docs])
         
         # Format a prompt for the LLM
@@ -221,14 +207,17 @@ Question: {query}
 
 Answer:"""
         
-        # Get response from Groq
-        response = llm(prompt)
+        # Get response from Gemini
+        response = llm.invoke(prompt)
         
         return {
-            "response": response,
+            "response": response.content, # Access content attribute for the response string
             "sources": [doc.page_content for doc in docs],
             "status": "success"
         }
     except Exception as e:
-        logger.error(f"Error querying notes: {str(e)}")
+        logger.error(f"Error querying notes with Gemini: {str(e)}")
+        # Check if the error is related to FAISS deserialization
+        if "Pickle" in str(e) or "deserialization" in str(e):
+             raise HTTPException(status_code=500, detail=f"Error loading notes. It might be due to library version changes. Please try re-uploading your notes. Original error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error querying notes: {str(e)}") 
