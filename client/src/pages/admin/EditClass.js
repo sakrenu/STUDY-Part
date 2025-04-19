@@ -41,7 +41,10 @@ const EditClassMode = () => {
         setCourseName(cls.courseName);
         setProfessorId(cls.professor);
         // Ensure students array is properly initialized
-        setSelectedStudents(cls.students || []);
+        const validStudentIds = Array.isArray(cls.students) 
+        ? cls.students.filter(id => typeof id === 'string' || typeof id === 'number')
+        : [];
+        setSelectedStudents(validStudentIds);
     };
 
     const handleStudentToggle = (studentId) => {
@@ -144,13 +147,16 @@ const EditClassMode = () => {
                             <p>Select Students:</p>
                             <div className="student-list">
                             {students.map(student => (
-                            <div className="student-item" key={student.id}>
+                            <div 
+                                className={`student-item ${selectedStudents.includes(student.id) ? 'selected' : ''}`}
+                                key={student.id}
+                                onClick={() => handleStudentToggle(student.id)}
+                            >
                                 <input
                                     type="checkbox"
                                     id={`student-${student.id}`}
                                     checked={selectedStudents.includes(student.id)}
-                                    onChange={() => handleStudentToggle(student.id)}
-                                    className="student-checkbox"
+                                    readOnly // Important when using onClick on parent
                                 />
                                 <label htmlFor={`student-${student.id}`} className="student-label">
                                     {student.email}
