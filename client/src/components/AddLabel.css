@@ -1,418 +1,174 @@
-.addlabel-overlay {
-    position: fixed;
+.addlabel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+  
+  .addlabel-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .addlabel-header h2 {
+    font-size: 1.8rem;
+    color: #b3c6d9;
+  }
+  
+  .addlabel-header p {
+    font-size: 1rem;
+    color: #7f8c8d;
+  }
+  
+  .addlabel-image-container {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  
+  .addlabel-base-image {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    display: block;
+  }
+  
+  .addlabel-regions-overlay {
+    position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
   
-  .addlabel-popup {
-    background-color: rgba(42, 42, 42, 0.95);
-    backdrop-filter: blur(12px);
-    padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(155, 74, 226, 0.4);
-    width: 400px;
-    max-width: 90%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  .addlabel-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.5;
+    pointer-events: none;
   }
   
-  .addlabel-header h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #cab7ce;
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin: 0;
+  .addlabel-label-wrapper {
+    position: absolute;
+    pointer-events: auto;
   }
   
-  .addlabel-color-indicator {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
+  .addlabel-line {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    stroke-dasharray: 120;
+    stroke-dashoffset: 120;
+    animation: drawLine 0.7s ease-in-out forwards;
   }
   
-  .addlabel-preview {
-    display: flex;
-    justify-content: center;
-    background-color: #3c4249;
+  @keyframes drawLine {
+    0% {
+      stroke-dashoffset: 120;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+  
+  .addlabel-input-wrapper {
+    position: absolute;
+    background-color: #2c2c2c;
     border-radius: 8px;
     padding: 10px;
-    box-shadow: 0 4px 16px rgba(155, 74, 226, 0.2);
-    transition: transform 0.2s ease;
-  }
-  
-  .addlabel-preview:hover {
-    transform: scale(1.02);
-  }
-  
-  .addlabel-preview-image {
-    max-width: 100%;
-    max-height: 150px;
-    object-fit: contain;
-    border-radius: 6px;
-    border: 2px solid #e982c8;
-  }
-  
-  .addlabel-error {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: #ff6b6b;
-    font-size: 0.9rem;
-    background-color: rgba(255, 107, 107, 0.1);
-    padding: 8px;
-    border-radius: 6px;
-  }
-  
-  .addlabel-input-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    gap: 5px;
+    max-width: 150px;
+    z-index: 10;
   }
   
   .addlabel-input {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background-color: #3c4249;
-    color: #ffffff;
-    font-size: 1rem;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(155, 74, 226, 0.3);
-    transition: box-shadow 0.2s ease;
+    flex-grow: 1;
+    padding: 5px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.9rem;
   }
   
   .addlabel-input:focus {
-    box-shadow: 0 0 0 3px #e982c8;
-    animation: input-pulse 1.5s infinite ease-in-out;
+    outline: none;
+    border-color: #7f4ae2;
   }
   
-  @keyframes input-pulse {
-    0% {
-      box-shadow: 0 0 0 3px rgba(233, 130, 200, 0.7);
-    }
-    50% {
-      box-shadow: 0 0 0 5px rgba(233, 130, 200, 0.3);
-    }
-    100% {
-      box-shadow: 0 0 0 3px rgba(233, 130, 200, 0.7);
-    }
-  }
-  
-  .addlabel-input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .addlabel-input-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .addlabel-char-count {
-    color: #dde7e8;
-    font-size: 0.85rem;
-    opacity: 0.8;
-  }
-  
-  .addlabel-undo-redo {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .addlabel-undo-button,
-  .addlabel-redo-button {
-    background: none;
+  .addlabel-input-wrapper button {
+    padding: 5px 10px;
+    background-color: #7f4ae2;
     border: none;
-    color: #cab7ce;
-    cursor: pointer;
-    padding: 4px;
     border-radius: 4px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-  }
-  
-  .addlabel-undo-button:hover,
-  .addlabel-redo-button:hover {
-    background-color: rgba(155, 74, 226, 0.2);
-    color: #e982c8;
-  }
-  
-  .addlabel-undo-button:disabled,
-  .addlabel-redo-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .addlabel-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: space-between;
-  }
-  
-  .addlabel-save-button,
-  .addlabel-cancel-button {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
+    color: #fff;
     cursor: pointer;
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    font-size: 0.8rem;
   }
   
-  .addlabel-save-button {
-    background: linear-gradient(90deg, #3e2663, #520c5b);
-    color: #ffffff;
+  .addlabel-input-wrapper button:hover {
+    background-color: #9b4ae2;
   }
   
-  .addlabel-cancel-button {
-    background-color: #4a545e;
-    color: #ffffff;
-  }
-  
-  .addlabel-save-button:hover,
-  .addlabel-cancel-button:hover {
-    box-shadow: 0 0 12px #9b4ae2, 0 0 16px #7f4ae2;
-    transform: translateY(-2px);
-  }
-  
-  .addlabel-save-button:disabled,
-  .addlabel-cancel-button:disabled {
-    opacity: 0.5;
+  .addlabel-input-wrapper button:disabled {
+    background-color: #666;
     cursor: not-allowed;
   }
   
-  .addlabel-spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #ffffff;
-    border-top: 2px solid transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  .addlabel-error {
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin-top: 5px;
   }
   
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+  .addlabel-text {
+    position: absolute;
+    background-color: #2c2c2c;
+    padding: 5px 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    font-size: 0.9rem;
+    color: #fff;
+    white-space: nowrap;
   }
-
-.addlabel-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 1400px;
-  margin: 20px auto;
-  background-color: rgba(42, 42, 42, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(155, 74, 226, 0.3);
-}
-
-.addlabel-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.addlabel-header h2 {
-  font-size: 2rem;
-  color: #cab7ce;
-  font-weight: 600;
-}
-
-.addlabel-header p {
-  font-size: 1rem;
-  color: #dde7e8;
-  opacity: 0.8;
-}
-
-.addlabel-image-container {
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  background-color: #2a2a2a;
-  padding: 10px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.addlabel-base-image {
-  max-width: 100%;
-  max-height: 80vh;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto;
-}
-
-.addlabel-regions-overlay {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: calc(100% - 20px);
-  height: calc(100% - 20px);
-  pointer-events: none;
-}
-
-.addlabel-region {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.addlabel-mask {
-  transition: opacity 0.3s ease;
-}
-
-.addlabel-region:hover .addlabel-mask {
-  opacity: 0.9 !important;
-}
-
-.addlabel-has-label-indicator {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: #2ecc71;
-  color: white;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  box-shadow: 0 0 10px rgba(46, 204, 113, 0.7);
-  z-index: 10;
-}
-
-.addlabel-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 5;
-}
-
-.addlabel-svg {
-  pointer-events: none;
-}
-
-.addlabel-text {
-  background-color: #0a1929;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-}
-
-.addlabel-input-wrapper {
-  pointer-events: auto;
-  background-color: rgba(10, 25, 41, 0.8);
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-}
-
-.addlabel-input {
-  background-color: #0a1929;
-  color: white;
-  border: 1px solid #30363d;
-  padding: 8px;
-  border-radius: 4px;
-  width: 200px;
-  margin-bottom: 8px;
-}
-
-.addlabel-input:focus {
-  outline: none;
-  border-color: #58a6ff;
-  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
-}
-
-.addlabel-input-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.addlabel-submit-button,
-.addlabel-cancel-button {
-  flex: 1;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.addlabel-submit-button {
-  background-color: #238636;
-  color: white;
-}
-
-.addlabel-cancel-button {
-  background-color: #30363d;
-  color: white;
-}
-
-.addlabel-footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.addlabel-back-button,
-.addlabel-done-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.addlabel-back-button {
-  background-color: #30363d;
-  color: white;
-}
-
-.addlabel-done-button {
-  background: linear-gradient(90deg, #3e2663, #520c5b);
-  color: white;
-}
-
-/* Animation for line drawing */
-.addlabel-line {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  animation: drawLine 0.5s ease-in-out forwards;
-}
-
-@keyframes drawLine {
-  to {
-    stroke-dashoffset: 0;
+  
+  .addlabel-footer {
+    display: flex;
+    gap: 10px;
   }
-}
+  
+  .addlabel-back-button,
+  .addlabel-done-button {
+    padding: 10px 20px;
+    background-color: #4a545e;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .addlabel-done-button {
+    background-color: #7f4ae2;
+  }
+  
+  .addlabel-back-button:hover,
+  .addlabel-done-button:hover {
+    opacity: 0.9;
+  }
+  
+  .addlabel-svg {
+    pointer-events: none;
+    overflow: visible !important;
+  }

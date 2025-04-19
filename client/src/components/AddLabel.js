@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import './Addlabel.css';
+import './AddLabel.css';
 
 const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBack, existingLabels, existingCoordinates }) => {
   const [currentLabel, setCurrentLabel] = useState(null);
@@ -11,52 +11,103 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const imageRef = useRef(null);
-  const inputRef = useRef(null);
+  const containerRef = useRef(null);
 
-  const handleRegionClick = (region, e) => {
-    e.stopPropagation();
-    
+  useEffect(() => {
+    console.log('Regions received:', regions);
+    const handleClickOutside = (e) => {
+      if (currentLabel && !containerRef.current.contains(e.target)) {
+        setCurrentLabel(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [currentLabel, regions]);
+
+  const handleImageClick = (e) => {
+    if (!imageRef.current || !regions || regions.length === 0) {
+      console.log('Image ref or regions not available:', { imageRef: !!imageRef.current, regions });
+      return;
+    }
     const rect = imageRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    console.log(`Clicked on region ${region.region_id} at (${x}, ${y})`);
-    
-    setCurrentLabel({
-      regionId: region.region_id,
-      regionIndex: regions.findIndex((r) => r.region_id === region.region_id),
-      text: labels[region.region_id] || '',
-      clickX: x,
-      clickY: y,
+    const imageWidth = imageRef.current.naturalWidth;
+    const imageHeight = imageRef.current.naturalHeight;
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    const scaleX = imageWidth / displayWidth;
+    const scaleY = imageHeight / displayHeight;
+    const originalX = x * scaleX;
+    const originalY = y * scaleY;
+
+    console.log('Click detected at:', { x, y, originalX, originalY });
+
+    const clickedRegion = regions.find((region) => {
+      const { position } = region;
+      if (!position || position.x === undefined || position.y === undefined || position.width === undefined || position.height === undefined) {
+        console.log('Invalid region position:', region);
+        return false;
+      }
+      const regionX = position.x * scaleX;
+      const regionY = position.y * scaleY;
+      const regionWidth = position.width * scaleX;
+      const regionHeight = position.height * scaleY;
+      return (
+        originalX >= regionX &&
+        originalX <= regionX + regionWidth &&
+        originalY >= regionY &&
+        originalY <= regionY + regionHeight
+      );
     });
-    
-    setTimeout(() => inputRef.current?.focus(), 0);
+
+    if (clickedRegion) {
+      console.log('Clicked region:', clickedRegion.region_id);
+      const { position } = clickedRegion;
+      const regionDisplayX = (position.x / imageWidth) * displayWidth;
+      const regionDisplayY = (position.y / imageHeight) * displayHeight;
+      const regionDisplayWidth = (position.width / imageWidth) * displayWidth;
+      const regionDisplayHeight = (position.height / imageHeight) * displayHeight;
+
+      // Adjust label position to stay within image boundaries
+      let labelX = Math.min(x + 100, regionDisplayX + regionDisplayWidth - 150); // 150px for input width
+      let labelY = Math.max(y - 30, regionDisplayY);
+      labelX = Math.max(labelX, rect.left + 10); // Keep within left edge
+      labelY = Math.min(labelY, rect.bottom - 60); // Keep within bottom edge
+
+      setCurrentLabel({
+        regionId: clickedRegion.region_id,
+        text: labels[clickedRegion.region_id] || '',
+        clickX: x,
+        clickY: y,
+        labelX,
+        labelY,
+      });
+    } else {
+      console.log('No region clicked at:', { x, y });
+    }
   };
 
-  const handleLabelChange = (text) => {
-    setCurrentLabel((prev) => ({ ...prev, text }));
+  const handleLabelChange = (e) => {
+    setCurrentLabel((prev) => ({ ...prev, text: e.target.value }));
     setError(null);
   };
 
   const handleLabelSubmit = async () => {
-    if (!currentLabel.text.trim()) {
+    if (!currentLabel || !currentLabel.text.trim()) {
       setError('Label cannot be empty');
       return;
     }
     setIsSaving(true);
     setError(null);
     try {
-      const { regionId, regionIndex, text, clickX, clickY } = currentLabel;
+      const { regionId, text, clickX, clickY } = currentLabel;
       await setDoc(
         doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId, 'Segments', regionId),
         {
           regionId,
-          segmentIndex: regionIndex,
           label: text,
           annotation: { x: clickX, y: clickY },
-          maskUrl: regions.find((r) => r.region_id === regionId).mask_url,
-          cutoutUrl: regions.find((r) => r.region_id === regionId).cutout_url,
-          position: regions.find((r) => r.region_id === regionId).position,
         },
         { merge: true }
       );
@@ -65,7 +116,8 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
       onSave(regionId, text, { x: clickX, y: clickY });
       setCurrentLabel(null);
     } catch (err) {
-      setError('Failed to save label: ' + err.message);
+      console.error('Save error:', err);
+      setError(`Failed to save label: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -86,69 +138,82 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
     >
       <div className="addlabel-header">
         <h2>Label Segments</h2>
-        <p>Click a segment to add or edit a label.</p>
+        <p>Click directly on a colored segment to add or edit a label.</p>
       </div>
-      <div className="addlabel-image-container">
+      <div className="addlabel-image-container" onClick={handleImageClick} ref={containerRef}>
         <img
           src={image.url}
           alt="Segmented Image"
           className="addlabel-base-image"
           ref={imageRef}
-          onLoad={() => {
-            if (imageRef.current) {
-              const { width, height } = imageRef.current;
-              imageRef.current.parentElement.style.width = `${width}px`;
-              imageRef.current.parentElement.style.height = `${height}px`;
-            }
-          }}
         />
         <div className="addlabel-regions-overlay">
           {regions.map((region) => (
-            <div
+            <img
               key={region.region_id}
-              className="addlabel-region"
-              onClick={(e) => handleRegionClick(region, e)}
+              src={region.mask_url}
+              alt={`Segment ${region.region_id}`}
+              className="addlabel-mask"
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '100%', 
-                cursor: 'pointer',
-                zIndex: 5
+                height: '100%',
+                objectFit: 'contain',
+                opacity: 0.5,
+                pointerEvents: 'none',
               }}
-            >
-              <img
-                src={region.mask_url}
-                alt={`Region ${region.region_id}`}
-                className="addlabel-mask"
-                style={{ 
-                  opacity: 0.7,
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  pointerEvents: 'auto'
-                }}
-                onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
-              />
-              {labels[region.region_id] && (
-                <div className="addlabel-has-label-indicator">
-                  <span>✓</span>
-                </div>
-              )}
-            </div>
+            />
           ))}
-          
+          <AnimatePresence>
+            {currentLabel && (
+              <motion.div
+                className="addlabel-label-wrapper"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.3 }}
+              >
+                <svg className="addlabel-line">
+                  <motion.line
+                    x1={currentLabel.clickX}
+                    y1={currentLabel.clickY}
+                    x2={currentLabel.labelX}
+                    y2={currentLabel.labelY}
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  />
+                </svg>
+                <div
+                  className="addlabel-input-wrapper"
+                  style={{ top: currentLabel.labelY, left: currentLabel.labelX }}
+                >
+                  <input
+                    type="text"
+                    value={currentLabel.text}
+                    onChange={handleLabelChange}
+                    className="addlabel-input"
+                    disabled={isSaving}
+                    autoFocus
+                  />
+                  <button onClick={handleLabelSubmit} disabled={isSaving}>Save</button>
+                  <button onClick={handleCancelLabel} disabled={isSaving}>Cancel</button>
+                  {error && <div className="addlabel-error">{error}</div>}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {Object.entries(labels).map(([regionId, text]) => {
             const coords = clickCoordinates[regionId];
-            if (!coords) return null;
+            if (!coords || regionId === currentLabel?.regionId) return null;
             const labelX = coords.x + 100;
             const labelY = coords.y - 20;
             return (
-              <div key={regionId} className="addlabel-wrapper">
+              <div key={`label-${regionId}`} className="addlabel-wrapper">
                 <svg
                   className="addlabel-svg"
                   style={{
@@ -158,7 +223,8 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
                     width: '100%',
                     height: '100%',
                     pointerEvents: 'none',
-                    zIndex: 10,
+                    zIndex: 15,
+                    overflow: 'visible',
                   }}
                 >
                   <line
@@ -169,6 +235,7 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
                     stroke="#ffffff"
                     strokeWidth="2"
                     className="addlabel-line"
+                    key={`line-${regionId}-${coords.x}-${coords.y}`}
                   />
                 </svg>
                 <div
@@ -177,7 +244,7 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
                     position: 'absolute',
                     top: labelY,
                     left: labelX,
-                    zIndex: 10,
+                    zIndex: 15,
                   }}
                 >
                   {text}
@@ -185,101 +252,11 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
               </div>
             );
           })}
-          {currentLabel && (
-            <div
-              className="addlabel-input-wrapper"
-              style={{
-                position: 'absolute',
-                top: currentLabel.clickY - 20,
-                left: currentLabel.clickX + 100,
-                zIndex: 10,
-              }}
-            >
-              <svg
-                className="addlabel-svg"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  pointerEvents: 'none',
-                  zIndex: 10,
-                }}
-              >
-                <line
-                  x1={currentLabel.clickX}
-                  y1={currentLabel.clickY}
-                  x2={currentLabel.clickX + 100}
-                  y2={currentLabel.clickY - 20}
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  className="addlabel-line"
-                />
-              </svg>
-              <input
-                ref={inputRef}
-                type="text"
-                value={currentLabel.text}
-                onChange={(e) => handleLabelChange(e.target.value)}
-                placeholder="Enter label..."
-                className="addlabel-input"
-                disabled={isSaving}
-                maxLength={100}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') handleLabelSubmit();
-                }}
-              />
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    className="addlabel-error"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {error}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              <div className="addlabel-input-buttons">
-                <button
-                  onClick={handleLabelSubmit}
-                  className="addlabel-submit-button"
-                  disabled={isSaving}
-                >
-                  {isSaving ? <span className="addlabel-spinner"></span> : 'Add'}
-                </button>
-                <button
-                  onClick={handleCancelLabel}
-                  className="addlabel-cancel-button"
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
       <div className="addlabel-footer">
-        <motion.button
-          className="addlabel-back-button"
-          onClick={onBack}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          Back to Features
-        </motion.button>
-        <motion.button
-          className="addlabel-done-button"
-          onClick={onDone}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          Done Labeling
-        </motion.button>
+        <button className="addlabel-back-button" onClick={onBack}>Back to Features</button>
+        <button className="addlabel-done-button" onClick={onDone}>Done Labeling</button>
       </div>
     </motion.div>
   );
