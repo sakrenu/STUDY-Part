@@ -14,6 +14,10 @@ import LearningMode from './pages/students/LearningMode';
 import NotesMode from './pages/students/NotesMode';
 import QuizTeachingDashboard from './pages/teachers/QuizTeachingDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import CreateClass from './pages/admin/CreateClass';
+import EditClass from './pages/admin/EditClass';
+import ViewClass from './pages/admin/ViewClass';
+
 
 const App = () => {
   return (
@@ -37,6 +41,9 @@ const App = () => {
 
           {/* Admin Route */}
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/Create-Class" element={<CreateClass />} />
+          <Route path="/Edit-Class" element={<EditClass />} />
+          <Route path="/View-Class" element={<ViewClass />} />
 
           {/* Redirect any other path - consider a 404 page later */}
           <Route path="*" element={<Navigate to="/" />} />

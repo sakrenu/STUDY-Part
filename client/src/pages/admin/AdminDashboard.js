@@ -19,37 +19,44 @@ const AdminDashboard = () => {
 
     return (
         <div className="admin-dashboard">
-            <header className="admin-header">
+            {/* Top Navigation */}
+            <nav className="top-nav">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
+                </div>
+                <button className="logout-btn" onClick={handleLogout}>Logout</button>
+            </nav>
+
+            {/* Welcome Section with Centered Heading */}
+            <div className="welcome-section">
                 <h1>Admin Dashboard</h1>
-                <button onClick={handleLogout} className="logout-button">
-                    Logout
-                </button>
-            </header>
+                <h3>Manage your educational platform</h3>
+            </div>
+
             <main className="admin-main-content">
-                <h2>Welcome, Admin!</h2>
-                <p>This is your central control panel. Manage users, content, and settings from here.</p>
-                
                 <div className="admin-widgets">
-                    <div className="widget">
-                        <h3>User Management</h3>
-                        <p>View and manage registered users, roles, and permissions.</p>
-                        {/* Add link or button to user management section */}
+                    <div className="widget" onClick={() => navigate('/Create-Class')}>
+                        <h3>Create Class</h3>
+                        <p>Create Classes with this mode, assign teachers and students to classes</p>
                     </div>
-                    <div className="widget">
-                        <h3>Content Moderation</h3>
-                        <p>Review and moderate user-generated content like notes or discussions.</p>
-                         {/* Add link or button to content moderation section */}
+
+                    <div className="widget" onClick={() => navigate('/Edit-Class')}>
+                        <h3>Edit Class</h3>
+                        <p>Edit Classes with this mode, change teachers and add students to classes</p>
                     </div>
-                    <div className="widget">
-                        <h3>System Settings</h3>
-                        <p>Configure application settings and parameters.</p>
-                         {/* Add link or button to system settings section */}
+
+                    <div className="widget" onClick={() => navigate('/View-Class')}>
+                        <h3>View Class</h3>
+                        <p>View Classes with this mode, view teachers and students in classes</p>
                     </div>
-                    {/* Add more widgets as needed */}
                 </div>
             </main>
         </div>
     );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;
