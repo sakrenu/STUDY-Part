@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Body
 from typing import Dict
 import PyPDF2
 import io
@@ -175,7 +175,7 @@ async def process_image(file: UploadFile = File(...), user_id: str = None):
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
 @router.post("/query_notes")
-async def query_notes(user_id: str, query: str):
+async def query_notes(user_id: str = Body(...), query: str = Body(...)):
     """Query the vector store for relevant information using Google Gemini"""
     try:
         logger.info(f"Querying notes for user: {user_id} with Gemini")
