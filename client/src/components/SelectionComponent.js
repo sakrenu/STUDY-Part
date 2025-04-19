@@ -219,6 +219,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       setPoints([]);
       setCurrentBox(null);
       setActiveBox(null);
+      console.log('Updated regions:', newRegions); // Debug log
     } catch (error) {
       const errorDetail = error.response?.data?.detail || error.message;
       console.error('Error segmenting:', errorDetail);
