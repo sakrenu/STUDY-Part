@@ -7,6 +7,7 @@ const ViewClassMode = () => {
     const navigate = useNavigate(); 
     const [users, setUsers] = useState([]);
     const [classes, setClasses] = useState([]);
+    const [expandedClass, setExpandedClass] = useState(null);
     const db = getFirestore();
 
     useEffect(() => {
@@ -21,8 +22,12 @@ const ViewClassMode = () => {
 
     const getEmail = (id) => users.find(u => u.id === id)?.email || 'Unknown';
 
+    const toggleExpand = (classId) => {
+        setExpandedClass(expandedClass === classId ? null : classId);
+    };
+
     return (
-        <div className="admin-dashboard">
+        <div className="admin-dashboard  view-class-page">
             {/* Top Navigation */}
             <nav className="top-nav">
                 <div className="logo-container">
@@ -35,37 +40,79 @@ const ViewClassMode = () => {
                 <button className="back-btn" onClick={() => navigate('/admin-dashboard')}>Back to Dashboard</button>
             </nav>
 
-            {/* Welcome Section with Centered Heading */}
+            {/* Welcome Section */}
             <div className="welcome-section">
                 <h1>View Classes</h1>
                 <h3>Overview of all classes and their assignments</h3>
             </div>
 
             <main className="admin-main-content">
-                <table className="user-table">
-                    <thead>
-                        <tr>
-                            <th>Course Name</th>
-                            <th>Class Name</th>
-                            <th>Professor</th>
-                            <th>Students</th>
-                            <th>Number of Students</th>
-                            <th>Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {classes.map(cls => (
-                            <tr key={cls.id}>
-                                <td>{cls.courseName}</td>
-                                <td>{cls.className || '—'}</td>
-                                <td>{getEmail(cls.professor)}</td>
-                                <td>{cls.students?.map(getEmail).join(', ')}</td>
-                                <td>{cls.students?.length ?? 0}</td>
-                                <td>{cls.createdAt?.toDate?.().toLocaleString() ?? 'N/A'}</td>
+                <div className="table-container">
+                    <table className="class-table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Class</th>
+                                <th>Professor</th>
+                                <th>Students</th>
+                                <th>Created</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {classes.map(cls => (
+                                <React.Fragment key={cls.id}>
+                                    <tr>
+                                        <td>{cls.courseName || '—'}</td>
+                                        <td>{cls.className || '—'}</td>
+                                        <td>{getEmail(cls.professor)}</td>
+                                        <td>{cls.students?.length || 0}</td>
+                                        <td className="date-column">
+                                            {cls.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}
+                                        </td>
+                                        <td>
+                                            <button 
+                                                className="expand-btn"
+                                                onClick={() => toggleExpand(cls.id)}
+                                            >
+                                                {expandedClass === cls.id ? '▲' : '▼'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {expandedClass === cls.id && (
+                                        <tr className="expanded-row">
+                                            <td colSpan="6">
+                                                <div className="expanded-content">
+                                                    <div className="detail-section">
+                                                        <h4>Course Details</h4>
+                                                        <p><strong>Course Name:</strong> {cls.courseName || '—'}</p>
+                                                        <p><strong>Class Name:</strong> {cls.className || '—'}</p>
+                                                        <p><strong>Professor:</strong> {getEmail(cls.professor)}</p>
+                                                        <p><strong>Created:</strong> {cls.createdAt?.toDate?.().toLocaleString() || 'N/A'}</p>
+                                                    </div>
+                                                    <div className="students-section">
+                                                        <h4>Students ({cls.students?.length || 0})</h4>
+                                                        {cls.students?.length > 0 ? (
+                                                            <ul className="student-list">
+                                                                {cls.students.map(studentId => (
+                                                                    <li key={studentId}>
+                                                                        {getEmail(studentId)}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        ) : (
+                                                            <p>No students enrolled</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </main>
         </div>
     );

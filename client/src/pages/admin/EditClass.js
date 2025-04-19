@@ -40,13 +40,26 @@ const EditClassMode = () => {
         setClassName(cls.className); 
         setCourseName(cls.courseName);
         setProfessorId(cls.professor);
+        // Ensure students array is properly initialized
         setSelectedStudents(cls.students || []);
     };
 
-    const handleStudentToggle = (id) => {
-        setSelectedStudents(prev =>
-            prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
-        );
+    const handleStudentToggle = (studentId) => {
+        setSelectedStudents(prevSelected => {
+            // Create a new array to avoid state mutation
+            const newSelected = [...prevSelected];
+            const index = newSelected.indexOf(studentId);
+            
+            if (index > -1) {
+                // Remove the student if already selected
+                newSelected.splice(index, 1);
+            } else {
+                // Add the student if not selected
+                newSelected.push(studentId);
+            }
+            
+            return newSelected;
+        });
     };
 
     const handleUpdate = async (e) => {
@@ -61,6 +74,7 @@ const EditClassMode = () => {
         alert('✅ Class updated!');
         setEditing(null);
         setCourseName('');
+        setClassName('');
         setProfessorId('');
         setSelectedStudents([]);
         const refreshed = await getDocs(collection(db, 'classes'));
@@ -129,19 +143,20 @@ const EditClassMode = () => {
                         <div className="student-checkboxes">
                             <p>Select Students:</p>
                             <div className="student-list">
-                                {students.map(s => (
-                                    <div className="student-item" key={s.id}>
-                                        <input
-                                            type="checkbox"
-                                            id={`student-${s.id}`}
-                                            checked={selectedStudents.includes(s.id)}
-                                            onChange={() => handleStudentToggle(s.id)}
-                                        />
-                                        <label htmlFor={`student-${s.id}`}>
-                                            {s.email}
-                                        </label>
-                                    </div>
-                                ))}
+                            {students.map(student => (
+                            <div className="student-item" key={student.id}>
+                                <input
+                                    type="checkbox"
+                                    id={`student-${student.id}`}
+                                    checked={selectedStudents.includes(student.id)}
+                                    onChange={() => handleStudentToggle(student.id)}
+                                    className="student-checkbox"
+                                />
+                                <label htmlFor={`student-${student.id}`} className="student-label">
+                                    {student.email}
+                                </label>
+                            </div>
+                        ))}
                             </div>
                         </div>
                         <div className="button-group">
@@ -151,6 +166,7 @@ const EditClassMode = () => {
                                 onClick={() => {
                                     setEditing(null);
                                     setCourseName('');
+                                    setClassName('');
                                     setProfessorId('');
                                     setSelectedStudents([]);
                                 }}
