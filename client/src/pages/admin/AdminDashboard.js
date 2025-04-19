@@ -28,31 +28,35 @@ const AdminDashboard = () => {
             <main className="admin-main-content">
                 <h2>Welcome, Admin!</h2>
                 <p>This is your central control panel. Manage users, content, and settings from here.</p>
-                
+
                 <div className="admin-widgets">
                     <div className="widget">
-                    <h3>User Management</h3>
-                    <p>View and manage registered users, roles, and permissions.</p>
-                    <button onClick={() => navigate('/user-management')} className="widget-button">
-                    Go to User Management
-                    </button>
+                        <h3>Create Class</h3>
+                        <p>Create Classes with this mode, assign teachers and students to classes</p>
+                        <button onClick={() => navigate('/Create-Class')} className="widget-button">
+                            Go to Create Class Mode
+                        </button>
                     </div>
 
                     <div className="widget">
-                        <h3>Content Moderation</h3>
-                        <p>Review and moderate user-generated content like notes or discussions.</p>
-                         {/* Add link or button to content moderation section */}
+                        <h3>Edit Class</h3>
+                        <p>Edit Classes with this mode, change teachers and add students to classes</p>
+                        <button onClick={() => navigate('/Edit-Class')} className="widget-button">
+                            Go to Edit Class Mode
+                        </button>
                     </div>
+
                     <div className="widget">
-                        <h3>System Settings</h3>
-                        <p>Configure application settings and parameters.</p>
-                         {/* Add link or button to system settings section */}
+                        <h3>View Class</h3>
+                        <p>View Classes with this mode, view teachers and students in classes</p>
+                        <button onClick={() => navigate('/View-Class')} className="widget-button">
+                            Go to View Class Mode
+                        </button>
                     </div>
-                    {/* Add more widgets as needed */}
                 </div>
             </main>
         </div>
     );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;
