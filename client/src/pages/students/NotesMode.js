@@ -8,6 +8,8 @@ import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import axios from 'axios';
 
+const BACKEND_URL = 'http://127.0.0.1:8000'; // Define this at the top level, after imports
+
 const NotesMode = () => {
     const navigate = useNavigate();
     const [image, setImage] = useState(null);
@@ -124,12 +126,15 @@ const NotesMode = () => {
                 const formData = new FormData();
                 formData.append('image', file);
                 
-                const response = await axios.post('http://127.0.0.1:8000/v1/deprecated/upload', formData, {
+                console.log('Uploading image to backend...');
+                const response = await axios.post(`${BACKEND_URL}/v1/deprecated/upload`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
-                    }
+                    },
+                    timeout: 30000 // 30 seconds timeout
                 });
                 
+                console.log('Upload response:', response.data);
                 const imageUrl = response.data.image_url;
                 
                 setCurrentImageUrl(imageUrl);
@@ -137,7 +142,20 @@ const NotesMode = () => {
                 setIsSelectingRegions(true);
             } catch (error) {
                 console.error('Failed to upload image:', error);
-                alert('Error uploading image: ' + error.message);
+                let errorMessage = 'Error uploading image: ';
+                
+                if (error.response) {
+                    // Server responded with an error
+                    errorMessage += error.response.data?.error || error.response.data?.detail || error.response.statusText || error.message;
+                } else if (error.request) {
+                    // Request was made but no response received
+                    errorMessage += 'No response from server. Please check if the backend is running on port 8000.';
+                } else {
+                    // Error in setting up the request
+                    errorMessage += error.message;
+                }
+                
+                alert(errorMessage);
             } finally {
                 setIsLoading(false);
             }
@@ -159,8 +177,8 @@ const NotesMode = () => {
                 // Start simulation progress
                 let progress = 0;
                 const progressInterval = setInterval(() => {
-                    if (progress < 85) {
-                        progress += progress < 25 ? 1 : 0.5;
+                    if (progress < 90) {
+                        progress += progress < 25 ? 2 : 1;
                         setSimulationProgress(progress);
                         setSimulationMessage(
                             progress < 25 ? 
@@ -170,32 +188,27 @@ const NotesMode = () => {
                             `Almost there (${Math.round(progress)}%)`
                         );
                     }
-                }, 100);
+                }, 50);
 
                 // Handle file upload
                 const formData = new FormData();
                 formData.append('file', file);
 
-                handleImageUpload(file);
-                clearInterval(progressInterval);
-
-                // Complete the progress animation
-                const finishProgress = () => {
-                    progress = Math.min(100, progress + 5);
-                    setSimulationProgress(progress);
-                    setSimulationMessage(`Finishing up (${Math.round(progress)}%)`);
+                // Wait before completing to show some progress
+                setTimeout(() => {
+                    handleImageUpload(file);
+                    clearInterval(progressInterval);
                     
-                    if (progress < 100) {
-                        setTimeout(finishProgress, 50);
-                    } else {
-                        setTimeout(() => {
-                            setIsLoading(false);
-                            setSimulationProgress(0);
-                            setSimulationMessage('');
-                        }, 500);
-                    }
-                };
-                finishProgress();
+                    // Complete the progress animation
+                    setSimulationProgress(100);
+                    setSimulationMessage(`Finishing up (100%)`);
+                    
+                    setTimeout(() => {
+                        setIsLoading(false);
+                        setSimulationProgress(0);
+                        setSimulationMessage('');
+                    }, 500);
+                }, 1000);
 
             } catch (error) {
                 console.error('Error handling file:', error);
@@ -221,30 +234,107 @@ const NotesMode = () => {
         }
     };
 
-    // Handle segmentation
+    // Handle segmentation with proper progress updates
     const handleDoneSelecting = async () => {
         try {
             if (!currentImageUrl) {
                 throw new Error('No image URL available');
             }
-    
+
+            if (selectedRegions.length === 0) {
+                alert('Please select at least one region before proceeding');
+                return;
+            }
+
             setIsLoading(true);
             console.log('Processing regions:', selectedRegions);
-    
-            const response = await axios.post('http://127.0.0.1:8000/v1/deprecated/segment-all', {
+            
+            // Format the bounding boxes correctly for the API
+            const formattedBoundingBoxes = selectedRegions.map(region => ({
+                x: region.x,
+                y: region.y,
+                width: region.width,
+                height: region.height
+            }));
+            
+            // Start simulation progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 95) {
+                    progress += 2;
+                    setSimulationProgress(progress);
+                    setSimulationMessage(
+                        progress < 25 ? 
+                        `Processing regions... (${Math.round(progress)}%)` :
+                        progress < 50 ?
+                        `Analyzing segments... (${Math.round(progress)}%)` :
+                        progress < 75 ?
+                        `Creating visual maps... (${Math.round(progress)}%)` :
+                        `Almost there (${Math.round(progress)}%)`
+                    );
+                }
+            }, 100);
+
+            // Log the request for debugging
+            console.log('Sending request to backend with:', {
                 image_url: currentImageUrl,
-                bounding_boxes: selectedRegions
+                bounding_boxes: formattedBoundingBoxes
             });
-    
-            setCombinedSegmentImage(response.data.combined_image);
-            setRegionData(response.data.regions || []); // Ensure regionData is at least an empty array
-            setIsSelectingRegions(false);
-    
+
+            // Make API call to segment the image
+            const response = await axios.post(`${BACKEND_URL}/v1/deprecated/segment-all`, {
+                image_url: currentImageUrl,
+                bounding_boxes: formattedBoundingBoxes
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                timeout: 60000 // 60 seconds timeout - segmentation can take time
+            });
+
+            // Log the response for debugging
+            console.log('Received response from backend:', response.data);
+
+            clearInterval(progressInterval);
+            setSimulationProgress(100);
+            setSimulationMessage('Segmentation complete!');
+            
+            setTimeout(() => {
+                if (response.data && response.data.combined_image) {
+                    setCombinedSegmentImage(response.data.combined_image);
+                    setRegionData(response.data.regions || []); // Ensure regionData is at least an empty array
+                    setIsSelectingRegions(false);
+                    setIsLoading(false);
+                    setSimulationProgress(0);
+                    setSimulationMessage('');
+                } else {
+                    throw new Error('Invalid response from server: missing combined_image');
+                }
+            }, 500);
+
         } catch (error) {
-            console.error('Error:', error);
-            alert('Error processing image: ' + (error.response?.data?.error || error.message));
-        } finally {
+            // Enhanced error handling
+            console.error('Error details:', error);
+            console.error('Response data:', error.response?.data);
+            console.error('Response status:', error.response?.status);
+            
+            let errorMessage = 'Error processing image: ';
+            if (error.response) {
+                // Server responded with an error
+                errorMessage += error.response.data?.error || error.response.data?.detail || error.response.statusText || error.message;
+            } else if (error.request) {
+                // Request was made but no response received
+                errorMessage += 'No response from server. Please check if the backend is running.';
+            } else {
+                // Error in setting up the request
+                errorMessage += error.message;
+            }
+            
+            alert(errorMessage);
             setIsLoading(false);
+            setSimulationProgress(0);
+            setSimulationMessage('');
         }
     };
     
@@ -456,6 +546,18 @@ const NotesMode = () => {
 
     return (
         <div className="notes-mode">
+            {/* Top Navigation */}
+            <nav className="top-nav">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
+                </div>
+                <button className="back-btn" onClick={() => navigate('/student-dashboard')}>Back</button>
+            </nav>
+
             <div className="notes-container">
                 <h1 className="notes-title">Notes Mode</h1>
 
@@ -535,12 +637,12 @@ const NotesMode = () => {
                     onMouseEnter={() => setShowToggleText(true)}
                     onMouseLeave={() => setShowToggleText(false)}
                 >
-                    <button className="toggle-button" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                        <span
-                            className={`sidebar-arrow ${isSidebarOpen ? 'arrow-left' : 'arrow-right'}`}
-                            aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-                        >
-                            {/* SVG Arrow: points left when open, right when closed */}
+                    <button 
+                        className="toggle-button" 
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+                    >
+                        <span className={`sidebar-arrow ${isSidebarOpen ? 'arrow-left' : 'arrow-right'}`}>
                             <svg width="28" height="28" viewBox="0 0 28 28">
                                 <polyline
                                     points="18,6 10,14 18,22"
@@ -560,13 +662,6 @@ const NotesMode = () => {
 
                 {/* Main Content */}
                 <div className={`main-content ${isSidebarOpen ? '' : 'closed'}`}>
-                    <button 
-                        onClick={() => navigate('/student-dashboard')} 
-                        className="back-button"
-                    >
-                        ← Back to Dashboard
-                    </button>
-
                     <div className="upload-section">
                         <input
                             type="file"
@@ -576,109 +671,103 @@ const NotesMode = () => {
                             style={{ display: 'none' }}
                             disabled={isLoading}
                         />
-                        <button 
-                            className="upload-button" 
-                            onClick={() => fileInputRef.current.click()}
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Processing...' : 'Choose Image'}
-                        </button>
+                        
+                        {!currentImageUrl && !isLoading && (
+                            <div className="choose-image-container">
+                                <button 
+                                    className="upload-button" 
+                                    onClick={() => fileInputRef.current.click()}
+                                    disabled={isLoading}
+                                >
+                                    Choose Image
+                                </button>
+                                <div className="no-image-message">
+                                    <p>Please select an image to upload</p>
+                                </div>
+                            </div>
+                        )}
 
-                        {currentImageUrl && (
-                            <div className="image-preview">
-                                <div className="processing-animation">
-                                    <img
-                                        src={currentImageUrl}
-                                        alt="Preview"
-                                        className={`preview-image ${isLoading ? 'dull-image' : ''}`}
-                                    />
-                                    {isLoading && (
+                        {currentImageUrl && isSelectingRegions && !isLoading && (
+                            <div className="cropper-container">
+                                <Cropper
+                                    src={currentImageUrl}
+                                    style={{ 
+                                        height: 600,
+                                        width: '100%',
+                                        maxWidth: 800
+                                    }}
+                                    initialAspectRatio={NaN}
+                                    aspectRatio={NaN}
+                                    guides={true}
+                                    ref={cropperRef}
+                                    zoomable={false}
+                                    scalable={false}
+                                    mouseWheelZoom={false}
+                                    dragMode="crop"
+                                    cropBoxMovable={true}
+                                    cropBoxResizable={true}
+                                    toggleDragModeOnDblclick={false}
+                                    viewMode={1}
+                                    minContainerWidth={800}
+                                    minContainerHeight={600}
+                                />
+                                <div className="region-selection-controls">
+                                    <button onClick={handleSelectRegion} className="select-region-button">
+                                        Select Region
+                                    </button>
+                                    {selectedRegions.length > 0 && (
                                         <>
-                                            <div className="processing-overlay" />
-                                            <div className="simulation-overlay">
-                                                <div className="simulation-bar-container">
-                                                    <div className="simulation-bar">
-                                                        <div 
-                                                            className="simulation-progress"
-                                                            style={{ width: `${simulationProgress}%` }}
-                                                        />
-                                                        <div className="simulation-glow" />
-                                                    </div>
-                                                </div>
-                                                <div className="simulation-percentage">
-                                                    {Math.round(simulationProgress)}%
-                                                </div>
-                                                <div className="simulation-message">
-                                                    {simulationMessage}
-                                                </div>
-                                            </div>
-                                            <div className="neural-animation-overlay">
-                                                <div className="neural-particles" />
-                                                <div className="neural-particles" />
-                                                <div className="neural-particles" />
-                                            </div>
+                                            <button onClick={() => cropperRef.current.cropper.clear()} className="select-another-button">
+                                                Select Another Part
+                                            </button>
+                                            <button onClick={handleDoneSelecting} className="done-selecting-button">
+                                                Done Selecting ({selectedRegions.length} regions)
+                                            </button>
                                         </>
                                     )}
                                 </div>
                             </div>
                         )}
 
-                        {!currentImageUrl && !isLoading && (
-                            <div className="no-image-message">
-                                <p>Please select an image to upload</p>
+                        {currentImageUrl && isLoading && (
+                            <div className="image-preview">
+                                <div className="processing-animation">
+                                    <img
+                                        src={currentImageUrl}
+                                        alt="Preview"
+                                        className={`preview-image dull-image`}
+                                    />
+                                    <div className="processing-overlay" />
+                                    <div className="simulation-overlay">
+                                        <div className="simulation-bar-container">
+                                            <div className="simulation-bar">
+                                                <div 
+                                                    className="simulation-progress"
+                                                    style={{ width: `${simulationProgress}%` }}
+                                                />
+                                                <div className="simulation-glow" />
+                                            </div>
+                                        </div>
+                                        <div className="simulation-percentage">
+                                            {Math.round(simulationProgress)}%
+                                        </div>
+                                        <div className="simulation-message">
+                                            {simulationMessage}
+                                        </div>
+                                    </div>
+                                    <div className="neural-animation-overlay">
+                                        <div className="neural-particles" />
+                                        <div className="neural-particles" />
+                                        <div className="neural-particles" />
+                                    </div>
+                                </div>
+                                <p className="processing-text">Processing your image...</p>
                             </div>
-                        )}
-
-                        {isLoading && (
-                            <p className="processing-text">Processing your image...</p>
                         )}
                     </div>
 
-                    {/* Image Selection Area */}
-                    {currentImageUrl && isSelectingRegions && (
-                        <div className="cropper-container">
-                            <Cropper
-                                src={currentImageUrl}
-                                style={{ 
-                                    height: 600,
-                                    width: '100%',
-                                    maxWidth: 800
-                                }}
-                                initialAspectRatio={NaN}
-                                aspectRatio={NaN}
-                                guides={true}
-                                ref={cropperRef}
-                                zoomable={false}
-                                scalable={false}
-                                mouseWheelZoom={false}
-                                dragMode="crop"
-                                cropBoxMovable={true}
-                                cropBoxResizable={true}
-                                toggleDragModeOnDblclick={false}
-                                viewMode={1}
-                                minContainerWidth={800}
-                                minContainerHeight={600}
-                            />
-                            <div className="region-selection-controls">
-                                <button onClick={handleSelectRegion} className="select-region-button">
-                                    Select Region
-                                </button>
-                                {selectedRegions.length > 0 && (
-                                    <>
-                                        <button onClick={() => cropperRef.current.cropper.clear()} className="select-another-button">
-                                            Select Another Part
-                                        </button>
-                                        <button onClick={handleDoneSelecting} className="done-selecting-button">
-                                            Done Selecting ({selectedRegions.length} regions)
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Display Segmented Regions */}
-                    {!isSelectingRegions && combinedSegmentImage && (
+                    {/* Display Segmented Regions - only shown when not in cropping mode */}
+                    {!isSelectingRegions && combinedSegmentImage && !isLoading && (
                         <div className="combined-segments-container">
                             <h3>Click on a region to add notes</h3>
                             <div className="interactive-image-container">
@@ -709,18 +798,6 @@ const NotesMode = () => {
                             onSave={handleSaveNotes}
                             onClose={handleClosePopup}
                         />
-                    )}
-
-                    {!currentImageUrl && !isLoading && (
-                        <div className="no-image-message">
-                            <p>Please select an image to upload</p>
-                        </div>
-                    )}
-
-                    {isLoading && (
-                        <div className="loading-indicator">
-                            <p>Processing... Please wait.</p>
-                        </div>
                     )}
                 </div>
             </div>
