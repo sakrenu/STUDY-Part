@@ -287,49 +287,6 @@ async def segment_image(data: SegmentRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/get_image_embedding')
-async def get_embedding(data: GetEmbeddingRequest):
-    try:
-        # Download the image from URL
-        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
-        try:
-            response = requests.get(data.image_url)
-            response.raise_for_status()
-            with open(temp_path, 'wb') as f:
-                f.write(response.content)
-
-            if not os.path.exists(temp_path):
-                raise ValueError("Failed to save downloaded image")
-
-            # Get image embeddings
-            embedding = get_image_embeddings(temp_path)
-            
-            # Generate a unique ID for this embedding
-            embedding_id = str(uuid.uuid4())
-            
-            # Store the embedding with the ID and original image URL
-            image_embeddings_store[embedding_id] = {
-                'embedding': embedding,
-                'teacher_id': data.teacher_id,
-                'created_at': time.time(),
-                'image_url': data.image_url   # new field for original image URL
-            }
-            
-            return {
-                'embedding_id': embedding_id,
-                'success': True,
-                'message': 'Image embedding created successfully'
-            }
-        except requests.exceptions.RequestException as e:
-            raise HTTPException(status_code=500, detail=f"Failed to download image: {str(e)}")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
-        finally:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.post('/segment_with_points')
 async def segment_with_points_route(data: PointSegmentationRequest):
     try:
@@ -974,6 +931,49 @@ async def deprecated_upload(image: UploadFile = File(...)):
 
         response = cloudinary.uploader.upload(image.file)
         return {"image_url": response['secure_url']}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@deprecated_router.post('/get_image_embedding')
+async def get_embedding(data: GetEmbeddingRequest):
+    try:
+        # Download the image from URL
+        temp_path = f'temp_original_{str(uuid.uuid4())[:8]}.jpg'
+        try:
+            response = requests.get(data.image_url)
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                f.write(response.content)
+
+            if not os.path.exists(temp_path):
+                raise ValueError("Failed to save downloaded image")
+
+            # Get image embeddings
+            embedding = get_image_embeddings(temp_path)
+            
+            # Generate a unique ID for this embedding
+            embedding_id = str(uuid.uuid4())
+            
+            # Store the embedding with the ID and original image URL
+            image_embeddings_store[embedding_id] = {
+                'embedding': embedding,
+                'teacher_id': data.teacher_id,
+                'created_at': time.time(),
+                'image_url': data.image_url   # new field for original image URL
+            }
+            
+            return {
+                'embedding_id': embedding_id,
+                'success': True,
+                'message': 'Image embedding created successfully'
+            }
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=500, detail=f"Failed to download image: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

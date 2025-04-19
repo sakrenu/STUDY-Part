@@ -123,13 +123,13 @@ const PointSegmentation = () => {
       try {
         const uploadForm = new FormData();
         uploadForm.append('image', selectedFile);
-        const uploadResponse = await axios.post('http://127.0.0.1:8000/upload', uploadForm, {
+        const uploadResponse = await axios.post('http://127.0.0.1:8000/deprecated/upload', uploadForm, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         const imageUrl = uploadResponse.data.image_url;
         setUploadedImageUrl(imageUrl);
         
-        const embeddingResponse = await axios.post('http://127.0.0.1:8000/get_image_embedding', {
+        const embeddingResponse = await axios.post('http://127.0.0.1:8000/deprecated/get_image_embedding', {
           image_url: imageUrl,
           teacher_id: teacherId
         });
@@ -249,7 +249,7 @@ const PointSegmentation = () => {
       setIsSegmenting(true);
       setError('');
       
-      const segmentationResponse = await axios.post('http://127.0.0.1:8000/segment_with_points', {
+      const segmentationResponse = await axios.post('http://127.0.0.1:8000/deprecated/segment_with_points', {
         image_embedding_id: imageEmbeddingId,
         points: points,
         labels: labels,
