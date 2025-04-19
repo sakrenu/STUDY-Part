@@ -529,3 +529,168 @@ body, html {
 .logout-btn:hover {
     box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
+
+/* Loading Animation Styles */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+}
+
+.loading-content {
+    text-align: center;
+    color: #f1b5fe;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(241, 181, 254, 0.1);
+    border-top: 5px solid #f1b5fe;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.loading-message {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 10px rgba(241, 181, 254, 0.5);
+}
+
+.neural-animation {
+    position: relative;
+    width: 200px;
+    height: 60px;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+
+.neural-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle, #f1b5fe 1px, transparent 1px),
+        radial-gradient(circle, #f1b5fe 1px, transparent 1px);
+    background-size: 20px 20px;
+    animation: particleFlow 3s linear infinite;
+    opacity: 0.5;
+}
+
+.neural-particles:nth-child(2) {
+    animation-delay: -1s;
+    opacity: 0.3;
+}
+
+.neural-particles:nth-child(3) {
+    animation-delay: -2s;
+    opacity: 0.2;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes particleFlow {
+    0% {
+        transform: translateY(-20px) translateX(-20px);
+    }
+    100% {
+        transform: translateY(20px) translateX(20px);
+    }
+}
+
+/* Preview Image Container */
+.preview-container {
+    position: relative;
+    max-width: 800px;
+    margin: 2rem auto;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 2px solid #6f42c1;
+    box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
+}
+
+.preview-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.point-selection-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.mode-selection {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.mode-button {
+    padding: 0.5rem 1rem;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-button.active {
+    border-color: #007bff;
+    background-color: #007bff;
+    color: white;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.point-selection-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.control-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.control-button:hover:not(:disabled) {
+    background-color: #0056b3;
+}

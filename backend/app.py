@@ -182,19 +182,23 @@ async def segment(request: SegmentRequest):
                 resource_type="image"
             )
 
-            # Calculate position
-            if box:
-                position = {"x1": box[0], "y1": box[1], "x2": box[2], "y2": box[3]}
+            # Calculate bounding box from the mask
+            coords = np.where(mask)
+            if len(coords[0]) > 0 and len(coords[1]) > 0:
+                position = {
+                    "x1": float(coords[1].min()),
+                    "y1": float(coords[0].min()),
+                    "x2": float(coords[1].max()),
+                    "y2": float(coords[0].max())
+                }
             else:
-                coords = np.where(mask)
-                if len(coords[0]) > 0:
-                    position = {
-                        "x1": float(coords[1].min()),
-                        "y1": float(coords[0].min()),
-                        "x2": float(coords[1].max()),
-                        "y2": float(coords[0].max())
-                    }
+                # Fallback if mask is empty or invalid, maybe use input box if available?
+                # Or just set to zero / raise error
+                if box:
+                    logger.warning(f"Mask {i} for lesson_id {lesson_id} resulted in empty coordinates. Falling back to input box.")
+                    position = {"x1": box[0], "y1": box[1], "x2": box[2], "y2": box[3]}
                 else:
+                    logger.warning(f"Mask {i} for lesson_id {lesson_id} resulted in empty coordinates and no input box provided.")
                     position = {"x1": 0, "y1": 0, "x2": 0, "y2": 0}
 
             regions.append({

@@ -4,25 +4,24 @@ import './NotesMode.css';
 import { getAuth } from 'firebase/auth';
 import { db, storage } from '../../firebase';
 import { collection, addDoc, getDocs, query, where, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import Cropper from 'react-cropper';
-import 'cropperjs/dist/cropper.css';
 import axios from 'axios';
 
 const NotesMode = () => {
     const navigate = useNavigate();
     const [image, setImage] = useState(null);
-    const [cropper, setCropper] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showToggleText, setShowToggleText] = useState(false);
     const [savedNotes, setSavedNotes] = useState([]);
     const [noteToDelete, setNoteToDelete] = useState(null);
     const [selectedNote, setSelectedNote] = useState(null);
-    const [selectedRegions, setSelectedRegions] = useState([]);
-    const [isSelectingRegions, setIsSelectingRegions] = useState(true);
+    const [selectedPoints, setSelectedPoints] = useState([]);
+    const [pointLabels, setPointLabels] = useState([]);
+    const [isSelectingPoints, setIsSelectingPoints] = useState(true);
     const [currentRegionForNotes, setCurrentRegionForNotes] = useState(null);
     const [regionNotes, setRegionNotes] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    const cropperRef = useRef(null);
+    const canvasRef = useRef(null);
+    const imageRef = useRef(null);
     const [currentImageUrl, setCurrentImageUrl] = useState(null);
     const [currentImageId, setCurrentImageId] = useState(null);
     const [currentImageDimensions, setCurrentImageDimensions] = useState({ width: 0, height: 0 });
@@ -31,6 +30,9 @@ const NotesMode = () => {
     const auth = getAuth();
     const user = auth.currentUser;
     const [isEditing, setIsEditing] = useState(false);
+    const imageDisplayRef = useRef(null);
+    const [displayDimensions, setDisplayDimensions] = useState({ width: 0, height: 0 });
+    const [selectionMode, setSelectionMode] = useState('foreground'); // 'foreground' or 'background'
 
     const NotesPopup = ({ regionIndex, regionNotes, setRegionNotes, onSave, onClose }) => {
         const [noteText, setNoteText] = useState(regionNotes[regionIndex] || '');
@@ -89,25 +91,48 @@ const NotesMode = () => {
         setCurrentImageUrl(null);
         setCurrentImageId(null);
         setCurrentImageDimensions({ width: 0, height: 0 });
-        setSelectedRegions([]);
+        setSelectedPoints([]);
+        setPointLabels([]);
         setSegmentationResults([]);
         setRegionNotes({});
-        setIsSelectingRegions(true);
+        setIsSelectingPoints(true);
         setIsEditing(false);
     }, []);
+
+    useEffect(() => {
+        const updateDisplayDimensions = () => {
+            if (imageDisplayRef.current) {
+                setDisplayDimensions({
+                    width: imageDisplayRef.current.offsetWidth,
+                    height: imageDisplayRef.current.offsetHeight,
+                });
+            }
+        };
+
+        updateDisplayDimensions();
+
+        window.addEventListener('resize', updateDisplayDimensions);
+
+        return () => window.removeEventListener('resize', updateDisplayDimensions);
+    }, [currentImageUrl, segmentationResults]);
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
+            let previewUrl = null;
             try {
                 setIsLoading(true);
                 setSelectedNote(null);
                 setIsEditing(false);
                 setImage(file);
-                setCurrentImageUrl(null);
+
+                previewUrl = URL.createObjectURL(file);
+                setCurrentImageUrl(previewUrl);
+                
                 setCurrentImageId(null);
                 setCurrentImageDimensions({ width: 0, height: 0 });
-                setSelectedRegions([]);
+                setSelectedPoints([]);
+                setPointLabels([]);
                 setSegmentationResults([]);
                 setRegionNotes({});
 
@@ -120,29 +145,96 @@ const NotesMode = () => {
                 setCurrentImageId(response.data.image_id);
                 setCurrentImageDimensions({ width: response.data.width, height: response.data.height });
 
-                setIsSelectingRegions(true);
+                setIsSelectingPoints(true);
+
+                // Load image to get dimensions
+                const img = new Image();
+                img.onload = () => {
+                    setCurrentImageDimensions({ width: img.width, height: img.height });
+                };
+                img.src = response.data.image_url;
             } catch (error) {
                 console.error('Failed to upload image:', error);
                 alert('Error uploading image: ' + error.message);
             } finally {
                 setIsLoading(false);
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                }
             }
         }
     };
 
-    const handleSelectRegion = () => {
-        if (cropperRef.current) {
-            const cropData = cropperRef.current.cropper.getData();
-            const boundingBox = {
-                x: Math.round(cropData.x),
-                y: Math.round(cropData.y),
-                width: Math.round(cropData.width),
-                height: Math.round(cropData.height),
-                rotate: cropData.rotate || 0
-            };
-            setSelectedRegions([...selectedRegions, boundingBox]);
-            cropperRef.current.cropper.clear();
+    const handleCanvasClick = (e) => {
+        if (!currentImageId || !isSelectingPoints) return;
+        
+        // Get click coordinates relative to the image
+        const rect = canvasRef.current.getBoundingClientRect();
+        const scaleX = currentImageDimensions.width / rect.width;
+        const scaleY = currentImageDimensions.height / rect.height;
+        
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        
+        // Add the point with correct label (1 for foreground, 0 for background)
+        setSelectedPoints(prev => [...prev, { x, y }]);
+        setPointLabels(prev => [...prev, selectionMode === 'foreground' ? 1 : 0]);
+        
+        // Redraw canvas
+        drawPoints();
+    };
+
+    const drawPoints = () => {
+        if (!canvasRef.current || !imageRef.current) return;
+        
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Set canvas dimensions to match the displayed image
+        canvas.width = imageRef.current.width;
+        canvas.height = imageRef.current.height;
+        
+        // Draw points
+        selectedPoints.forEach((point, index) => {
+            const scaleX = canvas.width / currentImageDimensions.width;
+            const scaleY = canvas.height / currentImageDimensions.height;
+            
+            ctx.beginPath();
+            ctx.arc(point.x * scaleX, point.y * scaleY, 7, 0, 2 * Math.PI);
+            
+            // Set point fill color based on label
+            ctx.fillStyle = pointLabels[index] === 1 ? 'green' : 'red';
+            ctx.fill();
+            
+            // Add a white border stroke to help the point stand out
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Add point number
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.fillText(index + 1, point.x * scaleX + 9, point.y * scaleY + 9);
+        });
+    };
+
+    useEffect(() => {
+        drawPoints();
+    }, [selectedPoints, pointLabels, currentImageDimensions]);
+
+    const handleUndoPoint = () => {
+        if (selectedPoints.length > 0) {
+            setSelectedPoints(prev => prev.slice(0, -1));
+            setPointLabels(prev => prev.slice(0, -1));
         }
+    };
+
+    const handleResetPoints = () => {
+        setSelectedPoints([]);
+        setPointLabels([]);
     };
 
     const handleDoneSelecting = async () => {
@@ -150,56 +242,56 @@ const NotesMode = () => {
             alert('Image ID is missing. Please upload the image again.');
             return;
         }
-        if (selectedRegions.length === 0) {
-            alert('Please select at least one region.');
+        if (selectedPoints.length === 0) {
+            alert('Please select at least one point.');
             return;
         }
 
         try {
             setIsLoading(true);
-            console.log('Processing regions:', selectedRegions);
-            const allSegmentedRegions = [];
-            let lessonId = null;
+            console.log('Processing points:', selectedPoints);
 
-            for (const region of selectedRegions) {
-                const box = [
-                    Math.round(region.x),
-                    Math.round(region.y),
-                    Math.round(region.x + region.width),
-                    Math.round(region.y + region.height)
-                ];
+            const pointCoords = selectedPoints.map(p => [p.x, p.y]);
+            const payload = {
+                image_id: currentImageId,
+                points: pointCoords,
+                labels: pointLabels
+            };
 
-                const response = await axios.post('http://127.0.0.1:8000/segment', {
-                    image_id: currentImageId,
-                    box: box,
+            console.log("Calling /segment with payload:", JSON.stringify(payload, null, 2));
+            const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+            const response = await axios.post(`${API_URL}/segment`, payload, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            console.log('Segmentation response:', response.data);
+
+            if (response.data.regions && response.data.regions.length > 0) {
+                const newRegions = response.data.regions.map((region, index) => ({
+                    ...region,
+                    originalSelectionIndex: index
+                }));
+                setSegmentationResults(newRegions);
+                
+                const initialNotes = {};
+                newRegions.forEach((_, index) => {
+                    initialNotes[index] = '';
                 });
-
-                if (response.data.regions && response.data.regions.length > 0) {
-                    const regionData = {
-                        ...response.data.regions[0],
-                        originalSelectionIndex: allSegmentedRegions.length
-                    };
-                    allSegmentedRegions.push(regionData);
-                    if (!lessonId) {
-                        lessonId = response.data.lesson_id;
-                    }
-                } else {
-                     console.warn(`Segmentation for region ${allSegmentedRegions.length} returned no regions.`);
-                }
+                setRegionNotes(initialNotes);
+            } else {
+                console.warn('Segmentation returned no regions.');
+                alert('No regions were detected. Try selecting different points.');
             }
 
-            setSegmentationResults(allSegmentedRegions);
-            const initialNotes = {};
-            allSegmentedRegions.forEach((_, index) => {
-                initialNotes[index] = '';
-            });
-            setRegionNotes(initialNotes);
-
-            setIsSelectingRegions(false);
+            setIsSelectingPoints(false);
 
         } catch (error) {
-            console.error('Error during segmentation:', error);
-            alert('Error processing regions: ' + (error.response?.data?.detail || error.message));
+            const errorDetail = error.response?.data?.detail
+                ? (typeof error.response.data.detail === 'string'
+                   ? error.response.data.detail
+                   : JSON.stringify(error.response.data.detail))
+                : error.message || 'Unknown error';
+            console.error('Error segmenting:', error, 'Response:', error.response?.data, 'Detail:', errorDetail);
+            alert('Error processing regions: ' + errorDetail);
         } finally {
             setIsLoading(false);
         }
@@ -266,10 +358,11 @@ const NotesMode = () => {
             setCurrentImageUrl(null);
             setCurrentImageId(null);
             setCurrentImageDimensions({ width: 0, height: 0 });
-            setSelectedRegions([]);
+            setSelectedPoints([]);
+            setPointLabels([]);
             setSegmentationResults([]);
             setRegionNotes({});
-            setIsSelectingRegions(true);
+            setIsSelectingPoints(true);
             setSelectedNote(null);
             setIsEditing(false);
             
@@ -313,7 +406,7 @@ const NotesMode = () => {
         setCurrentImageUrl(note.imageUrl);
         setCurrentImageId(note.imageId);
         setCurrentImageDimensions({ width: note.imageWidth || 0, height: note.imageHeight || 0 });
-        setIsSelectingRegions(false);
+        setIsSelectingPoints(false);
         setIsEditing(true);
 
         setSegmentationResults(note.regions || []);
@@ -324,7 +417,7 @@ const NotesMode = () => {
         }, {});
         setRegionNotes(notesObj);
 
-        setSelectedRegions([]);
+        setSelectedPoints([]);
     };
 
     const handleRegionClick = (event) => {
@@ -332,12 +425,14 @@ const NotesMode = () => {
             console.warn('No segmentation data available to handle click.');
             return;
         }
-        if (isSelectingRegions) {
-            console.warn('Cannot select regions for notes while in selection mode.');
+        if (isSelectingPoints) {
+            console.warn('Cannot select points for notes while in selection mode.');
             return;
         }
 
-        const imageElement = event.target;
+        const imageElement = imageDisplayRef.current;
+        if (!imageElement) return;
+
         const rect = imageElement.getBoundingClientRect();
 
         const clickX = event.clientX - rect.left;
@@ -415,10 +510,11 @@ const NotesMode = () => {
                             setCurrentImageUrl(null);
                             setCurrentImageId(null);
                             setCurrentImageDimensions({ width: 0, height: 0 });
-                            setSelectedRegions([]);
+                            setSelectedPoints([]);
+                            setPointLabels([]);
                             setSegmentationResults([]);
                             setRegionNotes({});
-                            setIsSelectingRegions(true);
+                            setIsSelectingPoints(true);
                         }}
                     >
                         New Note
@@ -520,61 +616,118 @@ const NotesMode = () => {
                         </label>
                     </div>
 
-                    {currentImageUrl && isSelectingRegions && (
-                        <div className="cropper-container">
-                            <Cropper
-                                src={currentImageUrl}
-                                style={{ 
-                                    height: 600,
-                                    width: '100%',
-                                    maxWidth: 800
-                                }}
-                                initialAspectRatio={NaN}
-                                aspectRatio={NaN}
-                                guides={true}
-                                ref={cropperRef}
-                                zoomable={false}
-                                scalable={false}
-                                mouseWheelZoom={false}
-                                dragMode="crop"
-                                cropBoxMovable={true}
-                                cropBoxResizable={true}
-                                toggleDragModeOnDblclick={false}
-                                viewMode={1}
-                                minContainerWidth={800}
-                                minContainerHeight={600}
-                            />
-                            <div className="region-selection-controls">
-                                <button onClick={handleSelectRegion} className="select-region-button" disabled={isLoading}>
-                                    Add Selection Box
+                    {currentImageUrl && isSelectingPoints && (
+                        <div className="point-selection-container">
+                            <div className="mode-selection">
+                                <button
+                                    className={`mode-button ${selectionMode === 'foreground' ? 'active' : ''}`}
+                                    onClick={() => setSelectionMode('foreground')}
+                                >
+                                    Foreground Points (Green)
                                 </button>
-                                {selectedRegions.length > 0 && (
-                                    <button onClick={() => setSelectedRegions(prev => prev.slice(0, -1))} className="clear-last-button" disabled={isLoading}>
-                                        Clear Last Box ({selectedRegions.length})
-                                    </button>
-                                )}
-                                {selectedRegions.length > 0 && (
-                                    <button onClick={handleDoneSelecting} className="done-selecting-button" disabled={isLoading}>
-                                        Segment Selected Regions ({selectedRegions.length})
-                                    </button>
-                                )}
+                                <button
+                                    className={`mode-button ${selectionMode === 'background' ? 'active' : ''}`}
+                                    onClick={() => setSelectionMode('background')}
+                                >
+                                    Background Points (Red)
+                                </button>
+                            </div>
+                            <div className="canvas-container" style={{ position: 'relative' }}>
+                                <img
+                                    ref={imageRef}
+                                    src={currentImageUrl}
+                                    alt="Upload preview"
+                                    style={{ maxWidth: '100%', height: 'auto' }}
+                                />
+                                <canvas
+                                    ref={canvasRef}
+                                    onClick={handleCanvasClick}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        cursor: 'crosshair'
+                                    }}
+                                />
+                            </div>
+                            <div className="point-selection-controls">
+                                <button onClick={handleUndoPoint} className="control-button" disabled={selectedPoints.length === 0}>
+                                    Undo Last Point
+                                </button>
+                                <button onClick={handleResetPoints} className="control-button" disabled={selectedPoints.length === 0}>
+                                    Reset All Points
+                                </button>
+                                <button onClick={handleDoneSelecting} className="control-button" disabled={selectedPoints.length === 0}>
+                                    Segment Selected Points ({selectedPoints.length})
+                                </button>
                             </div>
                         </div>
                     )}
 
-                    {!isSelectingRegions && currentImageUrl && segmentationResults.length > 0 && (
+                    {!isSelectingPoints && currentImageUrl && segmentationResults.length > 0 && (
                         <div className="combined-segments-container">
                             <h3>{isEditing ? 'Editing Notes - ' : ''}Click on a region to add/edit notes</h3>
-                            <div className="interactive-image-container">
+                            <div className="interactive-image-container" style={{ position: 'relative', maxWidth: '100%', height: 'auto' }}>
                                 <img
+                                    ref={imageDisplayRef}
                                     src={currentImageUrl}
-                                    alt="Segmented document"
+                                    alt="Segmented document base"
                                     className="combined-segments-image"
                                     onClick={handleRegionClick}
-                                    style={{ cursor: 'pointer', maxWidth: '100%', height: 'auto' }}
-                                    width={currentImageDimensions.width || undefined}
-                                    height={currentImageDimensions.height || undefined}
+                                    style={{
+                                        display: 'block',
+                                        cursor: 'pointer',
+                                        maxWidth: '100%',
+                                        height: 'auto',
+                                        opacity: 1
+                                    }}
+                                    onLoad={() => {
+                                        if (imageDisplayRef.current) {
+                                            setDisplayDimensions({
+                                                width: imageDisplayRef.current.offsetWidth,
+                                                height: imageDisplayRef.current.offsetHeight,
+                                            });
+                                        }
+                                    }}
                                 />
+                                {/* Dimming Overlay - REMOVED */}
+                                {/* 
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Adjust dim level here
+                                    pointerEvents: 'none', // Ignore clicks
+                                }}></div> 
+                                */}
+
+                                {/* Colored Region Overlays */}
+                                {displayDimensions.width > 0 && segmentationResults.map((region, index) => {
+                                    const scaleX = displayDimensions.width / (currentImageDimensions.width || 1);
+                                    const scaleY = displayDimensions.height / (currentImageDimensions.height || 1);
+
+                                    const { x1, y1, x2, y2 } = region.position;
+                                    const style = {
+                                        position: 'absolute',
+                                        left: `${x1 * scaleX}px`,
+                                        top: `${y1 * scaleY}px`,
+                                        width: `${(x2 - x1) * scaleX}px`,
+                                        height: `${(y2 - y1) * scaleY}px`,
+                                        pointerEvents: 'none',
+                                        backgroundColor: 'rgba(0, 150, 255, 0.4)', // Example: semi-transparent blue
+                                    };
+
+                                    return (
+                                        <div
+                                            key={region.region_id || index}
+                                            style={style}
+                                        ></div>
+                                    );
+                                })}
                             </div>
                             <button
                                 onClick={handleSaveNote}
@@ -586,10 +739,10 @@ const NotesMode = () => {
                         </div>
                     )}
 
-                    {!isSelectingRegions && currentImageUrl && segmentationResults.length === 0 && !isLoading && (
+                    {!isSelectingPoints && currentImageUrl && segmentationResults.length === 0 && !isLoading && (
                         <div className="no-regions-message">
                             <p>Segmentation did not identify any regions from your selections, or there was an error.</p>
-                            <button onClick={() => setIsSelectingRegions(true)}>Try Selecting Again</button>
+                            <button onClick={() => setIsSelectingPoints(true)}>Try Selecting Again</button>
                         </div>
                     )}
 
@@ -610,8 +763,26 @@ const NotesMode = () => {
                     )}
 
                     {isLoading && (
-                        <div className="loading-indicator">
-                            <p>Processing... Please wait.</p>
+                        <div className="loading-overlay">
+                            <div className="loading-content">
+                                <div className="loading-spinner"></div>
+                                <div className="loading-message">Processing your image...</div>
+                                <div className="neural-animation">
+                                    <div className="neural-particles"></div>
+                                    <div className="neural-particles"></div>
+                                    <div className="neural-particles"></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {currentImageUrl && !isSelectingPoints && (
+                        <div className="preview-container">
+                            <img
+                                src={currentImageUrl}
+                                alt="Uploaded document"
+                                className="preview-image"
+                            />
                         </div>
                     )}
                 </div>
