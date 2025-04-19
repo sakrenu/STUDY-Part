@@ -25,7 +25,6 @@ from dotenv import load_dotenv
 import uuid
 from ultralytics import FastSAM
 import hashlib
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter
 
 load_dotenv()
@@ -976,6 +975,5 @@ async def get_embedding(data: GetEmbeddingRequest):
                 os.remove(temp_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 # Include the deprecated router in the main app
 app.include_router(deprecated_router)
