@@ -2,80 +2,123 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: #1A1A1A;
-    padding: 20px;
+    max-width: 1400px;
+    margin: 20px auto;
+    background-color: rgba(42, 42, 42, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(155, 74, 226, 0.3);
   }
   
   .featadd-header {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
   
   .featadd-header h2 {
-    font-size: 1.8rem;
+    font-size: 2rem;
     color: #cab7ce;
+    font-weight: 600;
   }
   
   .featadd-header p {
     font-size: 1rem;
     color: #dde7e8;
+    opacity: 0.8;
   }
   
   .featadd-content {
     display: flex;
-    gap: 1.5rem;
-    min-height: 500px;
+    gap: 2rem;
+    min-height: 600px;
   }
   
-  .featadd-image-container {
-    flex: 2;
+  .featadd-image-container,
+  .featadd-preview-container {
+    flex: 3;
     position: relative;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
+    background-color: #3c4249;
+    padding: 10px;
   }
   
-  .featadd-base-image {
+  .featadd-base-image,
+  .featadd-preview-base-image {
     max-width: 100%;
-    max-height: 70vh;
+    max-height: 80vh;
     object-fit: contain;
     display: block;
     margin: 0 auto;
   }
   
-  .featadd-regions-overlay {
+  .featadd-regions-overlay,
+  .featadd-preview-regions-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    pointer-events: none;
+  }
+  
+  .featadd-region,
+  .featadd-preview-region {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
+    cursor: default;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
-  .featadd-region {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+  .featadd-region.featadd-active,
+  .featadd-preview-region.featadd-active {
     pointer-events: auto;
     cursor: pointer;
   }
   
-  .featadd-mask {
+  .featadd-region.featadd-active:hover,
+  .featadd-preview-region.featadd-active:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(155, 74, 226, 0.5);
+  }
+  
+  .featadd-mask,
+  .featadd-preview-mask {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    opacity: 0.5;
-    pointer-events: none; /* Prevent interaction with mask directly */
+    pointer-events: none;
   }
   
-  .featadd-selected .featadd-mask {
-    border: 2px solid #e982c8;
+  .featadd-selected .featadd-mask,
+  .featadd-preview-selected .featadd-preview-mask {
+    border: 3px solid #e982c8;
+    opacity: 0.7;
+  }
+  
+  .featadd-adding.featadd-region,
+  .featadd-adding.featadd-preview-region {
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(155, 74, 226, 0.7);
+    }
+    50% {
+      box-shadow: 0 0 20px 10px rgba(155, 74, 226, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(155, 74, 226, 0.7);
+    }
   }
   
   .featadd-sidebar {
@@ -83,98 +126,173 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: #3c4249;
-    border-radius: 8px;
-    padding: 1rem;
+    background-color: rgba(60, 66, 73, 0.9);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   }
   
   .featadd-panel {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
   }
   
   .featadd-panel h3 {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     color: #cab7ce;
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 600;
   }
   
   .featadd-color-indicator {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    border: 1px solid #FFFFFF;
+    border: 2px solid #ffffff;
   }
   
   .featadd-actions {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
   }
   
   .featadd-action-button {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
+    gap: 10px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     background: linear-gradient(90deg, #3e2663, #520c5b);
-    color: #FFFFFF;
-    font-size: 0.9rem;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: box-shadow 0.3s ease;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
   }
   
   .featadd-action-button:hover {
-    box-shadow: 0 0 8px #9b4ae2, 0 0 12px #7f4ae2;
+    box-shadow: 0 0 12px #9b4ae2, 0 0 16px #7f4ae2;
+    transform: translateY(-2px);
   }
   
   .featadd-empty-state {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 150px;
+    height: 200px;
     background-color: #4a545e;
-    border-radius: 6px;
+    border-radius: 8px;
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 500;
   }
   
   .featadd-footer {
     display: flex;
     justify-content: space-between;
     margin-top: auto;
+    padding-top: 1.5rem;
+    gap: 12px;
+  }
+  
+  .featadd-preview-footer {
+    display: flex;
+    justify-content: center;
     padding-top: 1rem;
+    gap: 12px;
   }
   
   .featadd-back-button,
-  .featadd-save-button {
+  .featadd-save-button,
+  .featadd-done-notes-button,
+  .featadd-preview-back-button {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
+    gap: 8px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
   }
   
-  .featadd-back-button {
+  .featadd-back-button,
+  .featadd-preview-back-button {
     background-color: #4a545e;
-    color: #FFFFFF;
+    color: #ffffff;
   }
   
-  .featadd-save-button {
+  .featadd-save-button,
+  .featadd-done-notes-button {
     background: linear-gradient(90deg, #3e2663, #520c5b);
-    color: #FFFFFF;
+    color: #ffffff;
   }
   
   .featadd-back-button:hover,
-  .featadd-save-button:hover {
-    box-shadow: 0 0 8px #9b4ae2, 0 0 12px #7f4ae2;
+  .featadd-save-button:hover,
+  .featadd-done-notes-button:hover,
+  .featadd-preview-back-button:hover {
+    box-shadow: 0 0 12px #9b4ae2, 0 0 16px #7f4ae2;
+    transform: translateY(-2px);
+  }
+  
+  .featadd-notes-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(42, 42, 42, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(155, 74, 226, 0.3);
+    width: 400px;
+    max-width: 90%;
+    z-index: 1000;
+  }
+  
+  .featadd-notes-popup h3 {
+    color: #cab7ce;
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+  
+  .featadd-notes-content {
+    background-color: #3c4249;
+    padding: 12px;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .featadd-notes-close-button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: #4a545e;
+    color: #ffffff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+  }
+  
+  .featadd-notes-close-button:hover {
+    box-shadow: 0 0 12px #9b4ae2, 0 0 16px #7f4ae2;
+    transform: translateY(-2px);
   }
