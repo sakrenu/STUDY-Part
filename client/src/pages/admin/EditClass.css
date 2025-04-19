@@ -65,7 +65,7 @@
     color: pink;
 }
 
-.logout-btn {
+.back-btn {
     background: linear-gradient(90deg, #573688, #520c5b);
     padding: 0.5rem 1rem;
     border: none;
@@ -75,7 +75,7 @@
     transition: box-shadow 0.3s ease;
 }
 
-.logout-btn:hover {
+.back-btn:hover {
     box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
@@ -109,42 +109,175 @@
     width: 100%;
 }
 
-.admin-widgets {
+.class-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.widget {
+.class-item {
     background: linear-gradient(135deg, #000000, #1e1440);
     padding: 1.5rem;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     transition: all 0.3s ease;
-    cursor: pointer;
 }
 
-.widget:hover {
+.class-item:hover {
     transform: translateY(-5px);
     box-shadow: 0 6px 30px rgba(255, 255, 255, 0.15);
     border-color: #ffffff;
 }
 
-.widget h3 {
+.class-name {
     color: #ffffff;
-    margin-top: 0;
-    margin-bottom: 0.8rem;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     text-shadow: 0 0 6px #ffffff;
 }
 
-.widget p {
-    color: #d3d3d3;
-    margin-bottom: 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
+.edit-button {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 9999px;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
 }
+
+.edit-button:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+.create-class-form {
+    background: linear-gradient(135deg, #000000, #1e1440);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+}
+
+.create-class-form input,
+.create-class-form select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.create-class-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.create-class-form select option {
+    background: #1e1440;
+    color: #ffffff;
+}
+
+.student-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    border: 2px solid #64ffda;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.student-checkboxes p {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.student-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 4px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.student-item input[type="checkbox"] {
+    margin-right: 0.8rem;
+}
+
+.student-label {
+    cursor: pointer;
+    color: #ccd6f6;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.cancel-button,
+.update-button {
+    flex: 1;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.update-button {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    color: #ffffff;
+}
+.student-checkbox:checked {
+    background-color: #64ffda;
+}
+
+.student-checkbox:checked::after {
+    content: "✓";
+    position: absolute;
+    color: #0a192f;
+    font-size: 12px;
+    font-weight: bold;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.cancel-button:hover,
+.update-button:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+.student-item:hover {
+    background-color: rgba(100, 255, 218, 0.05);
+}
+
 
 /* Responsive Design */
 @media (max-width: 1024px) {
@@ -174,13 +307,12 @@
         font-size: 1rem;
     }
 
-    .logo {
-        font-size: 1.8rem;
+    .create-class-form {
+        padding: 1.5rem;
     }
 
-    .logo-image {
-        width: 35px;
-        height: 35px;
+    .button-group {
+        flex-direction: column;
     }
 }
 
@@ -210,21 +342,18 @@
         font-size: 0.9rem;
     }
 
-    .widget {
-        padding: 1.2rem;
+    .create-class-form {
+        padding: 1rem;
     }
 
-    .widget h3 {
-        font-size: 1.1rem;
+    .student-checkboxes {
+        padding: 1rem;
     }
 
-    .widget p {
-        font-size: 0.9rem;
-    }
-
-    .logout-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
+    .cancel-button,
+    .update-button {
+        padding: 0.8rem;
+        font-size: 1rem;
     }
 }
   

@@ -65,7 +65,7 @@
     color: pink;
 }
 
-.logout-btn {
+.back-btn {
     background: linear-gradient(90deg, #573688, #520c5b);
     padding: 0.5rem 1rem;
     border: none;
@@ -75,7 +75,7 @@
     transition: box-shadow 0.3s ease;
 }
 
-.logout-btn:hover {
+.back-btn:hover {
     box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
@@ -109,41 +109,127 @@
     width: 100%;
 }
 
-.admin-widgets {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-}
-
-.widget {
+.create-class-form {
     background: linear-gradient(135deg, #000000, #1e1440);
-    padding: 1.5rem;
+    padding: 2rem;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
-    cursor: pointer;
 }
 
-.widget:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 30px rgba(255, 255, 255, 0.15);
-    border-color: #ffffff;
-}
-
-.widget h3 {
+.create-class-form input,
+.create-class-form select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
     color: #ffffff;
-    margin-top: 0;
-    margin-bottom: 0.8rem;
-    font-size: 1.2rem;
-    text-shadow: 0 0 6px #ffffff;
+    font-size: 1rem;
 }
 
-.widget p {
-    color: #d3d3d3;
-    margin-bottom: 0;
+.create-class-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.create-class-form select option {
+    background: #1e1440;
+    color: #ffffff;
+}
+
+.student-checkboxes {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.student-checkboxes p {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    text-align: left;
+}
+
+.student-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding: 0.8rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.student-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.student-item.selected {
+    background: rgba(87, 54, 136, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.student-item input[type="checkbox"] {
+    display: none;
+}
+
+.student-item label {
+    color: #D3D3D3;
     font-size: 0.95rem;
-    line-height: 1.5;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.student-item label::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    margin-right: 12px;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+}
+
+.student-item.selected label::before {
+    background-color: #573688;
+    border-color: #573688;
+    box-shadow: 0 0 8px rgba(87, 54, 136, 0.6);
+}
+
+.student-email {
+    flex-grow: 1;
+    text-align: left;
+    margin-left: 12px;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(90deg, #573688, #520c5b);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
 /* Responsive Design */
@@ -174,13 +260,8 @@
         font-size: 1rem;
     }
 
-    .logo {
-        font-size: 1.8rem;
-    }
-
-    .logo-image {
-        width: 35px;
-        height: 35px;
+    .create-class-form {
+        padding: 1.5rem;
     }
 }
 
@@ -210,21 +291,16 @@
         font-size: 0.9rem;
     }
 
-    .widget {
-        padding: 1.2rem;
+    .create-class-form {
+        padding: 1rem;
     }
 
-    .widget h3 {
-        font-size: 1.1rem;
+    .student-checkboxes {
+        padding: 1rem;
     }
 
-    .widget p {
-        font-size: 0.9rem;
-    }
-
-    .logout-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
+    button[type="submit"] {
+        padding: 0.8rem;
+        font-size: 1rem;
     }
 }
-  
