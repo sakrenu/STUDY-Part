@@ -42,7 +42,7 @@
   }
   
   .header-container h2 {
-    margin: 0 0 1rem;
+    margin: 0 0 1.5rem;
     font-size: 1.8rem;
     font-weight: 600;
     color: #ffffff;
@@ -60,7 +60,7 @@
     font-weight: 500;
     transition: all 0.3s ease;
     z-index: 1;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     align-self: flex-start;
     text-shadow: 0 0 6px #ffffff;
   }
