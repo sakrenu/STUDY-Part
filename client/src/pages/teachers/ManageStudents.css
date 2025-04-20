@@ -69,7 +69,7 @@
 .welcome-section h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
-    text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+    color: #ffffff;
 }
 
 .welcome-section h3 {
@@ -122,14 +122,14 @@
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(100, 255, 218, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
 }
 
 .class-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-    border-color: rgba(100, 255, 218, 0.3);
+    background: rgba(60, 36, 104, 0.4);
+    box-shadow: 0 5px 20px rgba(111, 66, 193, 0.3);
 }
 
 .class-card-header {
@@ -147,8 +147,8 @@
 }
 
 .students-badge {
-    background: rgba(0, 0, 0, 0.3);
-    color: #64ffda;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     padding: 0.3rem 0.6rem;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -172,8 +172,8 @@
 
 .view-details-btn {
     background: transparent;
-    color: #64ffda;
-    border: 1px solid #64ffda;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     padding: 0.5rem 1rem;
     border-radius: 4px;
     cursor: pointer;
@@ -181,7 +181,7 @@
 }
 
 .view-details-btn:hover {
-    background-color: rgba(100, 255, 218, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Details Overlay */
@@ -208,7 +208,7 @@
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
-    box-shadow: 0 0 30px rgba(100, 255, 218, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     animation: slideIn 0.3s ease-out;
 }
 
@@ -277,24 +277,17 @@
     flex: 2;
 }
 
-.details-section h3 {
-    color: #64ffda;
+.details-section h3, 
+.students-section h3 {
+    color: #ffffff;
     margin-bottom: 1rem;
     font-size: 1.2rem;
-    border-bottom: 1px solid rgba(100, 255, 218, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding-bottom: 0.5rem;
 }
 
 .details-info p {
     margin: 0.7rem 0;
-}
-
-.students-section h3 {
-    color: #64ffda;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    border-bottom: 1px solid rgba(100, 255, 218, 0.3);
-    padding-bottom: 0.5rem;
 }
 
 .students-grid {
@@ -324,14 +317,14 @@
     top: 50%;
     transform: translateY(-50%);
     font-size: 0.7rem;
-    color: rgba(100, 255, 218, 0.8);
+    color: rgba(255, 255, 255, 0.7);
     font-weight: normal;
     width: 16px;
     height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(100, 255, 218, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
 }
 
