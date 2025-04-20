@@ -407,7 +407,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
             transition={{ duration: 0.3 }}
           >
             <h3>
-              <span className="addnotes-color-indicator" style={{ backgroundColor: '#9b4ae2' }}></span>
+              <span className="addnotes-color-indicator" style={{ backgroundColor: '#e982c8' }}></span>
               {notes[currentNote.regionId] ? 'Edit Notes' : 'Add Notes'} for Segment {currentNote.regionIndex + 1}
             </h3>
             <div className="addnotes-preview">
@@ -443,7 +443,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
               transition={{ duration: 0.2 }}
             >
               {activeTab === 'ai' ? (
-                <div className="addnotes-ai-card">
+                <>
                   <motion.div
                     className="addnotes-generated-box"
                     initial={{ height: 0, opacity: 0 }}
@@ -451,7 +451,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <h4>AI-Powered Notes</h4>
+                    <h4>AI-Generated Notes</h4>
                     <p>{generatedNotes || 'No notes generated yet. Click "Generate with AI" to create notes.'}</p>
                     {generatedNotes && (
                       <motion.button
@@ -464,83 +464,108 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
                       </motion.button>
                     )}
                   </motion.div>
-                  <div className="addnotes-ai-option">
-                    <textarea
-                      value={customPrompt}
-                      onChange={(e) => setCustomPrompt(e.target.value)}
-                      placeholder="Enter a custom prompt (e.g., 'Generate notes on photosynthesis for this segment')"
-                      className="addnotes-prompt-input"
-                      disabled={isGenerating || isSaving || isRecording}
-                    />
-                  </div>
-                  <div className="addnotes-ai-option">
-                    <label htmlFor="use-image" className="addnotes-ai-label" title="Include the segment image to generate notes based on its visual content">
-                      <input
-                        type="checkbox"
-                        id="use-image"
-                        checked={useImage}
-                        onChange={(e) => setUseImage(e.target.checked)}
+                  <div className="addnotes-ai-card">
+                    <div className="addnotes-ai-option">
+                      <textarea
+                        value={customPrompt}
+                        onChange={(e) => setCustomPrompt(e.target.value)}
+                        placeholder="Enter a custom prompt (e.g., 'Generate notes on photosynthesis for this segment')"
+                        className="addnotes-prompt-input"
                         disabled={isGenerating || isSaving || isRecording}
                       />
-                      <MdImage size={18} /> Include Segment Image
-                    </label>
-                  </div>
-                  <div className="addnotes-ai-option">
-                    <label htmlFor="document-upload" className="addnotes-ai-label" title="Upload a PDF or TXT file to provide context for AI notes">
-                      <MdUploadFile size={18} /> Upload Study Material (PDF/TXT)
-                    </label>
-                    <input
-                      id="document-upload"
-                      type="file"
-                      accept=".pdf,.txt"
-                      onChange={handleFileUpload}
-                      ref={fileInputRef}
-                      className="addnotes-upload-input"
-                      disabled={isGenerating || isSaving || isRecording}
-                    />
-                    {uploadedFile && <span className="addnotes-upload-filename">{uploadedFile.name}</span>}
-                  </div>
-                  <motion.button
-                    className="addnotes-ai-button"
-                    onClick={handleGenerateWithAI}
-                    disabled={isGenerating || isSaving || isRecording}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    aria-label="Generate notes with AI"
-                  >
-                    {isGenerating ? (
-                      <span className="addnotes-spinner"></span>
-                    ) : (
-                      <>
-                        <MdAutoAwesome size={20} /> Generate with AI
-                      </>
-                    )}
-                  </motion.button>
-                  {useImage && compositeImageUrl && (
-                    <motion.div
-                      className="addnotes-composite-preview"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: showPreview ? 'auto' : 0, opacity: showPreview ? 1 : 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <button
-                        className="addnotes-preview-toggle"
-                        onClick={() => setShowPreview(!showPreview)}
-                        aria-label={showPreview ? 'Hide LLM image preview' : 'Show LLM image preview'}
-                      >
-                        {showPreview ? 'Hide LLM Image Preview' : 'Show LLM Image Preview'}
-                      </button>
-                      {showPreview && (
-                        <img
-                          src={compositeImageUrl}
-                          alt="Composite image for LLM"
-                          className="addnotes-composite-image"
-                          onError={() => console.error(`Failed to load composite image: ${compositeImageUrl}`)}
+                    </div>
+                    <div className="addnotes-ai-option">
+                      <label htmlFor="use-image" className="addnotes-ai-label" title="Include the segment image to generate notes based on its visual content">
+                        <input
+                          type="checkbox"
+                          id="use-image"
+                          checked={useImage}
+                          onChange={(e) => setUseImage(e.target.checked)}
+                          disabled={isGenerating || isSaving || isRecording}
                         />
+                        <MdImage size={18} /> Include Segment Image
+                      </label>
+                    </div>
+                    <div className="addnotes-ai-option">
+                      <label htmlFor="document-upload" className="addnotes-ai-label" title="Upload a PDF or TXT file to provide context for AI notes">
+                        <MdUploadFile size={18} /> Upload Study Material (PDF/TXT)
+                      </label>
+                      <input
+                        id="document-upload"
+                        type="file"
+                        accept=".pdf,.txt"
+                        onChange={handleFileUpload}
+                        ref={fileInputRef}
+                        className="addnotes-upload-input"
+                        disabled={isGenerating || isSaving || isRecording}
+                      />
+                      {uploadedFile && <span className="addnotes-upload-filename">{uploadedFile.name}</span>}
+                    </div>
+                    <motion.button
+                      className="addnotes-ai-button"
+                      onClick={handleGenerateWithAI}
+                      disabled={isGenerating || isSaving || isRecording}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      aria-label="Generate notes with AI"
+                    >
+                      {isGenerating ? (
+                        <span className="addnotes-spinner"></span>
+                      ) : (
+                        <>
+                          <MdAutoAwesome size={20} /> Generate with AI
+                        </>
                       )}
-                    </motion.div>
-                  )}
-                </div>
+                    </motion.button>
+                    <motion.button
+                      className="addnotes-record-button"
+                      onClick={isRecording ? handleStopRecording : handleStartRecording}
+                      disabled={isGenerating || isSaving}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      aria-label={isRecording ? 'Stop recording' : 'Record notes'}
+                    >
+                      {isRecording ? (
+                        <>
+                          <MdStop size={20} /> Stop Recording
+                        </>
+                      ) : (
+                        <>
+                          <MdMic size={20} /> Record Notes
+                        </>
+                      )}
+                    </motion.button>
+                    {audioUrl && (
+                      <div className="addnotes-audio-preview">
+                        <audio controls src={audioUrl} className="addnotes-audio-player" />
+                      </div>
+                    )}
+                    {useImage && compositeImageUrl && (
+                      <motion.div
+                        className="addnotes-composite-preview"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: showPreview ? 'auto' : 0, opacity: showPreview ? 1 : 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <button
+                          className="addnotes-preview-toggle"
+                          onClick={() => setShowPreview(!showPreview)}
+                          aria-label={showPreview ? 'Hide LLM image preview' : 'Show LLM image preview'}
+                        >
+                          {showPreview ? 'Hide LLM Image Preview' : 'Show LLM Image Preview'}
+                        </button>
+                        {showPreview && (
+                          <img
+                            src={compositeImageUrl}
+                            alt="Composite image for LLM"
+                            className="addnotes-composite-image"
+                            onError={() => console.error(`Failed to load composite image: ${compositeImageUrl}`)}
+                          />
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <div className="addnotes-textarea-container">
                   <textarea
@@ -581,29 +606,29 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
                       </motion.button>
                     </div>
                   </div>
-                </div>
-              )}
-              <motion.button
-                className="addnotes-record-button"
-                onClick={isRecording ? handleStopRecording : handleStartRecording}
-                disabled={isGenerating || isSaving}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label={isRecording ? 'Stop recording' : 'Record notes'}
-              >
-                {isRecording ? (
-                  <>
-                    <MdStop size={20} /> Stop Recording
-                  </>
-                ) : (
-                  <>
-                    <MdMic size={20} /> Record Notes
-                  </>
-                )}
-              </motion.button>
-              {audioUrl && (
-                <div className="addnotes-audio-preview">
-                  <audio controls src={audioUrl} className="addnotes-audio-player" />
+                  <motion.button
+                    className="addnotes-record-button"
+                    onClick={isRecording ? handleStopRecording : handleStartRecording}
+                    disabled={isGenerating || isSaving}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label={isRecording ? 'Stop recording' : 'Record notes'}
+                  >
+                    {isRecording ? (
+                      <>
+                        <MdStop size={20} /> Stop Recording
+                      </>
+                    ) : (
+                      <>
+                        <MdMic size={20} /> Record Notes
+                      </>
+                    )}
+                  </motion.button>
+                  {audioUrl && (
+                    <div className="addnotes-audio-preview">
+                      <audio controls src={audioUrl} className="addnotes-audio-player" />
+                    </div>
+                  )}
                 </div>
               )}
               {error && (
