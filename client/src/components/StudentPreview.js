@@ -10,6 +10,9 @@ const StudentPreview = ({ image, regions, notes, noteOrder, lessonId, teacherEma
   const [isSaving, setIsSaving] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const imageRef = useRef(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+
 
   const handleSegmentClick = (regionId) => {
     setSelectedRegionId(regionId);
@@ -80,42 +83,51 @@ const StudentPreview = ({ image, regions, notes, noteOrder, lessonId, teacherEma
           <p>Click a segment to view its notes and audio below.</p>
         </div>
         <div className="student-preview-image-container">
+        <img
+          src={image.url}
+          alt="Segmented Image"
+          className="student-preview-base-image"
+          ref={imageRef}
+          onLoad={() => {
+            const rect = imageRef.current.getBoundingClientRect();
+            setImageDimensions({ width: rect.width, height: rect.height });
+          }}
+        />
+
+
+<div className="student-preview-regions-overlay">
+  {imageDimensions.width > 0 && imageDimensions.height > 0 &&
+    regions
+      .sort((a, b) => noteOrder.indexOf(a.region_id) - noteOrder.indexOf(b.region_id))
+      .map((region) => (
+        <div
+          key={region.region_id}
+          className={`student-preview-segment ${selectedRegionId === region.region_id ? 'selected' : ''}`}
+          onClick={() => handleSegmentClick(region.region_id)}
+          style={{
+            position: 'absolute',
+            top: `${(region.position.y / image.height) * imageDimensions.height}px`,
+            left: `${(region.position.x / image.width) * imageDimensions.width}px`,
+            width: `${(region.position.width / image.width) * imageDimensions.width}px`,
+            height: `${(region.position.height / image.height) * imageDimensions.height}px`,
+          }}
+        >
           <img
-            src={image.url}
-            alt="Segmented Image"
-            className="student-preview-base-image"
-            ref={imageRef}
+            src={region.mask_url}
+            alt={`Segment ${region.region_id}`}
+            className="student-preview-mask"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              opacity: 0.5,
+            }}
           />
-          <div className="student-preview-regions-overlay">
-            {regions
-              .sort((a, b) => noteOrder.indexOf(a.region_id) - noteOrder.indexOf(b.region_id))
-              .map((region) => (
-                <div
-                  key={region.region_id}
-                  className={`student-preview-segment ${selectedRegionId === region.region_id ? 'selected' : ''}`}
-                  onClick={() => handleSegmentClick(region.region_id)}
-                  style={{
-                    position: 'absolute',
-                    top: `${(region.position.y / imageRef.current?.naturalHeight) * 100}%`,
-                    left: `${(region.position.x / imageRef.current?.naturalWidth) * 100}%`,
-                    width: `${(region.position.width / imageRef.current?.naturalWidth) * 100}%`,
-                    height: `${(region.position.height / imageRef.current?.naturalHeight) * 100}%`,
-                  }}
-                >
-                  <img
-                    src={region.mask_url}
-                    alt={`Segment ${region.region_id}`}
-                    className="student-preview-mask"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      opacity: 0.5,
-                    }}
-                  />
-                </div>
-              ))}
-          </div>
+        </div>
+      ))}
+</div>
+
+
         </div>
         <AnimatePresence>
           {selectedRegionId && (
