@@ -5,17 +5,22 @@
     color: #ffffff;
     font-family: 'Segoe UI', Roboto, sans-serif;
     position: relative;
+    padding-top: 72px; /* Add padding to account for navbar height */
 }
 
 .top-nav {
-    background-color: #3c2468;
-    padding: 1rem 1.5rem;
+    background-color: rgba(0, 0, 0, 0.8); /* Match TeachByParts */
+    backdrop-filter: blur(10px); /* Match TeachByParts */
+    padding: 1rem 2rem; /* Match TeachByParts */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
+    position: fixed; /* Change to fixed for consistency */
     top: 0;
-    z-index: 100;
+    left: 0; /* Navbar spans full width */
+    right: 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(111, 66, 193, 0.3); /* Match TeachByParts */
 }
 
 .logo-container {
@@ -47,16 +52,28 @@
 
 .back-btn {
     background: linear-gradient(90deg, #573688, #520c5b);
-    padding: 0.5rem 1rem;
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 9999px;
-    color: #FFFFFF;
+    border-radius: 8px;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: box-shadow 0.3s ease;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(111, 66, 193, 0.2);
 }
 
 .back-btn:hover {
-    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(111, 66, 193, 0.3);
+    background: linear-gradient(90deg, #6a44a7, #681577);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
 }
 
 /* Welcome Section */

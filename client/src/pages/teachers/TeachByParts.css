@@ -1,13 +1,11 @@
 /* Existing styles from TeachByParts.css */
 .teach-by-parts-container {
-  display: flex;
+  display: relative;
   min-height: 100vh;
   background-color: #000000;
   padding-left: 250px; /* matches the sidebar width */
+  margin-top: 72px; /* Add margin-top to account for navbar height */
 }
-
-
-
 
 .sidebar {
   width: 250px;
@@ -15,9 +13,9 @@
   color: #ecf0f1;
   padding: 20px;
   position: fixed;
-  top: 0;
+  top: 72px; /* Update top position to start below navbar */
   left: 0;
-  height: 100vh;
+  height: calc(100vh - 72px); /* Adjust height to account for navbar */
 }
 
 .sidebar-title {
@@ -62,6 +60,7 @@
   flex-direction: column;
   align-items: center;
   background-color: #000000;
+  padding-top: 20px; /* Reduce padding since we now have margin from container */
 }
 
 .main-header {
@@ -282,4 +281,70 @@
 
 .selcomp-back-button:hover {
   box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  position: fixed;
+  top: 0;
+  left: 0; /* Change from 250px to 0 to span full width */
+  right: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(111, 66, 193, 0.3);
+  height: 72px; /* Explicitly set navbar height */
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+}
+
+.logo {
+  text-decoration: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.study {
+  color: #cab7ce;
+}
+
+.part {
+  color: #cd579a;
+}
+
+.back-btn {
+  background: linear-gradient(90deg, #573688, #520c5b);
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(111, 66, 193, 0.2);
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(111, 66, 193, 0.3);
+  background: linear-gradient(90deg, #6a44a7, #681577);
+}
+
+.back-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
 }
