@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Body
-from typing import Dict
+from typing import Dict, Tuple
 import PyPDF2
 import io
 import pytesseract
@@ -19,6 +19,7 @@ from typing import Any, List, Optional, Mapping
 import cloudinary
 import cloudinary.uploader
 import uuid
+import re # Import regex
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO)
@@ -82,86 +83,101 @@ embeddings = HuggingFaceEmbeddings(
     cache_folder=cache_dir
 )
 
-async def process_text_to_vectors(text: str, user_id: str) -> Dict:
-    """Process text into chunks and create/update vector store for a user"""
+# --- Updated Vector Store Processing ---
+async def process_text_to_vectors(text: str, user_id: str, document_id: str) -> Dict:
+    """Process text into chunks and create/update vector store for a specific document"""
     try:
-        # Split text into chunks
         chunks = text_splitter.split_text(text)
         if not chunks:
-             logger.warning(f"No text chunks generated for user_id: {user_id}")
+             logger.warning(f"No text chunks generated for user_id: {user_id}, document_id: {document_id}")
              return {"status": "success", "message": "No text content found to process."}
 
-        vector_store_dir = f"vector_stores/{user_id}"
+        # Document-specific vector store path
+        vector_store_dir = f"vector_stores/{user_id}/{document_id}"
         vector_store_path = os.path.join(vector_store_dir, "vectors")
         os.makedirs(vector_store_dir, exist_ok=True)
 
-        # Create or update vector store
-        if os.path.exists(vector_store_path):
-             logger.info(f"Loading existing vector store for user_id: {user_id}")
-             vectorstore = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
-             vectorstore.add_texts(chunks)
-             logger.info(f"Added {len(chunks)} new chunks to existing vector store for user_id: {user_id}")
-        else:
-             logger.info(f"Creating new vector store for user_id: {user_id}")
-             vectorstore = FAISS.from_texts(chunks, embeddings)
-             logger.info(f"Created vector store with {len(chunks)} chunks for user_id: {user_id}")
+        # Create a new vector store for this document (overwrite if exists)
+        logger.info(f"Creating new vector store for user_id: {user_id}, document_id: {document_id}")
+        vectorstore = FAISS.from_texts(chunks, embeddings)
+        logger.info(f"Created vector store with {len(chunks)} chunks for document_id: {document_id}")
 
-        # Save the vector store
         vectorstore.save_local(vector_store_path)
-        logger.info(f"Vector store saved successfully for user_id: {user_id} at {vector_store_path}")
+        logger.info(f"Vector store saved successfully for document_id: {document_id} at {vector_store_path}")
 
         return {"status": "success", "chunks_processed": len(chunks)}
     except Exception as e:
-        logger.error(f"Error processing text for user_id {user_id}: {str(e)}")
+        logger.error(f"Error processing text for user_id {user_id}, document_id {document_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing text: {str(e)}")
 
-async def upload_to_cloudinary(file_content: bytes, user_id: str, filename: str) -> str:
-    """Uploads file content to Cloudinary"""
+# --- Updated Cloudinary Upload ---
+async def upload_to_cloudinary(file_content: bytes, user_id: str, filename: str) -> Tuple[str, str]:
+    """Uploads file content to Cloudinary and returns secure_url and public_id"""
     try:
-        public_id = f"notes/{user_id}/{uuid.uuid4()}_{filename}"
+        # Generate a unique identifier part for the public_id
+        unique_id = str(uuid.uuid4())
+        # Sanitize filename for public_id (remove potentially problematic characters)
+        sanitized_filename = re.sub(r'[^a-zA-Z0-9_.-]', '_', filename)
+        public_id = f"notes/{user_id}/{unique_id}_{sanitized_filename}"
+
         logger.info(f"Uploading file to Cloudinary with public_id: {public_id}")
         upload_result = cloudinary.uploader.upload(
             file_content,
             public_id=public_id,
-            resource_type="auto" # Automatically detect resource type
+            resource_type="auto"
         )
-        logger.info(f"File uploaded successfully to Cloudinary: {upload_result['secure_url']}")
-        return upload_result["secure_url"]
+        secure_url = upload_result['secure_url']
+        returned_public_id = upload_result['public_id'] # Use the public_id returned by Cloudinary
+        logger.info(f"File uploaded successfully to Cloudinary: {secure_url}, Public ID: {returned_public_id}")
+        return secure_url, returned_public_id
     except Exception as e:
         logger.error(f"Cloudinary upload failed for user {user_id}, filename {filename}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Cloudinary upload error: {str(e)}")
 
+def extract_document_id_from_public_id(public_id: str) -> str:
+    """Extracts a unique document identifier from the Cloudinary public_id"""
+    # Assumes public_id format like "notes/user_id/uuid_filename"
+    parts = public_id.split('/')
+    if len(parts) > 2:
+        # Extract the part after the user_id, e.g., "uuid_filename"
+        # Or even better, just the UUID if it's always present at the start
+        filename_part = parts[-1]
+        uuid_match = re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', filename_part)
+        if uuid_match:
+            return uuid_match.group(0) # Return just the UUID
+        else:
+            # Fallback to using the last part if UUID is not found (less ideal)
+            logger.warning(f"Could not extract UUID from public_id: {public_id}. Using last part.")
+            return filename_part
+    logger.error(f"Could not extract document_id from unexpected public_id format: {public_id}")
+    # Return a default or raise an error if extraction fails critically
+    return public_id.replace('/', '_') # Basic fallback
+
 
 @router.post("/process_pdf")
 async def process_pdf(user_id: str = Body(...), file: UploadFile = File(...)):
-    """Process PDF files: Upload to Cloudinary, extract text, create vectors"""
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="File must be a PDF")
-
     try:
         logger.info(f"Processing PDF file: {file.filename} for user: {user_id}")
-        # Read PDF content
         pdf_content = await file.read()
+        cloudinary_url, public_id = await upload_to_cloudinary(pdf_content, user_id, file.filename)
+        document_id = extract_document_id_from_public_id(public_id)
 
-        # Upload to Cloudinary first
-        cloudinary_url = await upload_to_cloudinary(pdf_content, user_id, file.filename)
-
-        # Extract text
         pdf_file = io.BytesIO(pdf_content)
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         text = ""
         for page in pdf_reader.pages:
             page_text = page.extract_text()
-            if page_text: # Add check for None
-                text += page_text + "\n"
+            if page_text: text += page_text + "\n"
         logger.info(f"Extracted {len(text)} characters from PDF: {file.filename}")
 
-        # Process text to vectors
-        vector_result = await process_text_to_vectors(text, user_id)
+        vector_result = await process_text_to_vectors(text, user_id, document_id)
 
         return {
-            "content": text, # Return extracted text
+            "content": text,
             "cloudinary_url": cloudinary_url,
+            "document_id": document_id, # Return the document_id
             "filename": file.filename,
             "filetype": file.content_type,
             "vector_status": vector_result,
@@ -169,55 +185,43 @@ async def process_pdf(user_id: str = Body(...), file: UploadFile = File(...)):
         }
     except Exception as e:
         logger.error(f"Error processing PDF for user {user_id}: {str(e)}")
-        # Don't re-raise generic Exception, let specific errors (like HTTPExceptions) propagate
-        if not isinstance(e, HTTPException):
-             raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
-        else:
-             raise # Re-raise HTTPException
+        if not isinstance(e, HTTPException): raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
+        else: raise
 
 @router.post("/process_ppt")
 async def process_ppt(user_id: str = Body(...), file: UploadFile = File(...)):
-    """Process PowerPoint files: Upload to Cloudinary, extract text, create vectors"""
     if not file.filename.endswith(('.ppt', '.pptx')):
         raise HTTPException(status_code=400, detail="File must be a PowerPoint presentation")
-
-    temp_path = None # Initialize temp_path
+    temp_path = None
     try:
         logger.info(f"Processing PowerPoint file: {file.filename} for user: {user_id}")
-        # Read file content only once
         file_content = await file.read()
+        cloudinary_url, public_id = await upload_to_cloudinary(file_content, user_id, file.filename)
+        document_id = extract_document_id_from_public_id(public_id)
 
-        # Upload to Cloudinary first
-        cloudinary_url = await upload_to_cloudinary(file_content, user_id, file.filename)
-
-        # Save the uploaded file temporarily for text extraction
         suffix = Path(file.filename).suffix
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-            temp_file.write(file_content) # Write the content to temp file
+            temp_file.write(file_content)
             temp_path = temp_file.name
-            logger.info(f"Saved PPT temporarily to: {temp_path}")
+        logger.info(f"Saved PPT temporarily to: {temp_path}")
 
-        # Process the PowerPoint
         try:
             prs = Presentation(temp_path)
             text = ""
-
-            # Extract text from all slides
             for slide in prs.slides:
                 for shape in slide.shapes:
-                    if hasattr(shape, "text"):
-                        text += shape.text + "\n"
+                    if hasattr(shape, "text"): text += shape.text + "\n"
             logger.info(f"Extracted {len(text)} characters from PPT: {file.filename}")
         except Exception as ppt_error:
             logger.error(f"Error extracting text from PowerPoint: {str(ppt_error)}")
             raise HTTPException(status_code=500, detail=f"Error reading PowerPoint content: {str(ppt_error)}")
 
-        # Process text to vectors
-        vector_result = await process_text_to_vectors(text, user_id)
+        vector_result = await process_text_to_vectors(text, user_id, document_id)
 
         return {
             "content": text,
             "cloudinary_url": cloudinary_url,
+            "document_id": document_id, # Return the document_id
             "filename": file.filename,
             "filetype": file.content_type,
             "vector_status": vector_result,
@@ -225,19 +229,88 @@ async def process_ppt(user_id: str = Body(...), file: UploadFile = File(...)):
         }
     except Exception as e:
         logger.error(f"Error processing PowerPoint for user {user_id}: {str(e)}")
-        if not isinstance(e, HTTPException):
-             raise HTTPException(status_code=500, detail=f"Error processing PowerPoint: {str(e)}")
-        else:
-             raise # Re-raise HTTPException
+        if not isinstance(e, HTTPException): raise HTTPException(status_code=500, detail=f"Error processing PowerPoint: {str(e)}")
+        else: raise
     finally:
-        # Clean up temporary file
         if temp_path and os.path.exists(temp_path):
-            try:
-                os.unlink(temp_path)
-                logger.info(f"Successfully deleted temporary file: {temp_path}")
-            except Exception as unlink_e:
-                 logger.error(f"Error deleting temporary file {temp_path}: {unlink_e}")
+            try: os.unlink(temp_path); logger.info(f"Successfully deleted temporary file: {temp_path}")
+            except Exception as unlink_e: logger.error(f"Error deleting temporary file {temp_path}: {unlink_e}")
 
+
+# --- Updated Query Endpoint ---
+@router.post("/query_notes")
+async def query_notes(user_id: str = Body(...), query: str = Body(...), document_id: str = Body(...)): # Expect document_id
+    """Query the vector store for a specific document using Google Gemini"""
+    try:
+        logger.info(f"Querying notes for user: {user_id}, document_id: {document_id}. Query: '{query}'")
+        # Define document-specific vector store path
+        vector_store_path = f"vector_stores/{user_id}/{document_id}/vectors"
+
+        if not os.path.exists(vector_store_path):
+             logger.warning(f"Vector store not found for user: {user_id}, document_id: {document_id} at {vector_store_path}")
+             raise HTTPException(status_code=404, detail="Notes for this specific document not found or not processed yet.")
+
+        logger.info(f"Loading vector store from: {vector_store_path}")
+        try:
+            vectorstore = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
+            logger.info(f"Successfully loaded vector store for document: {document_id}")
+        except Exception as faiss_load_error:
+             logger.error(f"Error loading FAISS index for document {document_id}: {faiss_load_error}")
+             raise HTTPException(status_code=500, detail=f"Error loading this document's index. Try re-uploading it. Original error: {str(faiss_load_error)}")
+
+        logger.info(f"Performing similarity search for query: '{query}' on document: {document_id}")
+        docs = vectorstore.similarity_search(query, k=3)
+
+        if not docs:
+             logger.info(f"No relevant documents found for query: '{query}' in document: {document_id}")
+             return {"response": "Could not find relevant information in this document for your query.", "sources": [], "status": "success"}
+        logger.info(f"Found {len(docs)} relevant documents for query: '{query}' in document: {document_id}")
+
+        context = "\n\n".join([doc.page_content for doc in docs])
+        prompt = f"""Answer the following question based ONLY on the provided context from the document. If the context doesn't contain the answer, say you couldn't find the information in this document.
+
+Context:
+{context}
+
+Question: {query}
+
+Answer:"""
+
+        logger.info(f"Sending prompt to Gemini for document: {document_id}")
+        response = llm.invoke(prompt)
+        logger.info(f"Received response from Gemini for document: {document_id}")
+
+        return {
+            "response": response.content,
+            "sources": [doc.page_content for doc in docs],
+            "status": "success"
+        }
+    except HTTPException as http_exc:
+         raise http_exc
+    except Exception as e:
+        logger.error(f"Unexpected error querying notes for document {document_id}: {str(e)}")
+        if "Pickle" in str(e) or "deserialization" in str(e):
+             raise HTTPException(status_code=500, detail=f"Error processing this document's index. Please try re-uploading it. Original error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error querying notes: {str(e)}")
+
+# --- Clear Vector Store Endpoint (remains the same, clears all for user) ---
+@router.post("/clear_vector_store")
+async def clear_vector_store(user_id: str = Body(...)):
+    """Clear all vector stores for a specific user"""
+    try:
+        logger.info(f"Clearing ALL vector stores for user: {user_id}")
+        vector_store_user_dir = f"vector_stores/{user_id}" # Path to the user's main folder
+
+        if os.path.exists(vector_store_user_dir):
+            shutil.rmtree(vector_store_user_dir)
+            logger.info(f"All vector stores cleared successfully for user: {user_id}")
+            return {"status": "success", "message": "All vector stores cleared successfully"}
+        else:
+            logger.info(f"No vector stores found for user: {user_id}")
+            return {"status": "success", "message": "No vector stores found for this user"}
+    except Exception as e:
+        logger.error(f"Error clearing vector stores for user {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error clearing vector stores: {str(e)}")
 
 @router.post("/process_image")
 async def process_image(user_id: str = Body(...), file: UploadFile = File(...)):
@@ -262,7 +335,7 @@ async def process_image(user_id: str = Body(...), file: UploadFile = File(...)):
         logger.info(f"Extracted {len(text)} characters via OCR from image: {file.filename}")
 
         # Process text to vectors
-        vector_result = await process_text_to_vectors(text, user_id)
+        vector_result = await process_text_to_vectors(text, user_id, "image")
 
         return {
             "content": text,
@@ -277,79 +350,4 @@ async def process_image(user_id: str = Body(...), file: UploadFile = File(...)):
         if not isinstance(e, HTTPException):
             raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
         else:
-            raise # Re-raise HTTPException
-
-
-@router.post("/query_notes")
-async def query_notes(user_id: str = Body(...), query: str = Body(...)):
-    """Query the vector store for relevant information using Google Gemini"""
-    try:
-        logger.info(f"Querying notes for user: {user_id} with Gemini. Query: '{query}'")
-        # Define vector store path based on user_id
-        vector_store_path = f"vector_stores/{user_id}/vectors"
-
-        # Check if the vector store exists
-        if not os.path.exists(vector_store_path):
-             logger.warning(f"Vector store not found for user: {user_id} at {vector_store_path}")
-             # It's better to inform the user clearly.
-             raise HTTPException(status_code=404, detail="No notes found for this user. Please upload some notes first.")
-
-        # Load the vector store
-        logger.info(f"Loading vector store from: {vector_store_path}")
-        try:
-            vectorstore = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
-            logger.info(f"Successfully loaded vector store for user: {user_id}")
-        except Exception as faiss_load_error:
-             logger.error(f"Error loading FAISS index for user {user_id} from {vector_store_path}: {faiss_load_error}")
-             # Provide a more specific error message for potential corruption or version issues
-             raise HTTPException(status_code=500, detail=f"Error loading your notes' index. It might be corrupted or incompatible. Try re-uploading your notes. Original error: {str(faiss_load_error)}")
-
-        # First get relevant documents
-        logger.info(f"Performing similarity search for query: '{query}' for user: {user_id}")
-        docs = vectorstore.similarity_search(query, k=3) # k=3 means retrieve top 3 relevant chunks
-
-        # Check if any relevant documents were found
-        if not docs:
-             logger.info(f"No relevant documents found for query: '{query}' for user: {user_id}")
-             return {
-                "response": "Could not find relevant information in your notes for this query.",
-                "sources": [],
-                "status": "success"
-            }
-        logger.info(f"Found {len(docs)} relevant documents for query: '{query}' for user: {user_id}")
-
-        # Combine the content of relevant documents to form the context
-        context = "\n\n".join([doc.page_content for doc in docs])
-
-        # Format a prompt for the LLM, instructing it to use only the provided context
-        prompt = f"""Answer the following question based ONLY on the provided context. If the context doesn't contain the answer, say you couldn't find the information in the notes.
-
-Context:
-{context}
-
-Question: {query}
-
-Answer:"""
-
-        # Get response from Gemini LLM
-        logger.info(f"Sending prompt to Gemini for user: {user_id}")
-        response = llm.invoke(prompt)
-        logger.info(f"Received response from Gemini for user: {user_id}")
-
-        # Return the LLM's response and the source document contents
-        return {
-            "response": response.content, # Access content attribute for the response string
-            "sources": [doc.page_content for doc in docs], # Include the source text chunks
-            "status": "success"
-        }
-    except HTTPException as http_exc:
-         # Re-raise HTTPExceptions directly to maintain status codes and details
-         raise http_exc
-    except Exception as e:
-        # Handle any other unexpected errors
-        logger.error(f"Unexpected error querying notes with Gemini for user {user_id}: {str(e)}")
-        # Check specifically for deserialization errors which might indicate version mismatch or corruption
-        if "Pickle" in str(e) or "deserialization" in str(e):
-             raise HTTPException(status_code=500, detail=f"Error processing your notes index. It might be due to library version changes or corruption. Please try re-uploading your notes. Original error: {str(e)}")
-        # For other errors, return a generic 500 error
-        raise HTTPException(status_code=500, detail=f"Error querying notes: {str(e)}") 
+            raise # Re-raise HTTPException 

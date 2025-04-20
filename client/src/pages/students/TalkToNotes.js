@@ -17,6 +17,41 @@ const TalkToNotes = () => {
     useEffect(() => {
         // Initialize notes as empty array - they will be stored in local state
         setNotes([]);
+        
+        // Clear vector stores when component mounts (page refresh)
+        const clearVectorStores = async () => {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    console.log('No user logged in, skipping vector store clear');
+                    return;
+                }
+                
+                console.log('Clearing vector stores...');
+                const response = await fetch('http://127.0.0.1:8000/api/rag/clear_vector_store', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: user.uid
+                    }),
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Failed to clear vector stores:', errorData.detail);
+                } else {
+                    const data = await response.json();
+                    console.log('Vector stores cleared:', data.message);
+                }
+            } catch (error) {
+                console.error('Error clearing vector stores:', error);
+            }
+        };
+        
+        // Call the function
+        clearVectorStores();
     }, []);
 
     // Auto-scroll to the bottom when chat history updates
@@ -30,7 +65,6 @@ const TalkToNotes = () => {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Reset states
         setUploadLoading(true);
         setUploadError('');
 
@@ -38,31 +72,21 @@ const TalkToNotes = () => {
             const user = auth.currentUser;
             if (!user) throw new Error('No user logged in');
 
-            // Validate file type
             const allowedTypes = [
                 'application/pdf',
                 'application/vnd.ms-powerpoint',
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
             ];
-
             if (!allowedTypes.includes(file.type)) {
                 throw new Error('File type not supported. Please upload PDF or PPT files only.');
             }
 
-            // Create form data
             const formData = new FormData();
             formData.append('file', file);
             formData.append('user_id', user.uid);
 
-            // Determine which endpoint to use based on file type
-            let endpoint;
-            if (file.type.includes('pdf')) {
-                endpoint = '/api/rag/process_pdf';
-            } else {
-                endpoint = '/api/rag/process_ppt';
-            }
+            let endpoint = file.type.includes('pdf') ? '/api/rag/process_pdf' : '/api/rag/process_ppt';
 
-            // Send to backend for processing
             const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
                 method: 'POST',
                 body: formData,
@@ -75,18 +99,18 @@ const TalkToNotes = () => {
 
             const data = await response.json();
 
-            // Create new note object
+            // Include document_id in the new note object
             const newNote = {
                 title: file.name,
                 content: data.content,
                 cloudinaryUrl: data.cloudinary_url,
+                document_id: data.document_id, // Store the document ID
                 fileType: data.filetype,
                 timestamp: Date.now()
             };
 
-            // Update local state
             setNotes(prevNotes => [...prevNotes, newNote]);
-            
+
         } catch (error) {
             console.error('Error uploading file:', error);
             setUploadError(error.message);
@@ -97,21 +121,21 @@ const TalkToNotes = () => {
 
     const handleNoteSelect = (note) => {
         setSelectedNote(note);
-        setChatHistory([]); // Clear chat history when selecting a new note
+        setChatHistory([]);
     };
 
     const handleQuerySubmit = async (e) => {
         e.preventDefault();
-        if (!query.trim() || !selectedNote) return;
+        if (!query.trim() || !selectedNote || !selectedNote.document_id) {
+            // Added check for document_id
+            setChatHistory(prev => [...prev, { type: 'bot', content: 'Please select a processed note first.' }]);
+            return;
+        }
 
         const userMessage = query.trim();
-        setQuery(''); // Clear input
+        setQuery('');
         setLoading(true);
-
-        // Add user message immediately
         setChatHistory(prev => [...prev, { type: 'user', content: userMessage }]);
-        
-        // Add a temporary typing indicator
         setChatHistory(prev => [...prev, { type: 'typing', content: '' }]);
 
         try {
@@ -126,8 +150,7 @@ const TalkToNotes = () => {
                 body: JSON.stringify({
                     user_id: user.uid,
                     query: userMessage,
-                    document_title: selectedNote.title,
-                    cloudinary_url: selectedNote.cloudinaryUrl
+                    document_id: selectedNote.document_id // Send the document_id
                 }),
             });
 
@@ -137,22 +160,16 @@ const TalkToNotes = () => {
             }
 
             const data = await response.json();
-            
-            // Remove the typing indicator and add bot response
+
             setChatHistory(prev => {
                 const newHistory = prev.filter(msg => msg.type !== 'typing');
                 return [...newHistory, { type: 'bot', content: data.response }];
             });
         } catch (error) {
             console.error('Error querying notes:', error);
-            
-            // Remove the typing indicator and add error message
             setChatHistory(prev => {
                 const newHistory = prev.filter(msg => msg.type !== 'typing');
-                return [...newHistory, { 
-                    type: 'bot', 
-                    content: 'Sorry, there was an error processing your query. Please try again.' 
-                }];
+                return [...newHistory, { type: 'bot', content: 'Sorry, there was an error processing your query. Please try again.' }];
             });
         } finally {
             setLoading(false);
