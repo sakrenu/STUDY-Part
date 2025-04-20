@@ -99,9 +99,11 @@ const TeachingMode = () => {
 
   return (
     <div className="teachers-dashboard">
-      {activeTab === 'teachbypart' && renderContent()}
+      
+      {renderContent()}
     </div>
   );
+  
   
 };
 

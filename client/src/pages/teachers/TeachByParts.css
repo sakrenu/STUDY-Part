@@ -1,6 +1,6 @@
 /* Existing styles from TeachByParts.css */
 .teach-by-parts-container {
-  display: flex;
+  display: relative;
   min-height: 100vh;
   background-color: #000000; /* Dark background to match landing page */
 }
