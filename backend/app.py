@@ -10,15 +10,23 @@ import cloudinary.uploader
 import os
 import uuid
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict
 from sam import Segmenter
 from dotenv import load_dotenv
-from deprecated_app import deprecated_router
-import PyPDF2
 from sentence_transformers import SentenceTransformer
 import faiss
 from gemini_service import generate_notes_with_gemini
 from huggingface_hub import login
+from routes.deprecated_app import deprecated_router
+from routes.rag_routes import router as rag_router
+import PyPDF2
+import pytesseract
+from pptx import Presentation
+import tempfile
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+import shutil
 
 load_dotenv()
 
@@ -35,6 +43,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include the deprecated router
 app.include_router(
     deprecated_router,
     prefix="/v1",
@@ -42,6 +51,18 @@ app.include_router(
     responses={404: {"description": "Not found"}}
 )
 
+# Include the RAG router with proper configuration
+app.include_router(
+    rag_router,
+    prefix="",  # Empty prefix to respect the router's own prefix
+    tags=["RAG"],
+    responses={
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"}
+    }
+)
+
+# Add deprecation warning middleware
 @app.middleware("http")
 async def add_deprecation_header(request, call_next):
     response = await call_next(request)
@@ -80,6 +101,27 @@ class SegmentRequest(BaseModel):
     box: Optional[List[float]] = None
     points: Optional[List[List[float]]] = None
     labels: Optional[List[int]] = None
+
+# Initialize text splitter for chunking
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200,
+    length_function=len,
+)
+
+# Initialize embeddings using HuggingFace
+cache_dir = os.path.join(os.path.dirname(__file__), 'model_cache')
+os.makedirs(cache_dir, exist_ok=True)
+
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    model_kwargs={'device': 'cpu'},
+    encode_kwargs={
+        'normalize_embeddings': True,
+        'batch_size': 32
+    },
+    cache_folder=cache_dir
+)
 
 @app.get("/health")
 async def health_check():
