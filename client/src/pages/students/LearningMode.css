@@ -119,6 +119,29 @@
   margin: 0 auto;
 }
 
+.courses-overview {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.course-card {
+    box-shadow: 0 0 15px rgba(111, 66, 193, 0.3);
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(111, 66, 193, 0.5);
+}
+
 /* Shared Note Styles */
 .shared-note {
   background: linear-gradient(135deg, #000000, #30074d, #000000);

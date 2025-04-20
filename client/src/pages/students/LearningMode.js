@@ -9,7 +9,6 @@ const LearningMode = ({ studentId }) => {
     const [originalImage, setOriginalImage] = useState(null);
     const [segmentedParts, setSegmentedParts] = useState([]);
     const [selectedNotes, setSelectedNotes] = useState('');
-    const [activeTab, setActiveTab] = useState('dashboard');
     const [notifications, setNotifications] = useState([]);
     const [enrolledCourses, setEnrolledCourses] = useState([]);
     const [professors, setProfessors] = useState({});
@@ -102,116 +101,6 @@ const LearningMode = ({ studentId }) => {
         'linear-gradient(135deg, #FFA585, #FFEDA0)'  // Orange
     ];
 
-    // Render content based on active tab
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'dashboard':
-                return (
-                    <>
-                        {originalImage && (
-                            <div className="image-container">
-                                <img src={originalImage} alt="Original" className="original-image" />
-                                {segmentedParts.map((part, index) => (
-                                    <div
-                                        key={index}
-                                        className="segment-highlight"
-                                        style={{ top: part.top, left: part.left, width: part.width, height: part.height }}
-                                        onClick={() => handlePartClick(part.notes)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {selectedNotes && (
-                            <div className="notes-section card-neon">
-                                <h2>Notes</h2>
-                                <p>{selectedNotes}</p>
-                            </div>
-                        )}
-                    </>
-                );
-            case 'view-notes':
-                return (
-                    <div className="view-notes-section card-neon">
-                        <h2>View Notes</h2>
-                        {segmentedParts.length > 0 ? (
-                            <div className="notes-grid">
-                                {segmentedParts.map((part, index) => (
-                                    <div key={index} className="note-card">
-                                        <p>{part.notes}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p>No notes available.</p>
-                        )}
-                    </div>
-                );
-            case 'notifications':
-                return (
-                    <div className="notifications-section card-neon">
-                        <h2>Notifications</h2>
-                        {notifications.length > 0 ? (
-                            <ul>
-                                {notifications.map((notification, index) => (
-                                    <li key={index} className="notification-item">
-                                        <p>{notification}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p>No new notifications.</p>
-                        )}
-                    </div>
-                );
-            case 'courses':
-                return (
-                    <div className="courses-overview">
-                        <div className="courses-header">
-                            <h2>Course Overview</h2>
-                        </div>
-                        <div className="courses-grid">
-                            {enrolledCourses.map((course, index) => (
-                                <div 
-                                    key={course.id} 
-                                    className="course-card"
-                                    onClick={() => handleCourseClick(course.id)}
-                                    style={{ 
-                                        background: cardColors[index % cardColors.length],
-                                        padding: '20px',
-                                        borderRadius: '10px',
-                                        minHeight: '200px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'space-between',
-                                        cursor: 'pointer',
-                                        transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                                    }}
-                                >
-                                    <div>
-                                        <h3 className="course-name">{course.courseName}</h3>
-                                        <p className="professor-name" style={{ 
-                                            color: 'rgba(255, 255, 255, 0.8)', 
-                                            fontSize: '0.9rem', 
-                                            marginTop: '8px' 
-                                        }}>
-                                            Professor: {professors[course.professor] || 'Loading...'}
-                                        </p>
-                                    </div>
-                                    <div className="course-details">
-                                        <p>Class: {course.className}</p>
-                                        <p>Students: {course.students?.length || 0}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
-
     return (
         <div className="student-dashboard">
             {/* Top Navigation */}
@@ -228,45 +117,51 @@ const LearningMode = ({ studentId }) => {
                 </button>
             </nav>
 
-            {/* Navbar */}
-            <nav className="navbar">
-                <ul>
-                    <li
-                        className={activeTab === 'dashboard' ? 'active' : ''}
-                        onClick={() => setActiveTab('dashboard')}
-                    >
-                        Dashboard
-                    </li>
-                    <li
-                        className={activeTab === 'view-notes' ? 'active' : ''}
-                        onClick={() => setActiveTab('view-notes')}
-                    >
-                        View Notes
-                    </li>
-                    <li
-                        className={activeTab === 'notifications' ? 'active' : ''}
-                        onClick={() => setActiveTab('notifications')}
-                    >
-                        Notifications
-                    </li>
-                    <li
-                        className={activeTab === 'courses' ? 'active' : ''}
-                        onClick={() => setActiveTab('courses')}
-                    >
-                        My Courses
-                    </li>
-                </ul>
-            </nav>
-
             {/* Header */}
             <header className="dashboard-header">
-                <h1 className="dashboard-title">Learning Mode</h1>
-                <p className="dashboard-subtitle">Explore and learn from your teacher's notes.</p>
+                <h1 className="dashboard-title">Your Courses</h1>
+                <p className="dashboard-subtitle">Access your enrolled courses</p>
             </header>
 
-            {/* Main Content */}
+            {/* Main Content - Directly showing courses */}
             <div className="main-content">
-                {renderContent()}
+                <div className="courses-overview">
+                    <div className="courses-grid">
+                        {enrolledCourses.map((course, index) => (
+                            <div 
+                                key={course.id} 
+                                className="course-card"
+                                onClick={() => navigate(`/course/${course.id}`)}
+                                style={{ 
+                                    background: cardColors[index % cardColors.length],
+                                    padding: '20px',
+                                    borderRadius: '10px',
+                                    minHeight: '200px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between',
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                                }}
+                            >
+                                <div>
+                                    <h3 className="course-name">{course.courseName}</h3>
+                                    <p className="professor-name" style={{ 
+                                        color: 'rgba(255, 255, 255, 0.8)', 
+                                        fontSize: '0.9rem', 
+                                        marginTop: '8px' 
+                                    }}>
+                                        Professor: {professors[course.professor] || 'Loading...'}
+                                    </p>
+                                </div>
+                                <div className="course-details">
+                                    <p>Class: {course.className}</p>
+                                    <p>Students: {course.students?.length || 0}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );
