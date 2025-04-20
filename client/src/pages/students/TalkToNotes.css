@@ -147,20 +147,17 @@
 
 /* Interaction Area */
 .interaction-area {
-    flex: 1;
-    background: #1E1E3A;
-    border-radius: 12px;
-    padding: 2rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    height: calc(100vh - 350px);
+    min-height: 600px;
 }
 
 .selected-note-content {
-    background: #232352;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    flex: 0 0 auto;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .selected-note-content h2 {
@@ -173,43 +170,122 @@
     line-height: 1.6;
 }
 
+/* Chat Container Styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+    background: #232352;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.message {
+    max-width: 70%;
+    margin-bottom: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.message.user {
+    align-self: flex-end;
+}
+
+.message.bot {
+    align-self: flex-start;
+}
+
+.message-content {
+    padding: 1rem;
+    border-radius: 12px;
+    line-height: 1.4;
+    position: relative;
+}
+
+.message.user .message-content {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    color: #ffffff;
+    border-radius: 12px 12px 0 12px;
+}
+
+.message.bot .message-content {
+    background: #3c2468;
+    color: #ffffff;
+    border-radius: 12px 12px 12px 0;
+}
+
+/* Update Query Form Styles */
 .query-form {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #1E1E3A;
+    border-top: 1px solid #3c2468;
+    margin-bottom: 0;
 }
 
 .query-form input {
     flex: 1;
-    padding: 0.8rem 1rem;
-    border: none;
-    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    border: 1px solid #3c2468;
+    border-radius: 24px;
     background: #232352;
     color: #ffffff;
     font-size: 1rem;
+    transition: all 0.3s ease;
+    line-height: normal;
 }
 
 .query-form input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.query-form input:focus {
+    outline: none;
+    border-color: #573688;
+    box-shadow: 0 0 0 2px rgba(87, 54, 136, 0.2);
 }
 
 .query-form button {
-    padding: 0.8rem 2rem;
+    padding: 0.8rem 1.5rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 24px;
     background: linear-gradient(90deg, #573688, #520c5b);
     color: #ffffff;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-width: auto;
+    font-weight: 500;
 }
 
 .query-form button:hover:not(:disabled) {
     box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+    transform: translateY(-1px);
 }
 
 .query-form button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .response-area {
@@ -291,6 +367,40 @@
     border: 1px solid #ff6b6b;
 }
 
+/* View Original Link Styles */
+.view-original {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    background: rgba(60, 36, 104, 0.5);
+    border-radius: 4px;
+    color: #f1b5fe;
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.view-original:hover {
+    background: rgba(60, 36, 104, 0.8);
+    color: #ffffff;
+}
+
+.view-original-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(90deg, #573688, #520c5b);
+    border-radius: 6px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.view-original-link:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .talk-to-notes-container {
@@ -317,12 +427,21 @@
         font-size: 1.1rem;
     }
 
+    .chat-container {
+        height: 500px;
+    }
+
+    .message {
+        max-width: 85%;
+    }
+
     .query-form {
-        flex-direction: column;
+        flex-direction: row;
     }
 
     .query-form button {
-        width: 100%;
+        min-width: 80px;
+        padding: 0.8rem 1.2rem;
     }
 }
 

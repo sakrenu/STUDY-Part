@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, auth, storage } from '../../firebase';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth } from '../../firebase';
 import './TalkToNotes.css';
 
 const TalkToNotes = () => {
@@ -10,25 +8,14 @@ const TalkToNotes = () => {
     const [notes, setNotes] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
     const [query, setQuery] = useState('');
-    const [response, setResponse] = useState('');
+    const [chatHistory, setChatHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const [uploadLoading, setUploadLoading] = useState(false);
     const [uploadError, setUploadError] = useState('');
 
     useEffect(() => {
-        const fetchNotes = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    setNotes(userData.notes || []);
-                }
-            }
-        };
-
-        fetchNotes();
+        // Initialize notes as empty array - they will be stored in local state
+        setNotes([]);
     }, []);
 
     const handleFileUpload = async (event) => {
@@ -57,16 +44,12 @@ const TalkToNotes = () => {
                 throw new Error('File type not supported. Please upload PDF, PPT, or image files.');
             }
 
-            // Upload file to Firebase Storage
-            const storageRef = ref(storage, `notes/${user.uid}/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(storageRef);
-
-            // Process the file based on its type
+            // Create form data
             const formData = new FormData();
             formData.append('file', file);
             formData.append('user_id', user.uid);
 
+            // Determine which endpoint to use based on file type
             let endpoint;
             if (file.type.includes('pdf')) {
                 endpoint = '/api/rag/process_pdf';
@@ -76,26 +59,27 @@ const TalkToNotes = () => {
                 endpoint = '/api/rag/process_image';
             }
 
+            // Send to backend for processing
             const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
                 method: 'POST',
                 body: formData,
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to process file');
+            }
+
             const data = await response.json();
 
             // Create new note object
             const newNote = {
                 title: file.name,
                 content: data.content,
-                fileUrl: downloadURL,
-                fileType: file.type,
+                cloudinaryUrl: data.cloudinary_url,
+                fileType: data.filetype,
                 timestamp: Date.now()
             };
-
-            // Update Firestore
-            const userDocRef = doc(db, 'users', user.uid);
-            await updateDoc(userDocRef, {
-                notes: arrayUnion(newNote)
-            });
 
             // Update local state
             setNotes(prevNotes => [...prevNotes, newNote]);
@@ -110,14 +94,20 @@ const TalkToNotes = () => {
 
     const handleNoteSelect = (note) => {
         setSelectedNote(note);
-        setResponse(''); // Clear previous responses
+        setChatHistory([]); // Clear chat history when selecting a new note
     };
 
     const handleQuerySubmit = async (e) => {
         e.preventDefault();
         if (!query.trim() || !selectedNote) return;
 
+        const userMessage = query.trim();
+        setQuery(''); // Clear input
         setLoading(true);
+
+        // Add user message immediately
+        setChatHistory(prev => [...prev, { type: 'user', content: userMessage }]);
+
         try {
             const user = auth.currentUser;
             if (!user) throw new Error('No user logged in');
@@ -129,15 +119,25 @@ const TalkToNotes = () => {
                 },
                 body: JSON.stringify({
                     user_id: user.uid,
-                    query: query
+                    query: userMessage
                 }),
             });
 
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to query notes');
+            }
+
             const data = await response.json();
-            setResponse(data.response);
+            // Add bot response to chat history
+            setChatHistory(prev => [...prev, { type: 'bot', content: data.response }]);
         } catch (error) {
             console.error('Error querying notes:', error);
-            setResponse('Sorry, there was an error processing your query. Please try again.');
+            // Add error message to chat history
+            setChatHistory(prev => [...prev, { 
+                type: 'bot', 
+                content: 'Sorry, there was an error processing your query. Please try again.' 
+            }]);
         } finally {
             setLoading(false);
         }
@@ -181,7 +181,7 @@ const TalkToNotes = () => {
                 <div className="notes-list">
                     <h2>Your Notes</h2>
                     {notes.length === 0 ? (
-                        <p className="no-notes">No notes available. Create some notes first!</p>
+                        <p className="no-notes">No notes available. Upload some notes first!</p>
                     ) : (
                         notes.map((note, index) => (
                             <div
@@ -191,6 +191,15 @@ const TalkToNotes = () => {
                             >
                                 <h3>{note.title || `Note ${index + 1}`}</h3>
                                 <p>{note.content.substring(0, 100)}...</p>
+                                <a 
+                                    href={note.cloudinaryUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="view-original"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    View Original
+                                </a>
                             </div>
                         ))
                     )}
@@ -202,25 +211,40 @@ const TalkToNotes = () => {
                             <div className="selected-note-content">
                                 <h2>{selectedNote.title || 'Selected Note'}</h2>
                                 <p>{selectedNote.content}</p>
+                                <a 
+                                    href={selectedNote.cloudinaryUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="view-original-link"
+                                >
+                                    View Original Document
+                                </a>
                             </div>
-                            <form onSubmit={handleQuerySubmit} className="query-form">
-                                <input
-                                    type="text"
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="Ask a question about your notes..."
-                                    disabled={loading}
-                                />
-                                <button type="submit" disabled={loading}>
-                                    {loading ? 'Processing...' : 'Ask'}
-                                </button>
-                            </form>
-                            {response && (
-                                <div className="response-area">
-                                    <h3>Answer:</h3>
-                                    <p>{response}</p>
+                            
+                            <div className="chat-container">
+                                <div className="chat-messages">
+                                    {chatHistory.map((message, index) => (
+                                        <div key={index} className={`message ${message.type}`}>
+                                            <div className="message-content">
+                                                {message.content}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
+                                
+                                <form onSubmit={handleQuerySubmit} className="query-form">
+                                    <input
+                                        type="text"
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        placeholder="Ask a question about your notes..."
+                                        disabled={loading}
+                                    />
+                                    <button type="submit" disabled={loading}>
+                                        {loading ? 'Processing...' : 'Ask'}
+                                    </button>
+                                </form>
+                            </div>
                         </>
                     ) : (
                         <div className="no-note-selected">
