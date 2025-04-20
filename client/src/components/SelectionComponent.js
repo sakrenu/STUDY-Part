@@ -40,7 +40,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     boxes.forEach((box, index) => {
-      ctx.strokeStyle = index === draggingBoxIndex ? '#F4C430' : '#FF6F61';
+      ctx.strokeStyle = index === draggingBoxIndex ? '#FFD700' : '#e982c8';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.strokeRect(box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1);
@@ -48,7 +48,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
     });
 
     if (currentBox && activeTool === "box") {
-      ctx.strokeStyle = '#FF6F61';
+      ctx.strokeStyle = '#e982c8';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.strokeRect(currentBox.x1, currentBox.y1, currentBox.x2 - currentBox.x1, currentBox.y2 - currentBox.y1);
@@ -59,7 +59,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       points.forEach(point => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = point.label === 1 ? '#F4C430' : '#FF6F61';
+        ctx.fillStyle = point.label === 1 ? '#FFD700' : '#e982c8';
         ctx.fill();
       });
     }
@@ -357,97 +357,95 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
             ))}
           </div>
           <div className="selcomp-toolbar">
-            <div className="selcomp-button-groups">
-              <div className="selcomp-tool-group">
-                <motion.button
-                  className={`selcomp-toolbar-button ${activeTool === "box" ? "active" : ""}`}
-                  onClick={() => setActiveTool("box")}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MdCrop size={20} /> Bounding Box
-                  <span className="tooltip">Draw a bounding box to select a region</span>
-                </motion.button>
-                <motion.button
-                  className={`selcomp-toolbar-button ${activeTool === "include" ? "active" : ""}`}
-                  onClick={() => setActiveTool("include")}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MdAddCircle size={20} /> Include Point
-                  <span className="tooltip">Click to include points in the segmentation</span>
-                </motion.button>
-                <motion.button
-                  className={`selcomp-toolbar-button ${activeTool === "exclude" ? "active" : ""}`}
-                  onClick={() => setActiveTool("exclude")}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MdAddCircle size={20} /> Exclude Point
-                  <span className="tooltip">Right-click to exclude points from the segmentation</span>
-                </motion.button>
-                <motion.button
-                  className="selcomp-toolbar-button"
-                  onClick={handleSelectRegion}
-                  disabled={activeTool !== "box" || !currentBox}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MdCheckCircle size={20} /> Select Region
-                  <span className="tooltip">Confirm the current bounding box as a region</span>
-                </motion.button>
-              </div>
-              <div className="selcomp-action-group">
-                <motion.button
-                  className="selcomp-toolbar-button"
-                  onClick={handleUndo}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MdUndo size={20} /> Undo
-                  <span className="tooltip">Undo the last action (point, box, or region)</span>
-                </motion.button>
-                <motion.button
-                  className="selcomp-toolbar-button"
-                  onClick={handleReset}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MdRestartAlt size={20} /> Reset
-                  <span className="tooltip">Reset all selections and regions</span>
-                </motion.button>
-                <motion.button
-                  className="selcomp-toolbar-button"
-                  onClick={toggleMasks}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MdVisibility size={20} /> {showMasks ? 'Hide' : 'Show'} Masks
-                  <span className="tooltip">{showMasks ? 'Hide segmented region masks' : 'Show segmented region masks'}</span>
-                </motion.button>
-                <motion.button
-                  className="selcomp-toolbar-button"
-                  onClick={onBack}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Back
-                  <span className="tooltip">Return to the previous screen</span>
-                </motion.button>
-              </div>
+            <div className="selcomp-tool-group">
               <motion.button
-                className="selcomp-primary-button"
-                onClick={handleSegment}
-                disabled={!image_id || typeof image_id !== 'string' || image_id.trim() === '' || (boxes.length === 0 && points.length === 0 && !activeBox)}
+                className={`selcomp-toolbar-button ${activeTool === "box" ? "active" : ""}`}
+                onClick={() => setActiveTool("box")}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <MdCheckCircle size={20} /> Segment
-                <span className="tooltip">Process the selected regions for segmentation</span>
+                <MdCrop size={20} /> Bounding Box
+                <span className="tooltip">Draw a bounding box to select a region</span>
+              </motion.button>
+              <motion.button
+                className={`selcomp-toolbar-button ${activeTool === "include" ? "active" : ""}`}
+                onClick={() => setActiveTool("include")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdAddCircle size={20} /> Include Point
+                <span className="tooltip">Click to include points in the segmentation</span>
+              </motion.button>
+              <motion.button
+                className={`selcomp-toolbar-button ${activeTool === "exclude" ? "active" : ""}`}
+                onClick={() => setActiveTool("exclude")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdAddCircle size={20} /> Exclude Point
+                <span className="tooltip">Right-click to exclude points from the segmentation</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={handleSelectRegion}
+                disabled={activeTool !== "box" || !currentBox}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdCheckCircle size={20} /> Select Region
+                <span className="tooltip">Confirm the current bounding box as a region</span>
+              </motion.button>
+            </div>
+            <div className="selcomp-action-group">
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={handleUndo}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdUndo size={20} /> Undo
+                <span className="tooltip">Undo the last action (point, box, or region)</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={handleReset}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdRestartAlt size={20} /> Reset
+                <span className="tooltip">Reset all selections and regions</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={toggleMasks}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdVisibility size={20} /> {showMasks ? 'Hide' : 'Show'} Masks
+                <span className="tooltip">{showMasks ? 'Hide segmented region masks' : 'Show segmented region masks'}</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={onBack}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Back
+                <span className="tooltip">Return to the previous screen</span>
               </motion.button>
             </div>
             <motion.button
-              className="selcomp-done-button"
+              className="selcomp-primary-button"
+              onClick={handleSegment}
+              disabled={!image_id || typeof image_id !== 'string' || image_id.trim() === '' || (boxes.length === 0 && points.length === 0 && !activeBox)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <MdCheckCircle size={20} /> Segment
+              <span className="tooltip">Process the selected regions for segmentation</span>
+            </motion.button>
+            <motion.button
+              className="selcomp-primary-button"
               onClick={handleDone}
               disabled={regions.length === 0}
               whileHover={{ scale: 1.05 }}
