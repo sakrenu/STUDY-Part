@@ -161,14 +161,15 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       return;
     }
 
-    if (!audioUrl && !recordings[currentNote.regionId]) {
-      setError('Please record audio before saving');
+    // Allow saving if there's either audio or text
+    if (!audioUrl && !recordings[currentNote.regionId] && !currentNote.text) {
+      setError('Please record audio or add text before saving');
       return;
     }
 
     setIsSaving(true);
     try {
-      const { regionId, clickX, clickY } = currentNote;
+      const { regionId, clickX, clickY, text } = currentNote;
       const currentAudioUrl = audioUrl || recordings[regionId];
       
       await setDoc(
@@ -176,6 +177,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         {
           regionId,
           audioNote: currentAudioUrl,
+          text: text || '',  // Include text if present
           annotation: { x: clickX, y: clickY },
         },
         { merge: true }
@@ -191,11 +193,11 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         [regionId]: { x: clickX, y: clickY }
       }));
       
-      onSave(regionId, { audioUrl: currentAudioUrl }, { x: clickX, y: clickY });
+      onSave(regionId, { audioUrl: currentAudioUrl, text }, { x: clickX, y: clickY });
       setCurrentNote(null);
       setAudioUrl(null);
     } catch (err) {
-      setError('Failed to save recording: ' + err.message);
+      setError('Failed to save: ' + err.message);
     } finally {
       setIsSaving(false);
     }

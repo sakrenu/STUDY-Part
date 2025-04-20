@@ -273,10 +273,17 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
   };
 
   const handleSave = async () => {
-    if (!currentNote || !currentNote.text.trim()) {
-      setError('Note cannot be empty');
+    if (!currentNote) {
+      setError('Please select a segment first');
       return;
     }
+
+    // Allow saving if there's either text or audio
+    if (!currentNote.text && !currentNote.audioUrl) {
+      setError('Please add text or record audio before saving');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
     try {
@@ -286,12 +293,12 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
         {
           regionId,
           segmentIndex: regionIndex,
-          notes: text,
+          notes: text || '',  // Save empty string if no text
+          audioUrl: audioUrl || null,  // Save null if no audio
           annotation: { x: clickX, y: clickY },
           maskUrl,
           cutoutUrl,
           position,
-          audioUrl: audioUrl || null,
         },
         { merge: true }
       );
