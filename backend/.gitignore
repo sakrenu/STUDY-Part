@@ -12,4 +12,7 @@ output_segmented_image.png
 model_cache/
 routes/model_cache
 spvenv/
-/routes/model_cache
+routes/model_cache
+.env
+model_cache/
+vector_stores/
