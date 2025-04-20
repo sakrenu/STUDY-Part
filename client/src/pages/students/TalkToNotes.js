@@ -274,9 +274,16 @@ const TalkToNotes = () => {
                                             </div>
                                         ) : (
                                             <div key={index} className={`message ${message.type}`}>
-                                                <div className="message-content">
-                                                    {message.content}
-                                                </div>
+                                                {message.type === 'user' ? (
+                                                    <div className="message-content">
+                                                        {message.content}
+                                                    </div>
+                                                ) : (
+                                                    <div 
+                                                        className="message-content bot-html-content"
+                                                        dangerouslySetInnerHTML={{ __html: message.content }}
+                                                    />
+                                                )}
                                             </div>
                                         )
                                     ))}

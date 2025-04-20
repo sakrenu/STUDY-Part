@@ -226,6 +226,32 @@
     border-radius: 12px 12px 12px 0;
 }
 
+/* Styles for HTML content within bot messages */
+.message.bot .bot-html-content p {
+    margin-bottom: 0.8rem;
+}
+
+.message.bot .bot-html-content p:last-child {
+    margin-bottom: 0;
+}
+
+.message.bot .bot-html-content ul {
+    list-style: disc;
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.message.bot .bot-html-content li {
+    margin-bottom: 0.3rem;
+}
+
+.message.bot .bot-html-content b, 
+.message.bot .bot-html-content strong {
+    font-weight: 600;
+    color: #f1b5fe; /* Highlight bold text slightly */
+}
+
 /* Update Query Form Styles */
 .query-form {
     display: flex;

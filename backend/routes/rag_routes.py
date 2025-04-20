@@ -243,7 +243,6 @@ async def query_notes(user_id: str = Body(...), query: str = Body(...), document
     """Query the vector store for a specific document using Google Gemini"""
     try:
         logger.info(f"Querying notes for user: {user_id}, document_id: {document_id}. Query: '{query}'")
-        # Define document-specific vector store path
         vector_store_path = f"vector_stores/{user_id}/{document_id}/vectors"
 
         if not os.path.exists(vector_store_path):
@@ -259,29 +258,40 @@ async def query_notes(user_id: str = Body(...), query: str = Body(...), document
              raise HTTPException(status_code=500, detail=f"Error loading this document's index. Try re-uploading it. Original error: {str(faiss_load_error)}")
 
         logger.info(f"Performing similarity search for query: '{query}' on document: {document_id}")
-        docs = vectorstore.similarity_search(query, k=3)
+        docs = vectorstore.similarity_search(query, k=4) # Increased K slightly for more context
 
         if not docs:
              logger.info(f"No relevant documents found for query: '{query}' in document: {document_id}")
-             return {"response": "Could not find relevant information in this document for your query.", "sources": [], "status": "success"}
+             return {"response": "<p>Could not find relevant information in this document for your query.</p>", "sources": [], "status": "success"}
         logger.info(f"Found {len(docs)} relevant documents for query: '{query}' in document: {document_id}")
 
         context = "\n\n".join([doc.page_content for doc in docs])
-        prompt = f"""Answer the following question based ONLY on the provided context from the document. If the context doesn't contain the answer, say you couldn't find the information in this document.
+        
+        # Updated Prompt for HTML output
+        prompt = f"""You are an AI assistant answering questions based ONLY on the provided context from a document.
+        Your goal is to provide a clear, user-friendly answer formatted in simple HTML.
+        Use tags like <p>, <ul>, <li>, and <b> where appropriate to structure the information.
+        Do NOT include `<html>`, `<head>`, or `<body>` tags. Only provide the HTML fragment for the answer itself.
+        If the context doesn't contain the answer, respond with just: `<p>I couldn't find the information for that question in this document.</p>`
 
-Context:
-{context}
+        Context:
+        --- START CONTEXT ---
+        {context}
+        --- END CONTEXT ---
 
-Question: {query}
+        Question: {query}
 
-Answer:"""
+        HTML Answer:"""
 
         logger.info(f"Sending prompt to Gemini for document: {document_id}")
         response = llm.invoke(prompt)
         logger.info(f"Received response from Gemini for document: {document_id}")
 
+        # Clean up potential markdown backticks if LLM adds them
+        html_response = response.content.strip().strip("`html`").strip('`')
+
         return {
-            "response": response.content,
+            "response": html_response, # Send the HTML response
             "sources": [doc.page_content for doc in docs],
             "status": "success"
         }
