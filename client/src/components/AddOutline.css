@@ -120,14 +120,13 @@
   border: 3px solid transparent; /* Add transparent border for smooth transition */
 }
 
-/* Highlight selected segment with a visible yellow border */
+/* Highlight selected segment with a visible yellow outline */
 .outline-mask.highlighted-mask {
-  /* Add a yellow border */
-  border: 3px solid #FFFF00; /* Yellow border, 3px thick */
-  box-sizing: border-box; /* Ensure border is inside */
-  opacity: 0.8; /* Keep mask slightly visible */
-  transition: border 0.3s ease, opacity 0.3s ease;
-  z-index: 5; /* Ensure border is visible */
+  /* Apply a yellow drop shadow */
+  filter: drop-shadow(0 0 3px #FFFF00) drop-shadow(0 0 3px #FFFF00) drop-shadow(0 0 3px #FFFF00); /* Apply multiple times for thickness */
+  opacity: 0.9; /* Keep mask visible */
+  transition: filter 0.3s ease, opacity 0.3s ease; /* Update transition property */
+  z-index: 5; /* Ensure effect is visible */
 }
 
 .outline-image-container:hover {
