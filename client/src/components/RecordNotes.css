@@ -172,22 +172,33 @@
   cursor: not-allowed;
 }
 
-.recordnotes-audio-preview {
+.recordnotes-audio-preview,
+.recordnotes-preview-audio {
   position: absolute;
-  background-color: #2c2c2c;
-  padding: 5px 10px;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 6px;
   border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
-  font-size: 0.9rem;
-  color: #fff;
-  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   z-index: 40;
   pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .recordnotes-audio-player {
-  width: 100%;
+  width: 200px;
   height: 32px;
+}
+
+.recordnotes-sound-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 20px;
+  margin-left: 4px;
+  color: #ffffff;
 }
 
 .recordnotes-error {
@@ -318,6 +329,34 @@ button:disabled {
   pointer-events: none;
   overflow: visible;
   z-index: 35;
+}
+
+.recordnotes-audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recordnotes-volume-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s ease;
+}
+
+.recordnotes-volume-button:hover {
+  transform: scale(1.1);
+}
+
+.recordnotes-volume-button:active {
+  transform: scale(0.95);
 }
 
 @media (max-width: 768px) {

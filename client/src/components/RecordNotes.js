@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MdMic, MdStop, MdErrorOutline } from 'react-icons/md';
+import { MdMic, MdStop, MdErrorOutline, MdVolumeUp, MdPlayArrow } from 'react-icons/md';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import './RecordNotes.css';
@@ -227,11 +227,32 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
     onCancel();
   };
 
-  const AudioIndicator = () => (
-    <span role="img" aria-label="sound" style={{ marginLeft: '8px', fontSize: '20px' }}>
-      🔊
-    </span>
-  );
+  const AudioIndicator = ({ audioUrl }) => {
+    const audioRef = useRef(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    const togglePlay = () => {
+      if (audioRef.current) {
+        if (isPlaying) {
+          audioRef.current.pause();
+        } else {
+          audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+      }
+    };
+
+    return (
+      <div className="recordnotes-audio-controls">
+        <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />
+        <button onClick={togglePlay} className="recordnotes-volume-button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          </svg>
+        </button>
+      </div>
+    );
+  };
 
   if (isPreview) {
     return (
@@ -301,8 +322,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                       zIndex: 15,
                     }}
                   >
-                    <audio controls src={audioUrl} className="recordnotes-audio-player" />
-                    <AudioIndicator />
+                    <AudioIndicator audioUrl={audioUrl} />
                   </div>
                 </div>
               );
@@ -406,8 +426,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                       zIndex: 15,
                     }}
                   >
-                    <audio controls src={audioUrl} className="recordnotes-audio-player" />
-                    <AudioIndicator />
+                    <AudioIndicator audioUrl={audioUrl} />
                   </div>
                 </div>
               );
