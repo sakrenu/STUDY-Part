@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MdNoteAdd, MdLabel, MdAnimation, MdMic, MdDone } from 'react-icons/md';
 import AddNotes from './AddNotes';
 import AddLabel from './AddLabel';
+import RecordNotes from './RecordNotes';
 import './FeatureAdditionEnhanced.css';
 import axios from 'axios';
 
@@ -13,6 +14,7 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   const [clickCoordinates, setClickCoordinates] = useState({});
   const [isAddingNotes, setIsAddingNotes] = useState(false);
   const [isAddingLabels, setIsAddingLabels] = useState(false);
+  const [isRecordingNotes, setIsRecordingNotes] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const imageRef = useRef(null);
 
@@ -29,6 +31,7 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   const handleAddNotes = () => {
     setIsAddingNotes(true);
     setIsAddingLabels(false);
+    setIsRecordingNotes(false);
     setIsPreviewing(false);
     setSelectedRegionId(null);
   };
@@ -36,6 +39,15 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   const handleAddLabels = () => {
     setIsAddingLabels(true);
     setIsAddingNotes(false);
+    setIsRecordingNotes(false);
+    setIsPreviewing(false);
+    setSelectedRegionId(null);
+  };
+
+  const handleRecordNotes = () => {
+    setIsRecordingNotes(true);
+    setIsAddingNotes(false);
+    setIsAddingLabels(false);
     setIsPreviewing(false);
     setSelectedRegionId(null);
   };
@@ -62,6 +74,12 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
     setSelectedRegionId(null);
   };
 
+  const handleDoneRecordingNotes = () => {
+    setIsRecordingNotes(false);
+    setIsPreviewing(true);
+    setSelectedRegionId(null);
+  };
+
   const handleBackToAddNotes = () => {
     setIsPreviewing(false);
     setIsAddingNotes(true);
@@ -74,19 +92,22 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
     setSelectedRegionId(null);
   };
 
+  const handleBackToRecordNotes = () => {
+    setIsPreviewing(false);
+    setIsRecordingNotes(true);
+    setSelectedRegionId(null);
+  };
+
   const handleBackToFeatures = () => {
     setIsPreviewing(false);
     setIsAddingNotes(false);
     setIsAddingLabels(false);
+    setIsRecordingNotes(false);
     setSelectedRegionId(null);
   };
 
   const handleAnimate = () => {
     console.log(`Animate region ${selectedRegionId}`);
-  };
-
-  const handleRecordNotes = () => {
-    console.log(`Record Notes for region ${selectedRegionId}`);
   };
 
   const handleSave = () => {
@@ -147,11 +168,11 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
         <div className="featadd-preview-footer">
           <motion.button
             className="featadd-preview-back-button"
-            onClick={isAddingNotes ? handleBackToAddNotes : isAddingLabels ? handleBackToAddLabels : handleBackToFeatures}
+            onClick={isAddingNotes ? handleBackToAddNotes : isAddingLabels ? handleBackToAddLabels : isRecordingNotes ? handleBackToRecordNotes : handleBackToFeatures}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            Back to {isAddingNotes ? 'Add Notes' : isAddingLabels ? 'Add Labels' : 'Features'}
+            Back to {isAddingNotes ? 'Add Notes' : isAddingLabels ? 'Add Labels' : isRecordingNotes ? 'Record Notes' : 'Features'}
           </motion.button>
         </div>
         <AnimatePresence>
@@ -206,6 +227,8 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
             ? 'Click any segment to add or edit notes.'
             : isAddingLabels
             ? 'Click any segment to add or edit labels.'
+            : isRecordingNotes
+            ? 'Click any segment to record notes.'
             : isPreviewing
             ? 'Preview your segments and features. Click to view.'
             : 'Select a segment or choose a feature to add.'}
@@ -230,7 +253,7 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
           />
           <div className="featadd-regions-overlay">
             {regions.map((region) => {
-              const isActive = isAddingNotes || isAddingLabels;
+              const isActive = isAddingNotes || isAddingLabels || isRecordingNotes;
               return (
                 <div
                   key={region.region_id}
@@ -306,14 +329,14 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
             >
               Back
             </motion.button>
-            {(isAddingNotes || isAddingLabels) && (
+            {(isAddingNotes || isAddingLabels || isRecordingNotes) && (
               <motion.button
                 className="featadd-done-button"
-                onClick={isAddingNotes ? handleDoneAddingNotes : handleDoneAddingLabels}
+                onClick={isAddingNotes ? handleDoneAddingNotes : isAddingLabels ? handleDoneAddingLabels : handleDoneRecordingNotes}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <MdDone size={20} /> Done Adding {isAddingNotes ? 'Notes' : 'Labels'}
+                <MdDone size={20} /> Done Adding {isAddingNotes ? 'Notes' : isAddingLabels ? 'Labels' : 'Recording Notes'}
               </motion.button>
             )}
             <motion.button
@@ -369,6 +392,26 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
             onDone={handleDoneAddingLabels}
             onBack={handleBackToFeatures}
             existingLabels={labels}
+            existingCoordinates={clickCoordinates}
+          />
+        </motion.div>
+      ) : isRecordingNotes ? (
+        <motion.div
+          key="record-notes"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <RecordNotes
+            image={image}
+            lessonId={lessonId}
+            regions={regions}
+            teacherEmail={teacherEmail}
+            onSave={handleSaveNote}
+            onDone={handleDoneRecordingNotes}
+            onCancel={handleBackToFeatures}
+            existingNotes={notes}
             existingCoordinates={clickCoordinates}
           />
         </motion.div>
