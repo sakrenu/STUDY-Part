@@ -40,16 +40,21 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
 
     if (clickedRegion) {
       const regionId = clickedRegion.region_id;
+      const existingAudioUrl = notes[regionId]?.audioUrl;
+      
       setCurrentNote({
         regionId,
-        text: notes[regionId]?.text || '',
         clickX: x,
         clickY: y,
         maskUrl: clickedRegion.mask_url,
         position: clickedRegion.position,
         regionIndex: regions.findIndex((r) => r.region_id === regionId),
-        audioUrl: notes[regionId]?.audioUrl || null,
+        audioUrl: existingAudioUrl || null,
       });
+
+      if (existingAudioUrl) {
+        setAudioUrl(existingAudioUrl);
+      }
     }
   };
 
@@ -89,26 +94,24 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
   const handleUploadAudio = async (audioBlob) => {
     try {
       const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.webm');
-      formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'your_upload_preset');
+      formData.append('file', new File([audioBlob], 'recording.webm', { type: 'audio/webm' }));
 
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'your_cloud_name'}/upload`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+      const response = await fetch('http://127.0.0.1:8000/api/upload-audio', {
+        method: 'POST',
+        body: formData,
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to upload audio');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to upload audio');
       }
 
       const data = await response.json();
-      const audioUrl = data.secure_url;
+      const audioUrl = data.url;
       setAudioUrl(audioUrl);
       setCurrentNote((prev) => ({ ...prev, audioUrl }));
     } catch (err) {
+      console.error('Upload error:', err);
       setError('Failed to upload audio: ' + err.message);
     }
   };
@@ -206,7 +209,11 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.3 }}
             >
-              <h3>Record Notes for Segment {currentNote.regionIndex + 1}</h3>
+              <h3>
+                {currentNote.audioUrl 
+                  ? `Existing Recording for Segment ${currentNote.regionIndex + 1}` 
+                  : `Record Notes for Segment ${currentNote.regionIndex + 1}`}
+              </h3>
               <div className="recordnotes-preview">
                 <img
                   src={currentNote.maskUrl}
@@ -214,6 +221,11 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                   className="recordnotes-preview-image"
                 />
               </div>
+              {audioUrl && (
+                <div className="recordnotes-audio-preview">
+                  <audio controls src={audioUrl} className="recordnotes-audio-player" />
+                </div>
+              )}
               <motion.button
                 className="recordnotes-record-button"
                 onClick={isRecording ? handleStopRecording : handleStartRecording}
@@ -226,15 +238,10 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                   </>
                 ) : (
                   <>
-                    <MdMic size={24} /> Start Recording
+                    <MdMic size={24} /> {currentNote.audioUrl ? 'Record New' : 'Start Recording'}
                   </>
                 )}
               </motion.button>
-              {audioUrl && (
-                <div className="recordnotes-audio-preview">
-                  <audio controls src={audioUrl} className="recordnotes-audio-player" />
-                </div>
-              )}
               {error && (
                 <motion.div
                   className="recordnotes-error"
@@ -249,11 +256,11 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                 <motion.button
                   className="recordnotes-save-button"
                   onClick={handleSave}
-                  disabled={isRecording}
+                  disabled={isRecording || (!audioUrl && !currentNote.audioUrl)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  Save Recording
+                  {currentNote.audioUrl ? 'Update Recording' : 'Save Recording'}
                 </motion.button>
                 <motion.button
                   className="recordnotes-cancel-button"
@@ -261,7 +268,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  Clear
+                  {isRecording ? 'Cancel' : 'Clear'}
                 </motion.button>
               </div>
             </motion.div>
