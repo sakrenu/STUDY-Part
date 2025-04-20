@@ -89,6 +89,10 @@ class ChatMessage(BaseModel):
     type: str # 'user' or 'bot'
     content: str
 
+# --- Pydantic model for general knowledge query ---
+class QueryRequest(BaseModel):
+    query: str
+
 # --- Updated Vector Store Processing ---
 async def process_text_to_vectors(text: str, user_id: str, document_id: str) -> Dict:
     """Process text into chunks and create/update vector store for a specific document"""
@@ -299,7 +303,7 @@ async def query_notes(
 
         Document Context:
         --- START CONTEXT ---
-        {context if docs else "No relevant context found in the document."} 
+        {context if docs else "No relevant context found in the document."}
         --- END CONTEXT ---
 
         Current Question: {query}
@@ -324,6 +328,42 @@ async def query_notes(
         if "Pickle" in str(e) or "deserialization" in str(e):
              raise HTTPException(status_code=500, detail=f"Error processing this document's index. Please try re-uploading it. Original error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error querying notes: {str(e)}")
+
+# --- New General Knowledge Query Endpoint ---
+@router.post("/general_query")
+async def general_query(request: QueryRequest):
+    """Answer a question based on general knowledge, without RAG context."""
+    try:
+        logger.info(f"Handling general knowledge query: '{request.query}'")
+
+        # Simple prompt for general knowledge
+        prompt = f"""You are a helpful AI assistant. Answer the following question based on your general knowledge.
+        Format your answer in simple HTML using tags like <p>, <ul>, <li>, and <b> where appropriate.
+        Do NOT include `<html>`, `<head>`, or `<body>` tags. Only provide the HTML fragment for the answer itself.
+
+        Question: {request.query}
+
+        HTML Answer:"""
+
+        logger.info(f"Sending general query prompt to Gemini")
+        response = llm.invoke(prompt)
+        logger.info(f"Received response from Gemini for general query")
+
+        html_response = response.content.strip().strip("`html`").strip('`')
+
+        # Basic check for empty response (adjust as needed)
+        if not html_response:
+             html_response = "<p>Sorry, I couldn't generate an answer for that question based on my general knowledge.</p>"
+
+        return {
+            "response": html_response,
+            "status": "success"
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error during general query: {str(e)}")
+        # Provide a user-friendly error message
+        raise HTTPException(status_code=500, detail="Sorry, an error occurred while processing your general knowledge question.")
+
 
 # --- Clear Vector Store Endpoint (remains the same, clears all for user) ---
 @router.post("/clear_vector_store")

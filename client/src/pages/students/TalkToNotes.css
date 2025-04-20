@@ -712,4 +712,31 @@
 
 .view-original-link:hover {
     box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Style for the General Knowledge button */
+.general-knowledge-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px; /* Pill shape */
+    padding: 0.3rem 0.8rem;
+    margin-left: 0.5rem; /* Space from message content */
+    margin-bottom: 8px; /* Align with speak button if present */
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    vertical-align: middle; /* Align better with text */
+}
+
+.general-knowledge-button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+}
+
+.general-knowledge-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 } 

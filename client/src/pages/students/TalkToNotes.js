@@ -311,6 +311,59 @@ const TalkToNotes = () => {
         </div>
     );
 
+    // Specific message content indicating RAG failed
+    const notFoundMessage = "<p>I couldn't find the information for that question in this document or conversation history.</p>";
+
+    // Function to handle general knowledge query
+    const handleGeneralKnowledgeQuery = async (originalQuery) => {
+        if (!originalQuery) {
+            console.error("Original query not found for general knowledge search.");
+            setChatHistory(prev => [...prev, { type: 'bot', content: '<p>Error: Could not find the original question to ask.</p>' }]);
+            return;
+        }
+
+        setLoading(true);
+
+        // Add a temporary user message indicating the action
+        const generalQueryUserPrompt = { type: 'user', content: `(Attempting general search) ${originalQuery}` };
+        setChatHistory(prev => [...prev, generalQueryUserPrompt]);
+
+        // Add typing indicator
+        setChatHistory(prev => [...prev, { type: 'typing', content: '' }]);
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/rag/general_query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: originalQuery }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to fetch general knowledge answer');
+            }
+
+            const data = await response.json();
+
+            // Replace typing indicator with bot response
+            setChatHistory(prev => {
+                const newHistory = prev.filter(msg => msg.type !== 'typing');
+                return [...newHistory, { type: 'bot', content: data.response }];
+            });
+
+        } catch (error) {
+            console.error('Error querying general knowledge:', error);
+            setChatHistory(prev => {
+                const newHistory = prev.filter(msg => msg.type !== 'typing');
+                return [...newHistory, { type: 'bot', content: `<p>Sorry, there was an error fetching the general knowledge answer: ${error.message}</p>` }];
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="talk-to-notes">
             {/* Top Navigation */}
@@ -392,12 +445,13 @@ const TalkToNotes = () => {
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <div 
+                                                        <div
                                                             className="message-content bot-html-content"
                                                             dangerouslySetInnerHTML={{ __html: message.content }}
                                                         />
-                                                        {message.content && !message.content.includes('Sorry, there was an error') && !message.content.includes('Please select a processed note') && !message.content.includes('Please enter a question') && !message.content.includes('Mic Error') && (
-                                                            <button 
+                                                        {/* Conditionally render Speak button */}
+                                                        {message.content && !message.content.includes('Sorry, there was an error') && !message.content.includes('Please select a processed note') && !message.content.includes('Please enter a question') && !message.content.includes('Mic Error') && message.content !== notFoundMessage && (
+                                                            <button
                                                                 className="speak-button"
                                                                 onClick={() => handleSpeakClick(message.content)}
                                                                 title="Speak this message aloud"
@@ -406,6 +460,18 @@ const TalkToNotes = () => {
                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px">
                                                                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                                                                 </svg>
+                                                            </button>
+                                                        )}
+                                                        {/* Conditionally render General Knowledge button */}
+                                                        {message.content === notFoundMessage && index > 0 && chatHistory[index - 1]?.type === 'user' && (
+                                                            <button
+                                                                className="general-knowledge-button"
+                                                                onClick={() => handleGeneralKnowledgeQuery(chatHistory[index - 1].content)}
+                                                                title="Ask AI based on general knowledge"
+                                                                aria-label="Ask AI based on general knowledge"
+                                                                disabled={loading}
+                                                            >
+                                                                Try General Search
                                                             </button>
                                                         )}
                                                     </>
