@@ -178,25 +178,33 @@
     display: flex;
     flex-direction: column;
     height: 400px;
+    min-height: 400px;
     background: #232352;
     border-radius: 12px;
     overflow: hidden;
+    flex: 1;
+    width: 100%;
+    min-width: 600px;
+    max-width: 1200px;
 }
 
 .chat-messages {
     flex: 1;
+    min-height: calc(400px - 80px);
     overflow-y: auto;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     scroll-behavior: smooth;
+    width: 100%;
 }
 
 .message {
-    max-width: 70%;
+    max-width: 80%;
     margin-bottom: 1rem;
     animation: fadeIn 0.3s ease;
+    min-width: 200px;
 }
 
 .message.user {
@@ -261,6 +269,8 @@
     border-top: 1px solid #3c2468;
     margin-bottom: 0;
     align-items: center;
+    height: 80px;
+    min-height: 80px;
 }
 
 .query-form input {
@@ -472,10 +482,17 @@
 
     .chat-container {
         height: 500px;
+        min-height: 500px;
+        min-width: 100%;
+    }
+
+    .chat-messages {
+        min-height: calc(500px - 80px);
     }
 
     .message {
-        max-width: 85%;
+        max-width: 90%;
+        min-width: 150px;
     }
 
     .query-form {
