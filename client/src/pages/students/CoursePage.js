@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import './StudentDashboard.css';
+import './CoursePage.css';
 
 const CoursePage = () => {
     const { courseId } = useParams();
@@ -35,8 +35,15 @@ const CoursePage = () => {
     return (
         <div className="course-page">
             <nav className="top-nav">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
+                </div>
                 <button className="back-btn" onClick={() => navigate(-1)}>
-                    Back to Courses
+                    Back to Dashboard
                 </button>
             </nav>
             

@@ -214,6 +214,20 @@ const LearningMode = ({ studentId }) => {
 
     return (
         <div className="student-dashboard">
+            {/* Top Navigation */}
+            <nav className="top-nav">
+                <div className="logo-container">
+                    <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+                    <a href="/" className="logo">
+                        <span className="study">Study</span>
+                        <span className="part">Part</span>
+                    </a>
+                </div>
+                <button className="logout-btn" onClick={() => navigate('/student-dashboard')}>
+                    Back to Dashboard
+                </button>
+            </nav>
+
             {/* Navbar */}
             <nav className="navbar">
                 <ul>
