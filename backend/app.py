@@ -224,7 +224,7 @@ async def segment(request: SegmentRequest):
                 (255, 165, 0),
                 (128, 0, 128)
             ]
-            # color = colors[i % len(colors)]
+            
             
             color = random.choice(colors)
 
