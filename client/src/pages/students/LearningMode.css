@@ -1,90 +1,376 @@
-/* LearningMode.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-/* General Container Styles */
-.learning-mode-container {
-    background: #0a192f; /* Dark black background */
-    min-height: 100vh;
-    color: #ffffff; /* White text for contrast */
-    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Helvetica Neue', sans-serif;
-    padding: 2rem;
-    box-sizing: border-box;
+.student-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #000000, #30074d, #000000);
+  color: #FFFFFF;
+  font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7rem 2rem 2rem;
+  width: 100%;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.dashboard-title {
+  font-size: 2.8rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+  text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+}
+
+.dashboard-subtitle {
+  font-size: 1.3rem;
+  color: #D3D3D3;
+}
+
+/* Navbar Styles */
+.navbar {
+  background-color: #3c2468;
+  padding: 1rem 1.5rem;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
+}
+
+.navbar ul {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  gap: 2rem;
+}
+
+.navbar li {
+  color: #FFFFFF;
+  cursor: pointer;
+  padding: 0.6rem 1.2rem;
+  border-radius: 9999px;
+  transition: background 0.3s ease;
+  font-weight: 500;
+}
+
+.navbar li:hover {
+  background: rgba(111, 66, 193, 0.3);
+}
+
+.navbar li.active {
+  background: linear-gradient(90deg, #573688, #520c5b);
+  box-shadow: 0 0 10px #8868ab;
+}
+
+/* Top Navigation */
+.top-nav {
+  background-color: #3c2468;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+}
+
+.logo .study {
+  color: white;
+}
+
+.logo .part {
+  color: pink;
+}
+
+/* Logout Button */
+.logout-btn {
+  background: linear-gradient(90deg, #573688, #520c5b);
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 9999px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+}
+
+.logout-btn:hover {
+  box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Main Content Styles */
+.main-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 2rem;
+}
+
+.courses-overview {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  margin-top: 2rem;
+}
+
+.course-card {
+  background: linear-gradient(135deg, #000000, #30074d, #000000);
+  border-radius: 0.5rem;
+  box-shadow: 0 0 15px rgba(111, 66, 193, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 25px;
+  min-height: 220px;
+  border: 2px solid #6f42c1;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
+}
+
+/* Styles for elements inside course card */
+.course-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #30074d;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.professor-name {
+  color: #D3D3D3 !important;
+  font-size: 1rem !important;
+  margin-top: 8px !important;
+  font-weight: 400;
+}
+
+.course-details {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: #D3D3D3;
+}
+
+.course-details p {
+  margin-bottom: 0.3rem;
+}
+
+/* Shared Note Styles */
+.shared-note {
+  background: linear-gradient(135deg, #000000, #30074d, #000000);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid #6f42c1;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
+}
+
+.shared-note:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
+}
+
+/* Image Container */
+.image-container {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.original-image {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 2px solid #6f42c1;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
+}
+
+.segment-highlight {
+  position: absolute;
+  border: 2px solid #f1b5fe;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.segment-highlight:hover {
+  background-color: rgba(111, 66, 193, 0.2);
+}
+
+/* Notes Section */
+.notes-section {
+  background: linear-gradient(135deg, #000000, #30074d, #000000);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+  border: 2px solid #6f42c1;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
+}
+
+.notes-section h2 {
+  color: #f1b5fe;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+}
+
+.notes-section p {
+  color: #D3D3D3;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .student-dashboard {
+    padding: 6rem 1.5rem 2rem;
   }
-  
-  .learning-mode-container h1 {
+
+  .dashboard-title {
+    font-size: 2.5rem;
+  }
+
+  .courses-grid {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-dashboard {
+    padding: 5.5rem 1rem 2rem;
+  }
+
+  .navbar ul {
+    gap: 1rem;
+  }
+
+  .dashboard-title {
+    font-size: 2.2rem;
+  }
+
+  .dashboard-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .top-nav {
+    padding: 0.6rem 1rem;
+  }
+
+  .logo {
+    font-size: 1.8rem;
+  }
+
+  .logo-image {
+    width: 35px;
+    height: 35px;
+  }
+
+  .logout-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .course-card {
+    padding: 20px;
+    min-height: auto;
+  }
+
+  .course-name {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-dashboard {
+    padding: 5rem 0.8rem 1.5rem;
+  }
+
+  .navbar {
+    padding: 0.6rem 1rem;
+  }
+
+  .navbar ul {
+    justify-content: space-around;
+    gap: 0.5rem;
+  }
+
+  .navbar li {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .dashboard-title {
     font-size: 2rem;
-    color: #6f42c1; /* Glowing purple for header */
-    text-shadow: 0 0 8px #6f42c1; /* Purple glow */
-    margin-bottom: 1.5rem;
   }
-  
-  /* Shared Note Styles */
-  .shared-note {
-    background: #112240; /* Slightly lighter dark black */
-    border: 2px solid #6f42c1; /* Purple border */
-    box-shadow: 0 0 12px #6f42c1; /* Purple glow */
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    transition: box-shadow 0.3s ease;
-  }
-  
-  .shared-note:hover {
-    box-shadow: 0 0 15px #5a329b; /* Enhanced purple glow on hover */
-  }
-  
-  .shared-note h2 {
-    color: #6f42c1; /* Glowing purple for subheadings */
-    text-shadow: 0 0 8px #6f42c1; /* Purple glow */
-    margin-bottom: 1rem;
-  }
-  
-  /* Shared Image Styles */
-  .shared-image {
-    max-width: 100%;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    border: 2px solid #6f42c1; /* Purple border */
-  }
-  
-  /* Shared Notes Styles */
-  .shared-notes {
-    color: #ccd6f6; /* Light purple-gray */
+
+  .dashboard-subtitle {
     font-size: 1rem;
   }
-  
-  .note-region {
-    position: relative;
-    margin: 0.5rem 0;
-    cursor: pointer;
+
+  .top-nav {
+    padding: 0.5rem 0.8rem;
   }
-  
-  .region-outline {
-    max-width: 100%;
-    border-radius: 8px;
-    border: 2px solid #6f42c1; /* Purple border */
+
+  .logo-container {
+    gap: 0.5rem;
   }
-  
-  .note-region p {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background: rgba(111, 66, 193, 0.1); /* Semi-transparent purple */
-    border-radius: 4px;
+
+  .logo {
+    font-size: 1.6rem;
   }
-  
-  /* Loading and Error Messages */
-  .loading-message {
-    color: #6f42c1; /* Glowing purple */
-    text-align: center;
-    font-size: 1.2rem;
-    padding: 1rem;
+
+  .logo-image {
+    width: 30px;
+    height: 30px;
   }
-  
-  .error-message {
-    background: #ff6b6b; /* Coral red for errors */
-    color: white;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    text-align: center;
-    box-shadow: 0 0 12px #ff6b6b; /* Red glow for errors */
+
+  .logout-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
+}
