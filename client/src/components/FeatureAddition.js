@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MdNoteAdd, MdLabel, MdBorderOuter, MdAnimation, MdMic, MdDone } from 'react-icons/md';
+import { MdNoteAdd, MdLabel, MdAnimation, MdMic, MdDone } from 'react-icons/md';
 import AddNotes from './AddNotes';
 import AddLabel from './AddLabel';
 import './FeatureAdditionEnhanced.css';
+import axios from 'axios';
 
 const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onComplete }) => {
   const [selectedRegionId, setSelectedRegionId] = useState(null);
@@ -12,18 +13,16 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   const [clickCoordinates, setClickCoordinates] = useState({});
   const [isAddingNotes, setIsAddingNotes] = useState(false);
   const [isAddingLabels, setIsAddingLabels] = useState(false);
-  const [showAddNotes, setShowAddNotes] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const imageRef = useRef(null);
 
   const handleRegionClick = (regionId, e) => {
-    if (isAddingNotes) {
-      setSelectedRegionId(regionId);
-      setShowAddNotes(true);
-    } else if (!isPreviewing) {
+    if (!isAddingNotes && !isAddingLabels) {
       setSelectedRegionId(regionId === selectedRegionId ? null : regionId);
     } else if (isPreviewing) {
       setSelectedRegionId(regionId);
+    } else {
+      setSelectedRegionId(regionId === selectedRegionId ? null : regionId);
     }
   };
 
@@ -41,20 +40,14 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
     setSelectedRegionId(null);
   };
 
-  const handleSaveNote = (regionId, note) => {
+  const handleSaveNote = (regionId, note, coordinates) => {
     setNotes((prev) => ({ ...prev, [regionId]: note }));
-    setShowAddNotes(false);
-    setSelectedRegionId(null);
+    setClickCoordinates((prev) => ({ ...prev, [regionId]: coordinates }));
   };
 
   const handleSaveLabel = (regionId, label, coordinates) => {
     setLabels((prev) => ({ ...prev, [regionId]: label }));
     setClickCoordinates((prev) => ({ ...prev, [regionId]: coordinates }));
-  };
-
-  const handleCancelAddNotes = () => {
-    setShowAddNotes(false);
-    setSelectedRegionId(null);
   };
 
   const handleDoneAddingNotes = () => {
@@ -88,10 +81,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
     setSelectedRegionId(null);
   };
 
-  const handleAddOutline = () => {
-    console.log(`Add Outline for region ${selectedRegionId}`);
-  };
-
   const handleAnimate = () => {
     console.log(`Animate region ${selectedRegionId}`);
   };
@@ -119,36 +108,40 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
       <div className="featadd-preview-container">
         <div className="featadd-preview-image-container">
           <img
+            ref={imageRef}
             src={image.url}
             alt="Segmented Image"
             className="featadd-preview-base-image"
             onLoad={() => {
               if (imageRef.current) {
-                const { width, height } = imageRef.current;
-                imageRef.current.parentElement.style.width = `${width}px`;
-                imageRef.current.parentElement.style.height = `${height}px`;
+                const { width, height } = imageRef.current.getBoundingClientRect();
+                if (imageRef.current.parentElement) {
+                  imageRef.current.parentElement.style.width = `${width}px`;
+                  imageRef.current.parentElement.style.height = `${height}px`;
+                }
               }
             }}
-            ref={imageRef}
           />
           <div className="featadd-preview-regions-overlay">
-            {regions.map((region) => (
-              <div
-                key={region.region_id}
-                className={`featadd-preview-region ${
-                  selectedRegionId === region.region_id ? 'featadd-preview-selected' : ''
-                } featadd-active`}
-                onClick={(e) => handleRegionClick(region.region_id, e)}
-              >
-                <img
-                  src={region.mask_url}
-                  alt={`Region ${region.region_id}`}
-                  className="featadd-preview-mask"
-                  style={{ opacity: 0.5 }}
-                  onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
-                />
-              </div>
-            ))}
+            {regions.map((region) => {
+              return (
+                <div
+                  key={region.region_id}
+                  className={`featadd-preview-region ${
+                    selectedRegionId === region.region_id ? 'featadd-preview-selected' : ''
+                  } featadd-active`}
+                  onClick={(e) => handleRegionClick(region.region_id, e)}
+                >
+                  <img
+                    src={region.mask_url}
+                    alt={`Region ${region.region_id}`}
+                    className={`featadd-preview-mask`}
+                    style={{ opacity: 0.5 }}
+                    onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
         <div className="featadd-preview-footer">
@@ -211,6 +204,8 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
         <p>
           {isAddingNotes
             ? 'Click any segment to add or edit notes.'
+            : isAddingLabels
+            ? 'Click any segment to add or edit labels.'
             : isPreviewing
             ? 'Preview your segments and features. Click to view.'
             : 'Select a segment or choose a feature to add.'}
@@ -219,36 +214,41 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
       <div className="featadd-content">
         <div className="featadd-image-container">
           <img
+            ref={imageRef}
             src={image.url}
             alt="Segmented Image"
             className="featadd-base-image"
             onLoad={() => {
               if (imageRef.current) {
-                const { width, height } = imageRef.current;
-                imageRef.current.parentElement.style.width = `${width}px`;
-                imageRef.current.parentElement.style.height = `${height}px`;
+                const { width, height } = imageRef.current.getBoundingClientRect();
+                if (imageRef.current.parentElement) {
+                  imageRef.current.parentElement.style.width = `${width}px`;
+                  imageRef.current.parentElement.style.height = `${height}px`;
+                }
               }
             }}
-            ref={imageRef}
           />
           <div className="featadd-regions-overlay">
-            {regions.map((region) => (
-              <div
-                key={region.region_id}
-                className={`featadd-region ${
-                  selectedRegionId === region.region_id ? 'featadd-selected featadd-active' : ''
-                } ${isAddingNotes ? 'featadd-adding featadd-active' : ''}`}
-                onClick={(e) => handleRegionClick(region.region_id, e)}
-              >
-                <img
-                  src={region.mask_url}
-                  alt={`Region ${region.region_id}`}
-                  className="featadd-mask"
-                  style={{ opacity: 0.5 }}
-                  onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
-                />
-              </div>
-            ))}
+            {regions.map((region) => {
+              const isActive = isAddingNotes || isAddingLabels;
+              return (
+                <div
+                  key={region.region_id}
+                  className={`featadd-region${
+                    selectedRegionId === region.region_id ? ' featadd-selected' : ''
+                  }${isActive ? ' featadd-active' : ''}${isAddingNotes ? ' featadd-adding' : ''}`}
+                  onClick={(e) => handleRegionClick(region.region_id, e)}
+                >
+                  <img
+                    src={region.mask_url}
+                    alt={`Region ${region.region_id}`}
+                    className={`featadd-mask`}
+                    style={{ opacity: 0.5 }}
+                    onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
         <div className="featadd-sidebar">
@@ -281,14 +281,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
               </motion.button>
               <motion.button
                 className="featadd-action-button"
-                onClick={handleAddOutline}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <MdBorderOuter size={20} /> Add Outline
-              </motion.button>
-              <motion.button
-                className="featadd-action-button"
                 onClick={handleAnimate}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -314,14 +306,14 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
             >
               Back
             </motion.button>
-            {isAddingNotes && (
+            {(isAddingNotes || isAddingLabels) && (
               <motion.button
-                className="featadd-done-notes-button"
-                onClick={handleDoneAddingNotes}
+                className="featadd-done-button"
+                onClick={isAddingNotes ? handleDoneAddingNotes : handleDoneAddingLabels}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <MdDone size={20} /> Done Adding Notes
+                <MdDone size={20} /> Done Adding {isAddingNotes ? 'Notes' : 'Labels'}
               </motion.button>
             )}
             <motion.button
@@ -335,26 +327,32 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
           </div>
         </div>
       </div>
-      {showAddNotes && (
-        <AddNotes
-          regionId={selectedRegionId}
-          lessonId={lessonId}
-          teacherEmail={teacherEmail}
-          regionIndex={regions.findIndex((r) => r.region_id === selectedRegionId)}
-          maskUrl={regions.find((r) => r.region_id === selectedRegionId).mask_url}
-          cutoutUrl={regions.find((r) => r.region_id === selectedRegionId).cutout_url}
-          position={regions.find((r) => r.region_id === selectedRegionId).position}
-          onSave={handleSaveNote}
-          onCancel={handleCancelAddNotes}
-          initialNote={notes[selectedRegionId] || ''}
-        />
-      )}
     </motion.div>
   );
 
   return (
     <AnimatePresence>
-      {isAddingLabels ? (
+      {isAddingNotes ? (
+        <motion.div
+          key="add-notes"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <AddNotes
+            image={image}
+            lessonId={lessonId}
+            regions={regions}
+            teacherEmail={teacherEmail}
+            onSave={handleSaveNote}
+            onDone={handleDoneAddingNotes}
+            onCancel={handleBackToFeatures}
+            existingNotes={notes}
+            existingCoordinates={clickCoordinates}
+          />
+        </motion.div>
+      ) : isAddingLabels ? (
         <motion.div
           key="add-label"
           initial={{ opacity: 0 }}
@@ -364,7 +362,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
         >
           <AddLabel
             image={image}
-// Zip to file FeatureAddition.js
             lessonId={lessonId}
             regions={regions}
             teacherEmail={teacherEmail}
