@@ -57,7 +57,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 # Initialize Google Gemini LLM
 try:
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-preview-04-17",
+        model="gemini-2.0-flash-lite",
         google_api_key=os.getenv("GOOGLE_API_KEY"),
         temperature=0.7,
         convert_system_message_to_human=True
@@ -184,9 +184,8 @@ async def process_ppt(user_id: str = Body(...), file: UploadFile = File(...)):
     temp_path = None # Initialize temp_path
     try:
         logger.info(f"Processing PowerPoint file: {file.filename} for user: {user_id}")
-        # Read file content for upload
+        # Read file content only once
         file_content = await file.read()
-        await file.seek(0) # Reset file pointer after reading
 
         # Upload to Cloudinary first
         cloudinary_url = await upload_to_cloudinary(file_content, user_id, file.filename)
@@ -194,21 +193,24 @@ async def process_ppt(user_id: str = Body(...), file: UploadFile = File(...)):
         # Save the uploaded file temporarily for text extraction
         suffix = Path(file.filename).suffix
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-            # shutil.copyfileobj(file.file, temp_file) # Problematic after reading content
-            temp_file.write(file_content) # Write the read content to temp file
+            temp_file.write(file_content) # Write the content to temp file
             temp_path = temp_file.name
             logger.info(f"Saved PPT temporarily to: {temp_path}")
 
         # Process the PowerPoint
-        prs = Presentation(temp_path)
-        text = ""
+        try:
+            prs = Presentation(temp_path)
+            text = ""
 
-        # Extract text from all slides
-        for slide in prs.slides:
-            for shape in slide.shapes:
-                if hasattr(shape, "text"):
-                    text += shape.text + "\n"
-        logger.info(f"Extracted {len(text)} characters from PPT: {file.filename}")
+            # Extract text from all slides
+            for slide in prs.slides:
+                for shape in slide.shapes:
+                    if hasattr(shape, "text"):
+                        text += shape.text + "\n"
+            logger.info(f"Extracted {len(text)} characters from PPT: {file.filename}")
+        except Exception as ppt_error:
+            logger.error(f"Error extracting text from PowerPoint: {str(ppt_error)}")
+            raise HTTPException(status_code=500, detail=f"Error reading PowerPoint content: {str(ppt_error)}")
 
         # Process text to vectors
         vector_result = await process_text_to_vectors(text, user_id)

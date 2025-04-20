@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../firebase';
 import './TalkToNotes.css';
@@ -12,11 +12,19 @@ const TalkToNotes = () => {
     const [loading, setLoading] = useState(false);
     const [uploadLoading, setUploadLoading] = useState(false);
     const [uploadError, setUploadError] = useState('');
+    const chatMessagesRef = useRef(null);
 
     useEffect(() => {
         // Initialize notes as empty array - they will be stored in local state
         setNotes([]);
     }, []);
+
+    // Auto-scroll to the bottom when chat history updates
+    useEffect(() => {
+        if (chatMessagesRef.current) {
+            chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+        }
+    }, [chatHistory]);
 
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
@@ -34,14 +42,11 @@ const TalkToNotes = () => {
             const allowedTypes = [
                 'application/pdf',
                 'application/vnd.ms-powerpoint',
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'image/jpeg',
-                'image/png',
-                'image/gif'
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation'
             ];
 
             if (!allowedTypes.includes(file.type)) {
-                throw new Error('File type not supported. Please upload PDF, PPT, or image files.');
+                throw new Error('File type not supported. Please upload PDF or PPT files only.');
             }
 
             // Create form data
@@ -53,10 +58,8 @@ const TalkToNotes = () => {
             let endpoint;
             if (file.type.includes('pdf')) {
                 endpoint = '/api/rag/process_pdf';
-            } else if (file.type.includes('powerpoint')) {
-                endpoint = '/api/rag/process_ppt';
             } else {
-                endpoint = '/api/rag/process_image';
+                endpoint = '/api/rag/process_ppt';
             }
 
             // Send to backend for processing
@@ -107,6 +110,9 @@ const TalkToNotes = () => {
 
         // Add user message immediately
         setChatHistory(prev => [...prev, { type: 'user', content: userMessage }]);
+        
+        // Add a temporary typing indicator
+        setChatHistory(prev => [...prev, { type: 'typing', content: '' }]);
 
         try {
             const user = auth.currentUser;
@@ -119,7 +125,9 @@ const TalkToNotes = () => {
                 },
                 body: JSON.stringify({
                     user_id: user.uid,
-                    query: userMessage
+                    query: userMessage,
+                    document_title: selectedNote.title,
+                    cloudinary_url: selectedNote.cloudinaryUrl
                 }),
             });
 
@@ -129,19 +137,36 @@ const TalkToNotes = () => {
             }
 
             const data = await response.json();
-            // Add bot response to chat history
-            setChatHistory(prev => [...prev, { type: 'bot', content: data.response }]);
+            
+            // Remove the typing indicator and add bot response
+            setChatHistory(prev => {
+                const newHistory = prev.filter(msg => msg.type !== 'typing');
+                return [...newHistory, { type: 'bot', content: data.response }];
+            });
         } catch (error) {
             console.error('Error querying notes:', error);
-            // Add error message to chat history
-            setChatHistory(prev => [...prev, { 
-                type: 'bot', 
-                content: 'Sorry, there was an error processing your query. Please try again.' 
-            }]);
+            
+            // Remove the typing indicator and add error message
+            setChatHistory(prev => {
+                const newHistory = prev.filter(msg => msg.type !== 'typing');
+                return [...newHistory, { 
+                    type: 'bot', 
+                    content: 'Sorry, there was an error processing your query. Please try again.' 
+                }];
+            });
         } finally {
             setLoading(false);
         }
     };
+
+    // Typing indicator component
+    const TypingIndicator = () => (
+        <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    );
 
     return (
         <div className="talk-to-notes">
@@ -165,14 +190,14 @@ const TalkToNotes = () => {
             <div className="upload-section">
                 <input
                     type="file"
-                    accept=".pdf,.ppt,.pptx,.jpg,.jpeg,.png,.gif"
+                    accept=".pdf,.ppt,.pptx"
                     onChange={handleFileUpload}
                     disabled={uploadLoading}
                     className="file-input"
                     id="file-input"
                 />
                 <label htmlFor="file-input" className="file-input-label">
-                    {uploadLoading ? 'Uploading...' : 'Upload PDF, PPT, or Image'}
+                    {uploadLoading ? 'Uploading...' : 'Upload PDF or PPT'}
                 </label>
                 {uploadError && <p className="upload-error">{uploadError}</p>}
             </div>
@@ -222,13 +247,21 @@ const TalkToNotes = () => {
                             </div>
                             
                             <div className="chat-container">
-                                <div className="chat-messages">
+                                <div className="chat-messages" ref={chatMessagesRef}>
                                     {chatHistory.map((message, index) => (
-                                        <div key={index} className={`message ${message.type}`}>
-                                            <div className="message-content">
-                                                {message.content}
+                                        message.type === 'typing' ? (
+                                            <div key={index} className="message bot typing-message">
+                                                <div className="message-content">
+                                                    <TypingIndicator />
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div key={index} className={`message ${message.type}`}>
+                                                <div className="message-content">
+                                                    {message.content}
+                                                </div>
+                                            </div>
+                                        )
                                     ))}
                                 </div>
                                 
@@ -241,7 +274,7 @@ const TalkToNotes = () => {
                                         disabled={loading}
                                     />
                                     <button type="submit" disabled={loading}>
-                                        {loading ? 'Processing...' : 'Ask'}
+                                        Ask
                                     </button>
                                 </form>
                             </div>
