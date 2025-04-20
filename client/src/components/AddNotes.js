@@ -22,7 +22,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
   const [compositeImageUrl, setCompositeImageUrl] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [generatedNotes, setGeneratedNotes] = useState(null);
-  const [activeTab, setActiveTab] = useState('manual'); // New state for tab switching
+  const [activeTab, setActiveTab] = useState('manual');
   const [showStudentPreview, setShowStudentPreview] = useState(false);
   const [noteOrder, setNoteOrder] = useState([]);
   const imageRef = useRef(null);
@@ -183,7 +183,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
       setGeneratedNotes(notes);
       setCompositeImageUrl(composite_image_url);
       setShowPreview(useImage);
-      setActiveTab('ai'); // Switch to AI tab after generation
+      setActiveTab('ai');
     } catch (err) {
       setError('Failed to generate notes: ' + err.message);
     } finally {
@@ -303,293 +303,294 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
     >
       <div className="addnotes-header">
         <h2>Add Notes to Segments</h2>
-        <p>Click a colored segment to add or edit notes.</p>
+        <p>Click a colored segment to add or edit notes in the sidebar.</p>
       </div>
-      <div className="addnotes-image-container" onClick={handleImageClick}>
-        <img
-          src={image.url}
-          alt="Segmented Image"
-          className="addnotes-base-image"
-          ref={imageRef}
-        />
-        <div className="addnotes-regions-overlay">
-          {regions.map((region) => (
-            <img
-              key={region.region_id}
-              src={region.mask_url}
-              alt={`Segment ${region.region_id}`}
-              className="addnotes-mask"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                opacity: 0.5,
-                pointerEvents: 'none',
-              }}
-              onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
-            />
-          ))}
+      <div className="addnotes-content">
+        <div className="addnotes-image-container" onClick={handleImageClick}>
+          <img
+            src={image.url}
+            alt="Segmented Image"
+            className="addnotes-base-image"
+            ref={imageRef}
+          />
+          <div className="addnotes-regions-overlay">
+            {regions.map((region) => (
+              <img
+                key={region.region_id}
+                src={region.mask_url}
+                alt={`Segment ${region.region_id}`}
+                className="addnotes-mask"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  opacity: 0.5,
+                  pointerEvents: 'none',
+                }}
+                onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
+              />
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="addnotes-footer">
-        <motion.button
-          className="addnotes-back-button"
-          onClick={onCancel}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          Back to Features
-        </motion.button>
-        <motion.button
-          className="addnotes-done-button"
-          onClick={handleDone}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          Done Adding Notes
-        </motion.button>
-      </div>
-      <AnimatePresence>
-        {currentNote && (
-          <motion.div
-            className="addnotes-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div
-              className="addnotes-popup"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              role="dialog"
-              aria-labelledby="addnotes-title"
-            >
-              <div className="addnotes-header">
-                <h3 id="addnotes-title">
+        <div className="addnotes-sidebar">
+          <AnimatePresence>
+            {currentNote ? (
+              <motion.div
+                className="addnotes-panel"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <h3>
                   <span className="addnotes-color-indicator" style={{ backgroundColor: '#e982c8' }}></span>
                   {notes[currentNote.regionId] ? 'Edit Notes' : 'Add Notes'} for Segment {currentNote.regionIndex + 1}
                 </h3>
-              </div>
-              <div className="addnotes-preview">
-                <img
-                  src={currentNote.maskUrl}
-                  alt={`Segment ${currentNote.regionIndex + 1} preview`}
-                  className="addnotes-preview-image"
-                  onError={() => console.error(`Failed to load mask: ${currentNote.maskUrl}`)}
-                />
-              </div>
-              <div className="addnotes-tabs">
-                <button
-                  className={`addnotes-tab ${activeTab === 'manual' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('manual')}
-                  aria-selected={activeTab === 'manual'}
-                  role="tab"
+                <div className="addnotes-preview">
+                  <img
+                    src={currentNote.maskUrl}
+                    alt={`Segment ${currentNote.regionIndex + 1} preview`}
+                    className="addnotes-preview-image"
+                    onError={() => console.error(`Failed to load mask: ${currentNote.maskUrl}`)}
+                  />
+                </div>
+                <div className="addnotes-tabs">
+                  <button
+                    className={`addnotes-tab ${activeTab === 'manual' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('manual')}
+                    aria-selected={activeTab === 'manual'}
+                    role="tab"
+                  >
+                    Manual Notes
+                  </button>
+                  <button
+                    className={`addnotes-tab ${activeTab === 'ai' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('ai')}
+                    aria-selected={activeTab === 'ai'}
+                    role="tab"
+                  >
+                    AI Notes
+                  </button>
+                </div>
+                <motion.div
+                  className="addnotes-tab-content"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  Manual Notes
-                </button>
-                <button
-                  className={`addnotes-tab ${activeTab === 'ai' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('ai')}
-                  aria-selected={activeTab === 'ai'}
-                  role="tab"
-                >
-                  AI Notes
-                </button>
-              </div>
-              <motion.div
-                className="addnotes-tab-content"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                {activeTab === 'ai' ? (
-                  <>
-                    <motion.div
-                      className="addnotes-generated-box"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: generatedNotes ? 'auto' : 0, opacity: generatedNotes ? 1 : 0 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <h4>AI-Generated Notes</h4>
-                      <p>{generatedNotes || 'No notes generated yet. Click "Generate with AI" to create notes.'}</p>
-                      {generatedNotes && (
-                        <motion.button
-                          className="addnotes-accept-button"
-                          onClick={handleAcceptGeneratedNotes}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          Accept Notes
-                        </motion.button>
-                      )}
-                    </motion.div>
-                    <div className="addnotes-ai-card">
-                      <div className="addnotes-ai-option">
-                        <textarea
-                          value={customPrompt}
-                          onChange={(e) => setCustomPrompt(e.target.value)}
-                          placeholder="Enter a custom prompt (e.g., 'Generate notes on photosynthesis for this segment')"
-                          className="addnotes-prompt-input"
-                          disabled={isGenerating || isSaving}
-                        />
-                      </div>
-                      <div className="addnotes-ai-option">
-                        <label htmlFor="use-image" className="addnotes-ai-label" title="Include the segment image to generate notes based on its visual content">
-                          <input
-                            type="checkbox"
-                            id="use-image"
-                            checked={useImage}
-                            onChange={(e) => setUseImage(e.target.checked)}
+                  {activeTab === 'ai' ? (
+                    <>
+                      <motion.div
+                        className="addnotes-generated-box"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: generatedNotes ? 'auto' : 0, opacity: generatedNotes ? 1 : 0 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <h4>AI-Generated Notes</h4>
+                        <p>{generatedNotes || 'No notes generated yet. Click "Generate with AI" to create notes.'}</p>
+                        {generatedNotes && (
+                          <motion.button
+                            className="addnotes-accept-button"
+                            onClick={handleAcceptGeneratedNotes}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            Accept Notes
+                          </motion.button>
+                        )}
+                      </motion.div>
+                      <div className="addnotes-ai-card">
+                        <div className="addnotes-ai-option">
+                          <textarea
+                            value={customPrompt}
+                            onChange={(e) => setCustomPrompt(e.target.value)}
+                            placeholder="Enter a custom prompt (e.g., 'Generate notes on photosynthesis for this segment')"
+                            className="addnotes-prompt-input"
                             disabled={isGenerating || isSaving}
                           />
-                          <MdImage size={18} /> Include Segment Image
-                        </label>
-                      </div>
-                      <div className="addnotes-ai-option">
-                        <label htmlFor="document-upload" className="addnotes-ai-label" title="Upload a PDF or TXT file to provide context for AI notes">
-                          <MdUploadFile size={18} /> Upload Study Material (PDF/TXT)
-                        </label>
-                        <input
-                          id="document-upload"
-                          type="file"
-                          accept=".pdf,.txt"
-                          onChange={handleFileUpload}
-                          ref={fileInputRef}
-                          className="addnotes-upload-input"
-                          disabled={isGenerating || isSaving}
-                        />
-                        {uploadedFile && <span className="addnotes-upload-filename">{uploadedFile.name}</span>}
-                      </div>
-                      <motion.button
-                        className="addnotes-ai-button"
-                        onClick={handleGenerateWithAI}
-                        disabled={isGenerating || isSaving}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        aria-label="Generate notes with AI"
-                      >
-                        {isGenerating ? (
-                          <span className="addnotes-spinner"></span>
-                        ) : (
-                          <>
-                            <MdAutoAwesome size={20} /> Generate with AI
-                          </>
-                        )}
-                      </motion.button>
-                      {useImage && compositeImageUrl && (
-                        <motion.div
-                          className="addnotes-composite-preview"
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: showPreview ? 'auto' : 0, opacity: showPreview ? 1 : 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <button
-                            className="addnotes-preview-toggle"
-                            onClick={() => setShowPreview(!showPreview)}
-                            aria-label={showPreview ? 'Hide LLM image preview' : 'Show LLM image preview'}
-                          >
-                            {showPreview ? 'Hide LLM Image Preview' : 'Show LLM Image Preview'}
-                          </button>
-                          {showPreview && (
-                            <img
-                              src={compositeImageUrl}
-                              alt="Composite image for LLM"
-                              className="addnotes-composite-image"
-                              onError={() => console.error(`Failed to load composite image: ${compositeImageUrl}`)}
+                        </div>
+                        <div className="addnotes-ai-option">
+                          <label htmlFor="use-image" className="addnotes-ai-label" title="Include the segment image to generate notes based on its visual content">
+                            <input
+                              type="checkbox"
+                              id="use-image"
+                              checked={useImage}
+                              onChange={(e) => setUseImage(e.target.checked)}
+                              disabled={isGenerating || isSaving}
                             />
+                            <MdImage size={18} /> Include Segment Image
+                          </label>
+                        </div>
+                        <div className="addnotes-ai-option">
+                          <label htmlFor="document-upload" className="addnotes-ai-label" title="Upload a PDF or TXT file to provide context for AI notes">
+                            <MdUploadFile size={18} /> Upload Study Material (PDF/TXT)
+                          </label>
+                          <input
+                            id="document-upload"
+                            type="file"
+                            accept=".pdf,.txt"
+                            onChange={handleFileUpload}
+                            ref={fileInputRef}
+                            className="addnotes-upload-input"
+                            disabled={isGenerating || isSaving}
+                          />
+                          {uploadedFile && <span className="addnotes-upload-filename">{uploadedFile.name}</span>}
+                        </div>
+                        <motion.button
+                          className="addnotes-ai-button"
+                          onClick={handleGenerateWithAI}
+                          disabled={isGenerating || isSaving}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          aria-label="Generate notes with AI"
+                        >
+                          {isGenerating ? (
+                            <span className="addnotes-spinner"></span>
+                          ) : (
+                            <>
+                              <MdAutoAwesome size={20} /> Generate with AI
+                            </>
                           )}
-                        </motion.div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div className="addnotes-textarea-container">
-                    <textarea
-                      ref={textareaRef}
-                      value={currentNote.text}
-                      onChange={handleNoteChange}
-                      placeholder="Enter notes for this segment (e.g., 'This is the main subject of the image...')"
-                      className="addnotes-textarea"
-                      disabled={isSaving}
-                      aria-describedby="addnotes-char-count"
-                    />
-                    <div className="addnotes-textarea-footer">
-                      <span id="addnotes-char-count" className="addnotes-char-count">
-                        {currentNote.text.length}/{maxChars}
-                      </span>
-                      <div className="addnotes-undo-redo">
-                        <motion.button
-                          className="addnotes-undo-button"
-                          onClick={handleUndo}
-                          disabled={historyIndex[currentNote.regionId] === 0 || isSaving}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          title="Undo last change"
-                          aria-label="Undo last change"
-                        >
-                          <MdUndo size={20} />
                         </motion.button>
-                        <motion.button
-                          className="addnotes-redo-button"
-                          onClick={handleRedo}
-                          disabled={historyIndex[currentNote.regionId] === history[currentNote.regionId].length - 1 || isSaving}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          title="Redo last change"
-                          aria-label="Redo last change"
-                        >
-                          <MdRedo size={20} />
-                        </motion.button>
+                        {useImage && compositeImageUrl && (
+                          <motion.div
+                            className="addnotes-composite-preview"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: showPreview ? 'auto' : 0, opacity: showPreview ? 1 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <button
+                              className="addnotes-preview-toggle"
+                              onClick={() => setShowPreview(!showPreview)}
+                              aria-label={showPreview ? 'Hide LLM image preview' : 'Show LLM image preview'}
+                            >
+                              {showPreview ? 'Hide LLM Image Preview' : 'Show LLM Image Preview'}
+                            </button>
+                            {showPreview && (
+                              <img
+                                src={compositeImageUrl}
+                                alt="Composite image for LLM"
+                                className="addnotes-composite-image"
+                                onError={() => console.error(`Failed to load composite image: ${compositeImageUrl}`)}
+                              />
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="addnotes-textarea-container">
+                      <textarea
+                        ref={textareaRef}
+                        value={currentNote.text}
+                        onChange={handleNoteChange}
+                        placeholder="Enter notes for this segment (e.g., 'This is the main subject of the image...')"
+                        className="addnotes-textarea"
+                        disabled={isSaving}
+                        aria-describedby="addnotes-char-count"
+                      />
+                      <div className="addnotes-textarea-footer">
+                        <span id="addnotes-char-count" className="addnotes-char-count">
+                          {currentNote.text.length}/{maxChars}
+                        </span>
+                        <div className="addnotes-undo-redo">
+                          <motion.button
+                            className="addnotes-undo-button"
+                            onClick={handleUndo}
+                            disabled={historyIndex[currentNote.regionId] === 0 || isSaving}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Undo last change"
+                            aria-label="Undo last change"
+                          >
+                            <MdUndo size={20} />
+                          </motion.button>
+                          <motion.button
+                            className="addnotes-redo-button"
+                            onClick={handleRedo}
+                            disabled={historyIndex[currentNote.regionId] === history[currentNote.regionId].length - 1 || isSaving}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Redo last change"
+                            aria-label="Redo last change"
+                          >
+                            <MdRedo size={20} />
+                          </motion.button>
+                        </div>
                       </div>
                     </div>
+                  )}
+                  {error && (
+                    <motion.div
+                      className="addnotes-error"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <MdErrorOutline size={20} />
+                      {error}
+                    </motion.div>
+                  )}
+                  <div className="addnotes-buttons">
+                    <motion.button
+                      className="addnotes-save-button"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      aria-label="Save note"
+                    >
+                      {isSaving ? <span className="addnotes-spinner"></span> : 'Save Note'}
+                    </motion.button>
+                    <motion.button
+                      className="addnotes-cancel-button"
+                      onClick={handleCancelNote}
+                      disabled={isSaving}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      aria-label="Clear note"
+                    >
+                      Clear
+                    </motion.button>
                   </div>
-                )}
-                {error && (
-                  <motion.div
-                    className="addnotes-error"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <MdErrorOutline size={20} />
-                    {error}
-                  </motion.div>
-                )}
-                <div className="addnotes-buttons">
-                  <motion.button
-                    className="addnotes-save-button"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    aria-label="Save note"
-                  >
-                    {isSaving ? <span className="addnotes-spinner"></span> : 'Save Note'}
-                  </motion.button>
-                  <motion.button
-                    className="addnotes-cancel-button"
-                    onClick={handleCancelNote}
-                    disabled={isSaving}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    aria-label="Cancel and close"
-                  >
-                    Cancel
-                  </motion.button>
-                </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            ) : (
+              <motion.div
+                className="addnotes-empty-state"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                Click a segment to add or edit notes
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="addnotes-footer">
+            <motion.button
+              className="addnotes-back-button"
+              onClick={onCancel}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Back to Features
+            </motion.button>
+            <motion.button
+              className="addnotes-done-button"
+              onClick={handleDone}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Done Adding Notes
+            </motion.button>
+          </div>
+        </div>
+      </div>
       <AnimatePresence>
         {showStudentPreview && (
           <StudentPreview
