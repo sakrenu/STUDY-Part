@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -41,7 +40,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     boxes.forEach((box, index) => {
-      ctx.strokeStyle = index === draggingBoxIndex ? '#ffcc00' : '#00ff00';
+      ctx.strokeStyle = index === draggingBoxIndex ? '#FFD700' : '#e982c8';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.strokeRect(box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1);
@@ -49,7 +48,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
     });
 
     if (currentBox && activeTool === "box") {
-      ctx.strokeStyle = '#00ff00';
+      ctx.strokeStyle = '#e982c8';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.strokeRect(currentBox.x1, currentBox.y1, currentBox.x2 - currentBox.x1, currentBox.y2 - currentBox.y1);
@@ -60,7 +59,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       points.forEach(point => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = point.label === 1 ? 'green' : 'red';
+        ctx.fillStyle = point.label === 1 ? '#FFD700' : '#e982c8';
         ctx.fill();
       });
     }
@@ -153,41 +152,41 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       setCurrentBox(null);
     }
   };
+
   const handleSegment = async () => {
     const img = imageRef.current;
     const canvas = canvasRef.current;
-  
+
     if (!img || !canvas) {
       toast.error("Image or canvas not found.");
       return;
     }
-  
+
     const scaleX = img.naturalWidth / canvas.width;
     const scaleY = img.naturalHeight / canvas.height;
-  
-    // Scale point coordinates
+
     const pointCoords = points.map(p => [p.x * scaleX, p.y * scaleY]);
     const pointLabels = points.map(p => p.label);
-  
+
     if (!image_id || typeof image_id !== 'string' || image_id.trim() === '') {
       console.error('Invalid image_id:', image_id);
       toast.error("Image is not uploaded properly. Please try uploading again.");
       return;
     }
-  
+
     if (boxes.length === 0 && pointCoords.length === 0 && !activeBox) {
       toast.error("Please select at least one bounding box or point.");
       return;
     }
-  
+
     try {
       let newRegions = [...regions];
       let boxesToProcess = boxes;
-  
+
       if (activeBox && pointCoords.length > 0) {
         boxesToProcess = [...boxes, activeBox];
       }
-  
+
       for (const box of boxesToProcess) {
         const scaledBox = [
           box.x1 * scaleX,
@@ -195,26 +194,26 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
           box.x2 * scaleX,
           box.y2 * scaleY
         ];
-  
+
         const payload = {
           image_id,
           box: scaledBox,
           points: pointCoords.length > 0 ? pointCoords : null,
           labels: pointLabels.length > 0 ? pointLabels : null
         };
-  
+
         const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });
-  
+
         const incomingRegions = response.data.regions.filter(
           newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
         );
         newRegions = [...newRegions, ...incomingRegions];
         if (!lessonId) setLessonId(response.data.lesson_id);
       }
-  
+
       if (boxesToProcess.length === 0 && pointCoords.length > 0) {
         const scaledBox = activeBox
           ? [
@@ -224,26 +223,26 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
               activeBox.y2 * scaleY
             ]
           : null;
-  
+
         const payload = {
           image_id,
           box: scaledBox,
           points: pointCoords,
           labels: pointLabels
         };
-  
+
         const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });
-  
+
         const incomingRegions = response.data.regions.filter(
           newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
         );
         newRegions = [...newRegions, ...incomingRegions];
         if (!lessonId) setLessonId(response.data.lesson_id);
       }
-  
+
       setRegions(newRegions);
       setBoxes([]);
       setPoints([]);
@@ -255,11 +254,6 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       console.error('Error segmenting:', errorDetail);
       toast.error(`Segmentation failed: ${errorDetail}`);
     }
-  };
-  
-  const handleAddPart = () => {
-    setCurrentBox(null);
-    setActiveBox(null);
   };
 
   const handleDone = () => {
@@ -314,47 +308,12 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
   return (
     <motion.div
       className="selcomp-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       {!showFeatureAddition && !showMaskPreview && (
         <>
-          <div className="controls">
-            <motion.button className="control-button" onClick={() => setActiveTool("box")} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdCrop size={20} /> Bounding Box
-            </motion.button>
-            <motion.button className={`control-button ${activeTool === "include" ? 'active-point-mode' : ''}`} onClick={() => setActiveTool("include")} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdAddCircle size={20} /> Include Point
-            </motion.button>
-            <motion.button className={`control-button ${activeTool === "exclude" ? 'active-point-mode' : ''}`} onClick={() => setActiveTool("exclude")} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdAddCircle size={20} /> Exclude Point
-            </motion.button>
-            <motion.button className="control-button" onClick={handleSelectRegion} disabled={activeTool !== "box" || !currentBox} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdCheckCircle size={20} /> Select Region
-            </motion.button>
-            <motion.button className="control-button" onClick={handleAddPart} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdAddCircle size={20} /> Add Part
-            </motion.button>
-            <motion.button className="control-button" onClick={handleSegment} disabled={!image_id || typeof image_id !== 'string' || image_id.trim() === '' || (boxes.length === 0 && points.length === 0 && !activeBox)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdCheckCircle size={20} /> Segment
-            </motion.button>
-            <motion.button className="control-button" onClick={handleDone} disabled={regions.length === 0} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdCheckCircle size={20} /> Done
-            </motion.button>
-            <motion.button className="control-button" onClick={handleUndo} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdUndo size={20} /> Undo
-            </motion.button>
-            <motion.button className="control-button" onClick={handleReset} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdRestartAlt size={20} /> Reset
-            </motion.button>
-            <motion.button className="control-button" onClick={toggleMasks} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <MdVisibility size={20} /> {showMasks ? 'Hide' : 'Show'} Masks
-            </motion.button>
-            <motion.button className="control-button" onClick={onBack} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              Back
-            </motion.button>
-          </div>
           <div className="selcomp-image-container">
             <img
               ref={imageRef}
@@ -390,21 +349,119 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
                   className="region-outline"
                   style={{
                     width: imageRef.current?.width,
-                    height: imageRef.current?.height,
-                    opacity: 0.5
+                    height: imageRef.current?.height
                   }}
                   onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
                 />
               </div>
             ))}
           </div>
+          <div className="selcomp-toolbar">
+            <div className="selcomp-tool-group">
+              <motion.button
+                className={`selcomp-toolbar-button ${activeTool === "box" ? "active" : ""}`}
+                onClick={() => setActiveTool("box")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdCrop size={20} /> Bounding Box
+                <span className="tooltip">Draw a bounding box to select a region</span>
+              </motion.button>
+              <motion.button
+                className={`selcomp-toolbar-button ${activeTool === "include" ? "active" : ""}`}
+                onClick={() => setActiveTool("include")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdAddCircle size={20} /> Include Point
+                <span className="tooltip">Click to include points in the segmentation</span>
+              </motion.button>
+              <motion.button
+                className={`selcomp-toolbar-button ${activeTool === "exclude" ? "active" : ""}`}
+                onClick={() => setActiveTool("exclude")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdAddCircle size={20} /> Exclude Point
+                <span className="tooltip">Right-click to exclude points from the segmentation</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={handleSelectRegion}
+                disabled={activeTool !== "box" || !currentBox}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdCheckCircle size={20} /> Select Region
+                <span className="tooltip">Confirm the current bounding box as a region</span>
+              </motion.button>
+            </div>
+            <div className="selcomp-action-group">
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={handleUndo}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdUndo size={20} /> Undo
+                <span className="tooltip">Undo the last action (point, box, or region)</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={handleReset}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdRestartAlt size={20} /> Reset
+                <span className="tooltip">Reset all selections and regions</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={toggleMasks}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MdVisibility size={20} /> {showMasks ? 'Hide' : 'Show'} Masks
+                <span className="tooltip">{showMasks ? 'Hide segmented region masks' : 'Show segmented region masks'}</span>
+              </motion.button>
+              <motion.button
+                className="selcomp-toolbar-button"
+                onClick={onBack}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Back
+                <span className="tooltip">Return to the previous screen</span>
+              </motion.button>
+            </div>
+            <motion.button
+              className="selcomp-primary-button"
+              onClick={handleSegment}
+              disabled={!image_id || typeof image_id !== 'string' || image_id.trim() === '' || (boxes.length === 0 && points.length === 0 && !activeBox)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <MdCheckCircle size={20} /> Segment
+              <span className="tooltip">Process the selected regions for segmentation</span>
+            </motion.button>
+            <motion.button
+              className="selcomp-primary-button"
+              onClick={handleDone}
+              disabled={regions.length === 0}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <MdCheckCircle size={20} /> Done
+              <span className="tooltip">Finish segmentation and review results</span>
+            </motion.button>
+          </div>
         </>
       )}
       {showMaskPreview && !showFeatureAddition && (
         <motion.div
           className="selcomp-mask-preview"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
           <div className="selcomp-image-container">
@@ -423,8 +480,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
                     className="region-outline"
                     style={{
                       width: imageRef.current?.width,
-                      height: imageRef.current?.height,
-                      opacity: 0.5
+                      height: imageRef.current?.height
                     }}
                     onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
                   />
@@ -434,20 +490,22 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
           </div>
           <div className="selcomp-toolbar">
             <motion.button
-              className="selcomp-toolbar-button"
+              className="selcomp-primary-button"
               onClick={handleProceedToFeatures}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <MdArrowForward size={20} /> Proceed to Add Features
+              <span className="tooltip">Add features to the segmented regions</span>
             </motion.button>
             <motion.button
-              className="selcomp-toolbar-button selcomp-back-button"
+              className="selcomp-back-button"
               onClick={() => setShowMaskPreview(false)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               Back
+              <span className="tooltip">Return to segmentation</span>
             </motion.button>
           </div>
         </motion.div>
