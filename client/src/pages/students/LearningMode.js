@@ -12,6 +12,7 @@ const LearningMode = ({ studentId }) => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [notifications, setNotifications] = useState([]);
     const [enrolledCourses, setEnrolledCourses] = useState([]);
+    const [professors, setProfessors] = useState({});
     const auth = getAuth();
     const navigate = useNavigate();
 
@@ -62,6 +63,27 @@ const LearningMode = ({ studentId }) => {
             fetchEnrolledCourses();
         }
     }, [auth.currentUser]);
+
+    // Add new useEffect to fetch professor details
+    useEffect(() => {
+        const fetchProfessors = async () => {
+            try {
+                const usersSnap = await getDocs(collection(db, 'users'));
+                const profMap = {};
+                usersSnap.docs.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.role === 'teacher') {
+                        profMap[doc.id] = userData.email;
+                    }
+                });
+                setProfessors(profMap);
+            } catch (err) {
+                console.error('Failed to fetch professors:', err);
+            }
+        };
+
+        fetchProfessors();
+    }, []);
 
     // Handle segment click
     const handlePartClick = (notes) => {
@@ -167,8 +189,14 @@ const LearningMode = ({ studentId }) => {
                                     }}
                                 >
                                     <div>
-                                        <div className="course-department">Information Technology</div>
                                         <h3 className="course-name">{course.courseName}</h3>
+                                        <p className="professor-name" style={{ 
+                                            color: 'rgba(255, 255, 255, 0.8)', 
+                                            fontSize: '0.9rem', 
+                                            marginTop: '8px' 
+                                        }}>
+                                            Professor: {professors[course.professor] || 'Loading...'}
+                                        </p>
                                     </div>
                                     <div className="course-details">
                                         <p>Class: {course.className}</p>
