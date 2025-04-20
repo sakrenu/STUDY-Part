@@ -324,7 +324,7 @@
   color: #cd579a;
 }
 
-.back-button {
+.back-btn {
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
   padding: 0.75rem 1.5rem;
@@ -339,13 +339,13 @@
   box-shadow: 0 4px 6px rgba(111, 66, 193, 0.2);
 }
 
-.back-button:hover {
+.back-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(111, 66, 193, 0.3);
   background: linear-gradient(90deg, #6a44a7, #681577);
 }
 
-.back-button:active {
+.back-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
 }

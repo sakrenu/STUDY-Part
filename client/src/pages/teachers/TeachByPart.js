@@ -103,7 +103,7 @@ const TeachByParts = () => {
             <span className="part">Part</span>
           </a>
         </div>
-        <button className="back-button" onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
+        <button className="back-btn" onClick={() => navigate('/dashboard')}>Back</button>
       </nav>
 
       <div className="teach-by-parts-container">
