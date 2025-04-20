@@ -83,8 +83,7 @@
     border: 2px solid #e982c8;
   }
   
-  .featadd-mask,
-  .featadd-preview-mask {
+  .featadd-mask {
     position: absolute;
     top: 0;
     left: 0;
@@ -92,17 +91,20 @@
     height: 100%;
     object-fit: contain;
     pointer-events: none;
+    transition: border 0.3s ease;
+    border: 3px solid transparent;
+    box-sizing: border-box;
   }
   
   .featadd-selected .featadd-mask,
   .featadd-preview-selected .featadd-preview-mask {
-    border: 3px solid #e982c8;
     opacity: 0.7;
   }
   
   .featadd-adding.featadd-region,
   .featadd-adding.featadd-preview-region {
     animation: pulse 1.5s infinite ease-in-out;
+    background-color: #4a4a4a;
   }
   
   @keyframes pulse {
