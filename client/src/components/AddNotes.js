@@ -451,7 +451,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <h4>AI-Generated Notes</h4>
+                    <h4>AI-Powered Notes</h4>
                     <p>{generatedNotes || 'No notes generated yet. Click "Generate with AI" to create notes.'}</p>
                     {generatedNotes && (
                       <motion.button
