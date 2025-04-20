@@ -156,7 +156,7 @@ const TalkToNotes = () => {
                 title: file.name,
                 content: data.content,
                 cloudinaryUrl: data.cloudinary_url,
-                document_id: data.document_id, // Store the document ID
+                document_id: data.document_id,
                 fileType: data.filetype,
                 timestamp: Date.now()
             };
@@ -358,16 +358,7 @@ const TalkToNotes = () => {
                                 onClick={() => handleNoteSelect(note)}
                             >
                                 <h3>{note.title || `Note ${index + 1}`}</h3>
-                                <p>{note.content ? note.content.substring(0, 100) : 'Processing...'}...</p> {/* Added check for content */}
-                                <a 
-                                    href={note.cloudinaryUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="view-original"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    View Original
-                                </a>
+                                <p>{note.content ? note.content.substring(0, 100) : 'Processing...'}...</p>
                             </div>
                         ))
                     )}
@@ -376,17 +367,13 @@ const TalkToNotes = () => {
                 <div className="interaction-area">
                     {selectedNote ? (
                         <>
-                            {/* Removed selected note content display from here */}
-                            
                             <div className="chat-container">
                                 <div className="chat-messages" ref={chatMessagesRef}>
-                                    {/* Display selected note info at the top of chat */}
                                     {chatHistory.length === 0 && (
                                         <div className="message bot selected-note-info">
                                             <div className="message-content">
                                                 <p><b>Selected Note: {selectedNote.title}</b></p>
                                                 <p>{selectedNote.content ? selectedNote.content.substring(0, 150) + '...' : 'Loading content...'}</p>
-                                                <a href={selectedNote.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="view-original-link-inline">View Original</a>
                                             </div>
                                         </div>
                                     )}
@@ -409,7 +396,6 @@ const TalkToNotes = () => {
                                                             className="message-content bot-html-content"
                                                             dangerouslySetInnerHTML={{ __html: message.content }}
                                                         />
-                                                        {/* Speak button moved outside message-content */}
                                                         {message.content && !message.content.includes('Sorry, there was an error') && !message.content.includes('Please select a processed note') && !message.content.includes('Please enter a question') && !message.content.includes('Mic Error') && (
                                                             <button 
                                                                 className="speak-button"
@@ -417,7 +403,6 @@ const TalkToNotes = () => {
                                                                 title="Speak this message aloud"
                                                                 aria-label="Speak this message aloud"
                                                             >
-                                                                {/* Speaker Icon SVG */}
                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px">
                                                                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                                                                 </svg>
@@ -439,20 +424,19 @@ const TalkToNotes = () => {
                                         disabled={loading || isRecording}
                                     />
                                     <button 
-                                        type="button" // Change to type="button" to prevent form submission
+                                        type="button"
                                         onClick={handleMicClick}
                                         className={`mic-button ${isRecording ? 'recording' : ''}`}
-                                        disabled={loading || !SpeechRecognition} // Disable if loading or not supported
+                                        disabled={loading || !SpeechRecognition}
                                         title={SpeechRecognition ? (isRecording ? "Stop Recording" : "Start Recording") : "Voice input not supported"}
                                     >
-                                        {/* Modern Mic SVG Icon */}
                                         <svg 
                                             xmlns="http://www.w3.org/2000/svg" 
                                             viewBox="0 0 24 24" 
                                             fill="currentColor" 
                                             width="18px" 
                                             height="18px"
-                                            aria-hidden="true" // Hide from screen readers as title is present
+                                            aria-hidden="true"
                                         >
                                           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                                           <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V22h-3v2h8v-2h-3v-1.06A9 9 0 0 0 21 12v-2h-2z"/>

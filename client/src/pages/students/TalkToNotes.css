@@ -523,38 +523,12 @@
 }
 
 /* View Original Link Styles */
-.view-original {
-    display: inline-block;
-    margin-top: 0.5rem;
-    padding: 0.3rem 0.8rem;
-    background: rgba(60, 36, 104, 0.5);
-    border-radius: 4px;
-    color: #f1b5fe;
-    text-decoration: none;
-    font-size: 0.8rem;
-    transition: all 0.3s ease;
-}
+/* REMOVED .view-original styles as they are now handled by .note-actions a */
 
-.view-original:hover {
-    background: rgba(60, 36, 104, 0.8);
-    color: #ffffff;
-}
+/* Download Button Styles */
+/* REMOVED .download-original styles as they are now handled by .note-actions a */
 
-.view-original-link {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background: linear-gradient(90deg, #573688, #520c5b);
-    border-radius: 6px;
-    color: #ffffff;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.view-original-link:hover {
-    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
-}
+/* REMOVED .download-link-inline styles as they are now handled by .note-actions a */
 
 /* Pulse Animation */
 @keyframes pulse {
@@ -583,23 +557,6 @@
 
 .selected-note-info b {
     color: #f1b5fe;
-}
-
-.view-original-link-inline {
-    color: #f1b5fe;
-    text-decoration: none;
-    font-size: 0.9em;
-    display: inline-block;
-    margin-top: 0.5rem;
-    padding: 0.2rem 0.5rem;
-    border: 1px solid #573688;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-
-.view-original-link-inline:hover {
-    background-color: #573688;
-    color: white;
 }
 
 /* Responsive Design */
@@ -736,4 +693,23 @@
     border-radius: 12px;
     word-wrap: break-word;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Note Actions Container */
+/* REMOVED .note-actions styles */
+
+.view-original-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(90deg, #573688, #520c5b);
+    border-radius: 6px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.view-original-link:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 } 
