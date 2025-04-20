@@ -4,9 +4,9 @@
   box-sizing: border-box;
 }
 
-.learning-mode-container {
+.student-dashboard {
   min-height: 100vh;
-  background-color: #000000;
+  background: linear-gradient(135deg, #000000, #30074d, #000000);
   color: #FFFFFF;
   font-family: 'Poppins', sans-serif;
   overflow-x: hidden;
@@ -25,14 +25,15 @@
 }
 
 .dashboard-title {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: bold;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
   text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
 }
 
 .dashboard-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: #D3D3D3;
 }
 
@@ -44,6 +45,7 @@
   top: 0;
   width: 100%;
   z-index: 1000;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
 }
 
 .navbar ul {
@@ -56,9 +58,10 @@
 .navbar li {
   color: #FFFFFF;
   cursor: pointer;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 9999px;
   transition: background 0.3s ease;
+  font-weight: 500;
 }
 
 .navbar li:hover {
@@ -112,34 +115,85 @@
   color: pink;
 }
 
+/* Logout Button */
+.logout-btn {
+  background: linear-gradient(90deg, #573688, #520c5b);
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 9999px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+}
+
+.logout-btn:hover {
+  box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
 /* Main Content Styles */
 .main-content {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  padding-top: 2rem;
 }
 
 .courses-overview {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
 }
 
 .courses-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  margin-top: 2rem;
 }
 
 .course-card {
-    box-shadow: 0 0 15px rgba(111, 66, 193, 0.3);
+  background: linear-gradient(135deg, #000000, #30074d, #000000);
+  border-radius: 0.5rem;
+  box-shadow: 0 0 15px rgba(111, 66, 193, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 25px;
+  min-height: 220px;
+  border: 2px solid #6f42c1;
 }
 
 .course-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 20px rgba(111, 66, 193, 0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 0 10px #750db2, 0 0 20px #8a4fc1, 0 0 30px #4a074e;
+}
+
+/* Styles for elements inside course card */
+.course-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #f1b5fe;
+}
+
+.professor-name {
+  color: #D3D3D3 !important;
+  font-size: 1rem !important;
+  margin-top: 8px !important;
+  font-weight: 400;
+}
+
+.course-details {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: #D3D3D3;
+}
+
+.course-details p {
+  margin-bottom: 0.3rem;
 }
 
 /* Shared Note Styles */
@@ -149,6 +203,8 @@
   padding: 2rem;
   margin-bottom: 1.5rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid #6f42c1;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
 }
 
 .shared-note:hover {
@@ -166,6 +222,7 @@
   width: 100%;
   border-radius: 0.5rem;
   border: 2px solid #6f42c1;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
 }
 
 .segment-highlight {
@@ -185,33 +242,41 @@
   padding: 2rem;
   border-radius: 0.5rem;
   margin-top: 2rem;
+  border: 2px solid #6f42c1;
+  box-shadow: 0 0 20px rgba(111, 66, 193, 0.3);
 }
 
 .notes-section h2 {
   color: #f1b5fe;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
 }
 
 .notes-section p {
   color: #D3D3D3;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 1.05rem;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .learning-mode-container {
+  .student-dashboard {
     padding: 6rem 1.5rem 2rem;
   }
 
   .dashboard-title {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
+  }
+
+  .courses-grid {
+    gap: 2rem;
   }
 }
 
 @media (max-width: 768px) {
-  .learning-mode-container {
-    padding: 5rem 1rem 2rem;
+  .student-dashboard {
+    padding: 5.5rem 1rem 2rem;
   }
 
   .navbar ul {
@@ -219,13 +284,49 @@
   }
 
   .dashboard-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
+  }
+
+  .dashboard-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .top-nav {
+    padding: 0.6rem 1rem;
+  }
+
+  .logo {
+    font-size: 1.8rem;
+  }
+
+  .logo-image {
+    width: 35px;
+    height: 35px;
+  }
+
+  .logout-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .course-card {
+    padding: 20px;
+    min-height: auto;
+  }
+
+  .course-name {
+    font-size: 1.3rem;
   }
 }
 
 @media (max-width: 480px) {
-  .learning-mode-container {
-    padding: 4rem 0.8rem 1.5rem;
+  .student-dashboard {
+    padding: 5rem 0.8rem 1.5rem;
   }
 
   .navbar {
@@ -233,6 +334,7 @@
   }
 
   .navbar ul {
+    justify-content: space-around;
     gap: 0.5rem;
   }
 
@@ -242,6 +344,32 @@
   }
 
   .dashboard-title {
-    font-size: 1.8rem;
+    font-size: 2rem;
+  }
+
+  .dashboard-subtitle {
+    font-size: 1rem;
+  }
+
+  .top-nav {
+    padding: 0.5rem 0.8rem;
+  }
+
+  .logo-container {
+    gap: 0.5rem;
+  }
+
+  .logo {
+    font-size: 1.6rem;
+  }
+
+  .logo-image {
+    width: 30px;
+    height: 30px;
+  }
+
+  .logout-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
 }

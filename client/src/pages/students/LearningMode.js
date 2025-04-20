@@ -3,7 +3,7 @@ import { db } from '../../firebase';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import './StudentDashboard.css';
+import './LearningMode.css';
 
 const LearningMode = ({ studentId }) => {
     const [originalImage, setOriginalImage] = useState(null);
