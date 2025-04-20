@@ -2,15 +2,21 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { MdPlayArrow, MdVolumeUp } from 'react-icons/md';
 import './StudentPreview.css';
 
 const StudentPreview = ({ image, regions, notes, noteOrder, lessonId, teacherEmail, onClose, onSave }) => {
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const imageRef = useRef(null);
 
   const handleSegmentClick = (regionId) => {
     setSelectedRegionId(regionId);
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
   };
 
   const handleSavePreview = async () => {
@@ -22,7 +28,8 @@ const StudentPreview = ({ image, regions, notes, noteOrder, lessonId, teacherEma
           regionId: region.region_id,
           maskUrl: region.mask_url,
           position: region.position,
-          notes: notes[region.region_id] || '',
+          notes: notes[region.region_id]?.text || '',
+          audioUrl: notes[region.region_id]?.audioUrl || null,
         })),
         noteOrder: noteOrder,
       };
@@ -36,6 +43,20 @@ const StudentPreview = ({ image, regions, notes, noteOrder, lessonId, teacherEma
       console.error('Failed to save preview:', err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleReadAloud = () => {
+    if (!selectedRegionId || !notes[selectedRegionId]?.text) return;
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      const utterance = new SpeechSynthesisUtterance(notes[selectedRegionId].text);
+      utterance.onend = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
     }
   };
 
@@ -56,7 +77,7 @@ const StudentPreview = ({ image, regions, notes, noteOrder, lessonId, teacherEma
       >
         <div className="student-preview-header">
           <h2>Student View Preview</h2>
-          <p>Click a segment to view its notes in the preview.</p>
+          <p>Click a segment to view its notes and audio below.</p>
         </div>
         <div className="student-preview-image-container">
           <img
@@ -95,25 +116,45 @@ const StudentPreview = ({ image, regions, notes, noteOrder, lessonId, teacherEma
                 </div>
               ))}
           </div>
-          <AnimatePresence>
-            {selectedRegionId && notes[selectedRegionId] && (
-              <motion.div
-                className="student-preview-notes"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  top: `${(regions.find(r => r.region_id === selectedRegionId).position.y / imageRef.current?.naturalHeight) * 100 + 5}%`,
-                  left: `${(regions.find(r => r.region_id === selectedRegionId).position.x / imageRef.current?.naturalWidth) * 100}%`,
-                }}
-              >
-                <h3>Segment Notes</h3>
-                <p>{notes[selectedRegionId]}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
+        <AnimatePresence>
+          {selectedRegionId && (
+            <motion.div
+              className="student-preview-notes-panel"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h3>Segment {regions.find((r) => r.region_id === selectedRegionId).regionIndex + 1} Notes</h3>
+              {notes[selectedRegionId]?.text ? (
+                <p>{notes[selectedRegionId].text}</p>
+              ) : (
+                <p className="student-preview-no-notes">No notes available for this segment.</p>
+              )}
+              <div className="student-preview-audio-section">
+                {notes[selectedRegionId]?.audioUrl ? (
+                  <audio controls src={notes[selectedRegionId].audioUrl} className="student-preview-audio-player">
+                    <MdPlayArrow size={20} /> Play Audio
+                  </audio>
+                ) : (
+                  <p className="student-preview-no-audio">No recording available.</p>
+                )}
+              </div>
+              {notes[selectedRegionId]?.text && (
+                <motion.button
+                  className="student-preview-read-aloud"
+                  onClick={handleReadAloud}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label={isSpeaking ? 'Stop reading aloud' : 'Read notes aloud'}
+                >
+                  <MdVolumeUp size={20} /> {isSpeaking ? 'Stop Reading' : 'Read Aloud'}
+                </motion.button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="student-preview-footer">
           <motion.button
             className="student-preview-close-button"
