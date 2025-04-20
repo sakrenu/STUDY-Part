@@ -306,15 +306,33 @@
 .student-card {
     background: rgba(60, 36, 104, 0.3);
     border-radius: 8px;
-    padding: 1rem;
+    padding: 1rem 1rem 1rem 2.5rem;
     display: flex;
     align-items: center;
     gap: 0.8rem;
     transition: background-color 0.2s ease;
+    position: relative;
 }
 
 .student-card:hover {
     background: rgba(60, 36, 104, 0.5);
+}
+
+.student-number {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: rgba(100, 255, 218, 0.8);
+    font-weight: normal;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(100, 255, 218, 0.4);
+    border-radius: 50%;
 }
 
 .student-avatar {

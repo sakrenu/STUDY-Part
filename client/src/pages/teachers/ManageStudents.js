@@ -68,6 +68,16 @@ const ManageStudents = () => {
 
   const getStudentEmail = (id) => students.find(s => s.id === id)?.email || 'Unknown';
   
+  const getSortedStudents = (studentIds) => {
+    if (!studentIds || !studentIds.length) return [];
+    
+    return [...studentIds].sort((a, b) => {
+      const emailA = getStudentEmail(a).toLowerCase();
+      const emailB = getStudentEmail(b).toLowerCase();
+      return emailA.localeCompare(emailB);
+    });
+  };
+
   const handleClassSelect = (cls) => {
     setSelectedClass(cls);
     setShowDetails(true);
@@ -148,8 +158,9 @@ const ManageStudents = () => {
                   <h3>Enrolled Students</h3>
                   {selectedClass.students?.length > 0 ? (
                     <div className="students-grid">
-                      {selectedClass.students.map((sid) => (
+                      {getSortedStudents(selectedClass.students).map((sid, index) => (
                         <div key={sid} className="student-card">
+                          <div className="student-number">{index + 1}</div>
                           <div className="student-avatar">
                             {getStudentEmail(sid).charAt(0).toUpperCase()}
                           </div>
