@@ -2,7 +2,7 @@
 .teach-by-parts-container {
   position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #000000, #0f0221);
+  background: linear-gradient(135deg, #000000, #00332B, #26A69A);
   padding-left: 250px;
   margin-top: 72px;
   overflow-x: hidden;
@@ -10,8 +10,8 @@
 
 .sidebar {
   width: 250px;
-  background: linear-gradient(180deg, #3c2468, #0f0221);
-  color: #f1b5fe;
+  background: linear-gradient(180deg, #00695C, #00332B);
+  color: #FFFFFF;
   padding: 20px;
   position: fixed;
   top: 72px;
@@ -24,8 +24,8 @@
   font-size: 1.6rem;
   margin-bottom: 20px;
   text-align: center;
-  color: #e982c8;
-  text-shadow: 0 0 5px #9b4ae2;
+  color: #F4C430;
+  text-shadow: 0 0 5px #26A69A;
 }
 
 .sidebar-menu {
@@ -44,18 +44,18 @@
 }
 
 .sidebar-item:hover {
-  background: linear-gradient(90deg, #4f2879, #3c2468);
+  background: linear-gradient(90deg, #26A69A, #00695C);
   transform: translateX(5px);
 }
 
 .sidebar-item.active {
-  background: linear-gradient(90deg, #e982c8, #4f2879);
-  box-shadow: 0 0 10px #9b4ae2;
+  background: linear-gradient(90deg, #FF6F61, #F4C430);
+  box-shadow: 0 0 10px #26A69A;
 }
 
 .sidebar-item svg {
   margin-right: 12px;
-  color: #f1b5fe;
+  color: #80CBC4;
 }
 
 .main-content {
@@ -72,14 +72,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: linear-gradient(90deg, rgba(15, 2, 33, 0.9), rgba(0, 0, 0, 0.8));
+  background: linear-gradient(90deg, rgba(0, 105, 92, 0.9), rgba(0, 51, 43, 0.8));
   backdrop-filter: blur(12px);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  border-bottom: 1px solid #4f2879;
+  border-bottom: 1px solid #26A69A;
   height: 72px;
 }
 
@@ -92,7 +92,7 @@
 .logo-image {
   height: 40px;
   width: auto;
-  filter: drop-shadow(0 0 5px #e982c8);
+  filter: drop-shadow(0 0 5px #FF6F61);
 }
 
 .logo {
@@ -102,17 +102,17 @@
 }
 
 .study {
-  color: #f1b5fe;
-  text-shadow: 0 0 5px #9b4ae2;
+  color: #80CBC4;
+  text-shadow: 0 0 5px #26A69A;
 }
 
 .part {
-  color: #e982c8;
-  text-shadow: 0 0 5px #9b4ae2;
+  color: #FF6F61;
+  text-shadow: 0 0 5px #FF6F61;
 }
 
 .back-btn {
-  background: linear-gradient(90deg, #4f2879, #3c2468);
+  background: linear-gradient(90deg, #26A69A, #00695C);
   color: #FFFFFF;
   padding: 0.75rem 1.5rem;
   border: none;
@@ -120,18 +120,44 @@
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 10px #680baf;
+  box-shadow: 0 0 10px rgba(38, 166, 154, 0.5);
 }
 
 .back-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 15px #9b4ae2;
-  background: linear-gradient(90deg, #e982c8, #4f2879);
+  box-shadow: 0 0 15px #FF6F61;
+  background: linear-gradient(90deg, #FF6F61, #26A69A);
 }
 
 .back-btn:active {
   transform: translateY(0);
-  box-shadow: 0 0 5px #680baf;
+  box-shadow: 0 0 5px rgba(38, 166, 154, 0.5);
+}
+
+/* Welcome Card Styles */
+.welcome-card {
+  background: linear-gradient(135deg, #00332B, #00695C);
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  border: 2px solid #26A69A;
+  box-shadow: 0 0 15px #26A69A;
+}
+
+.welcome-title {
+  font-size: 1.8rem;
+  color: #F4C430; /* Gold for Interactive Lesson Creator */
+  margin-bottom: 10px;
+  text-shadow: 0 0 8px #F4C430;
+}
+
+.welcome-description {
+  font-size: 1rem;
+  color: #80CBC4; /* Light Teal for subtitle */
+  margin-bottom: 20px;
+  text-shadow: 0 0 5px #80CBC4;
 }
 
 /* Selection Component Styles */
@@ -150,9 +176,9 @@
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  border: 2px solid #e982c8;
-  box-shadow: 0 0 15px #9b4ae2;
-  background: #0f0221;
+  border: 2px solid #FF6F61;
+  box-shadow: 0 0 15px #26A69A;
+  background: #00332B;
 }
 
 .selcomp-base-image {
@@ -185,27 +211,34 @@
   height: 100%;
   object-fit: contain;
   pointer-events: none;
-  filter: drop-shadow(0 0 8px #e982c8);
+  filter: drop-shadow(0 0 8px #FF6F61);
   opacity: 0.6;
 }
 
 .selcomp-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
   margin-top: 1.5rem;
-  justify-content: center;
-  background: linear-gradient(90deg, rgba(15, 2, 33, 0.8), rgba(63, 36, 104, 0.8));
+  background: linear-gradient(90deg, rgba(0, 105, 92, 0.8), rgba(0, 51, 43, 0.8));
   padding: 15px;
   border-radius: 12px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
 }
 
+.selcomp-button-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
 .selcomp-tool-group {
   display: flex;
   gap: 0.5rem;
-  border-right: 1px solid #4f2879;
+  border-right: 1px solid #26A69A;
   padding-right: 1rem;
 }
 
@@ -215,10 +248,11 @@
 }
 
 .selcomp-toolbar-button {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(90deg, #4f2879, #3c2468);
+  background: linear-gradient(90deg, #26A69A, #00695C);
   color: #FFFFFF;
   padding: 10px 20px;
   border: none;
@@ -226,47 +260,93 @@
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 10px #680baf;
+  box-shadow: 0 0 10px rgba(38, 166, 154, 0.5);
 }
 
 .selcomp-toolbar-button:hover {
-  box-shadow: 0 0 15px #e982c8;
-  background: linear-gradient(90deg, #e982c8, #4f2879);
+  box-shadow: 0 0 15px #FF6F61;
+  background: linear-gradient(90deg, #FF6F61, #26A69A);
   transform: translateY(-2px);
 }
 
 .selcomp-toolbar-button:disabled {
-  background: #D3D3D3;
+  background: #B0BEC5;
   color: #000000;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .selcomp-toolbar-button.active {
-  background: linear-gradient(90deg, #e982c8, #FFD700);
-  box-shadow: 0 0 15px #D774E4;
+  background: linear-gradient(90deg, #FF6F61, #F4C430);
+  box-shadow: 0 0 15px #F4C430;
 }
 
 .selcomp-primary-button {
-  background: linear-gradient(90deg, #e982c8, #FFD700);
+  background: linear-gradient(90deg, #26A69A, #FF6F61);
+  color: #FFFFFF;
+  padding: 12px 24px;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 0 15px #F4C430;
+}
+
+.selcomp-primary-button:hover {
+  box-shadow: 0 0 20px #FF6F61;
+  transform: translateY(-2px);
+}
+
+.selcomp-primary-button:disabled {
+  background: #B0BEC5;
+  color: #000000;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.selcomp-done-button {
+  background: linear-gradient(90deg, #FF6F61, #F4C430);
   color: #000000;
   padding: 12px 24px;
   font-weight: bold;
   font-size: 1rem;
   border-radius: 10px;
-  box-shadow: 0 0 15px #D774E4;
+  box-shadow: 0 0 15px #F4C430;
 }
 
-.selcomp-primary-button:hover {
-  box-shadow: 0 0 20px #9b4ae2;
+.selcomp-done-button:hover {
+  box-shadow: 0 0 20px #26A69A;
   transform: translateY(-2px);
 }
 
-.selcomp-primary-button:disabled {
-  background: #D3D3D3;
+.selcomp-done-button:disabled {
+  background: #B0BEC5;
   color: #000000;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* Tooltip Styles */
+.tooltip {
+  visibility: hidden;
+  background: linear-gradient(90deg, #26A69A, #00695C);
+  color: #FFFFFF;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  box-shadow: 0 0 10px rgba(38, 166, 154, 0.5);
+  white-space: nowrap;
+}
+
+.selcomp-toolbar-button:hover .tooltip,
+.selcomp-primary-button:hover .tooltip,
+.selcomp-done-button:hover .tooltip {
+  visibility: visible;
 }
 
 .selcomp-mask-preview {
@@ -275,23 +355,23 @@
   flex-direction: column;
   align-items: center;
   padding: 20px;
-  background: linear-gradient(135deg, #0f0221, #000000);
+  background: linear-gradient(135deg, #00332B, #000000);
   border-radius: 12px;
-  box-shadow: 0 0 15px #4a074e;
+  box-shadow: 0 0 15px #26A69A;
 }
 
 .selcomp-back-button {
-  background: linear-gradient(90deg, #4f2879, #3c2468);
+  background: linear-gradient(90deg, #26A69A, #00695C);
   color: #FFFFFF;
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 10px #680baf;
+  box-shadow: 0 0 10px rgba(38, 166, 154, 0.5);
 }
 
 .selcomp-back-button:hover {
-  box-shadow: 0 0 15px #e982c8;
+  box-shadow: 0 0 15px #FF6F61;
   transform: translateY(-2px);
 }
