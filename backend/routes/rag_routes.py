@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Body
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List, Optional
 import PyPDF2
 import io
 import pytesseract
@@ -15,11 +15,12 @@ import shutil
 import logging
 from dotenv import load_dotenv
 from pathlib import Path
-from typing import Any, List, Optional, Mapping
+from typing import Any, Mapping
 import cloudinary
 import cloudinary.uploader
 import uuid
 import re # Import regex
+from pydantic import BaseModel # Import BaseModel
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO)
@@ -82,6 +83,11 @@ embeddings = HuggingFaceEmbeddings(
     },
     cache_folder=cache_dir
 )
+
+# --- Pydantic model for chat messages ---
+class ChatMessage(BaseModel):
+    type: str # 'user' or 'bot'
+    content: str
 
 # --- Updated Vector Store Processing ---
 async def process_text_to_vectors(text: str, user_id: str, document_id: str) -> Dict:
@@ -239,66 +245,82 @@ async def process_ppt(user_id: str = Body(...), file: UploadFile = File(...)):
 
 # --- Updated Query Endpoint ---
 @router.post("/query_notes")
-async def query_notes(user_id: str = Body(...), query: str = Body(...), document_id: str = Body(...)): # Expect document_id
-    """Query the vector store for a specific document using Google Gemini"""
+async def query_notes(
+    user_id: str = Body(...),
+    query: str = Body(...),
+    document_id: str = Body(...),
+    chat_history: Optional[List[ChatMessage]] = Body(None) # Accept chat history
+):
+    """Query the vector store for a specific document, considering chat history"""
     try:
-        logger.info(f"Querying notes for user: {user_id}, document_id: {document_id}. Query: '{query}'")
+        logger.info(f"Querying notes for user: {user_id}, doc: {document_id}, history: {chat_history is not None}. Query: '{query}'")
         vector_store_path = f"vector_stores/{user_id}/{document_id}/vectors"
 
         if not os.path.exists(vector_store_path):
-             logger.warning(f"Vector store not found for user: {user_id}, document_id: {document_id} at {vector_store_path}")
              raise HTTPException(status_code=404, detail="Notes for this specific document not found or not processed yet.")
 
         logger.info(f"Loading vector store from: {vector_store_path}")
         try:
             vectorstore = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
-            logger.info(f"Successfully loaded vector store for document: {document_id}")
         except Exception as faiss_load_error:
-             logger.error(f"Error loading FAISS index for document {document_id}: {faiss_load_error}")
              raise HTTPException(status_code=500, detail=f"Error loading this document's index. Try re-uploading it. Original error: {str(faiss_load_error)}")
 
         logger.info(f"Performing similarity search for query: '{query}' on document: {document_id}")
-        docs = vectorstore.similarity_search(query, k=4) # Increased K slightly for more context
-
+        docs = vectorstore.similarity_search(query, k=4)
+        context = "\n\n".join([doc.page_content for doc in docs])
         if not docs:
              logger.info(f"No relevant documents found for query: '{query}' in document: {document_id}")
-             return {"response": "<p>Could not find relevant information in this document for your query.</p>", "sources": [], "status": "success"}
-        logger.info(f"Found {len(docs)} relevant documents for query: '{query}' in document: {document_id}")
+             # Still use history for context if available
 
-        context = "\n\n".join([doc.page_content for doc in docs])
-        
-        # Updated Prompt for HTML output
-        prompt = f"""You are an AI assistant answering questions based ONLY on the provided context from a document.
+        # Format chat history for the prompt (limit length)
+        formatted_history = ""
+        if chat_history:
+            # Take last N messages (e.g., 6 messages = 3 turns)
+            history_limit = 6
+            recent_history = chat_history[-history_limit:]
+            history_lines = []
+            for msg in recent_history:
+                prefix = "Human:" if msg.type == 'user' else "AI:"
+                history_lines.append(f"{prefix} {msg.content}")
+            formatted_history = "\n".join(history_lines)
+            formatted_history += "\n" # Add a newline before the context/question
+
+        # Updated Prompt incorporating chat history
+        prompt = f"""You are an AI assistant answering questions based on the provided context from a document AND the preceding conversation history.
         Your goal is to provide a clear, user-friendly answer formatted in simple HTML.
-        Use tags like <p>, <ul>, <li>, and <b> where appropriate to structure the information.
+        Use tags like <p>, <ul>, <li>, and <b> where appropriate.
+        Prioritize information from the Document Context section for factual answers.
+        Use the Conversation History to understand follow-up questions or pronoun references (like "it" or "that").
         Do NOT include `<html>`, `<head>`, or `<body>` tags. Only provide the HTML fragment for the answer itself.
-        If the context doesn't contain the answer, respond with just: `<p>I couldn't find the information for that question in this document.</p>`
+        If the context doesn't contain the answer, check the conversation history. If the answer isn't there either, respond with just: `<p>I couldn't find the information for that question in this document or conversation history.</p>`
 
-        Context:
+        Conversation History:
+        {formatted_history}
+
+        Document Context:
         --- START CONTEXT ---
-        {context}
+        {context if docs else "No relevant context found in the document."} 
         --- END CONTEXT ---
 
-        Question: {query}
+        Current Question: {query}
 
         HTML Answer:"""
 
-        logger.info(f"Sending prompt to Gemini for document: {document_id}")
+        logger.info(f"Sending prompt with history to Gemini for document: {document_id}")
         response = llm.invoke(prompt)
         logger.info(f"Received response from Gemini for document: {document_id}")
 
-        # Clean up potential markdown backticks if LLM adds them
         html_response = response.content.strip().strip("`html`").strip('`')
 
         return {
-            "response": html_response, # Send the HTML response
-            "sources": [doc.page_content for doc in docs],
+            "response": html_response,
+            "sources": [doc.page_content for doc in docs], # Keep sources for reference
             "status": "success"
         }
     except HTTPException as http_exc:
          raise http_exc
     except Exception as e:
-        logger.error(f"Unexpected error querying notes for document {document_id}: {str(e)}")
+        logger.error(f"Unexpected error querying notes w/ history for doc {document_id}: {str(e)}")
         if "Pickle" in str(e) or "deserialization" in str(e):
              raise HTTPException(status_code=500, detail=f"Error processing this document's index. Please try re-uploading it. Original error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error querying notes: {str(e)}")

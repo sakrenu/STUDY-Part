@@ -127,15 +127,25 @@ const TalkToNotes = () => {
     const handleQuerySubmit = async (e) => {
         e.preventDefault();
         if (!query.trim() || !selectedNote || !selectedNote.document_id) {
-            // Added check for document_id
-            setChatHistory(prev => [...prev, { type: 'bot', content: 'Please select a processed note first.' }]);
+            setChatHistory(prev => [...prev, { type: 'bot', content: '<p>Please select a processed note first.</p>' }]);
             return;
         }
 
         const userMessage = query.trim();
         setQuery('');
         setLoading(true);
-        setChatHistory(prev => [...prev, { type: 'user', content: userMessage }]);
+
+        // Prepare history for backend (last 6 messages, excluding typing indicators)
+        const historyToSend = chatHistory
+            .filter(msg => msg.type !== 'typing') // Remove typing indicators
+            .slice(-6) // Get last 6 messages (3 turns)
+            .map(msg => ({ type: msg.type, content: msg.content })); // Ensure correct format
+
+        // Add user message to local history immediately
+        const newUserMessageEntry = { type: 'user', content: userMessage };
+        setChatHistory(prev => [...prev, newUserMessageEntry]);
+
+        // Add typing indicator immediately
         setChatHistory(prev => [...prev, { type: 'typing', content: '' }]);
 
         try {
@@ -150,7 +160,8 @@ const TalkToNotes = () => {
                 body: JSON.stringify({
                     user_id: user.uid,
                     query: userMessage,
-                    document_id: selectedNote.document_id // Send the document_id
+                    document_id: selectedNote.document_id,
+                    chat_history: historyToSend // Send the prepared history
                 }),
             });
 
@@ -169,7 +180,8 @@ const TalkToNotes = () => {
             console.error('Error querying notes:', error);
             setChatHistory(prev => {
                 const newHistory = prev.filter(msg => msg.type !== 'typing');
-                return [...newHistory, { type: 'bot', content: 'Sorry, there was an error processing your query. Please try again.' }];
+                // Send error message formatted as HTML paragraph
+                return [...newHistory, { type: 'bot', content: '<p>Sorry, there was an error processing your query. Please try again.</p>' }];
             });
         } finally {
             setLoading(false);
