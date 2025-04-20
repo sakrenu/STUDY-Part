@@ -3,6 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { auth } from '../../firebase';
 import './TalkToNotes.css';
 
+// Check for browser support for SpeechRecognition
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+if (recognition) {
+    recognition.continuous = false; // Process single utterances
+    recognition.interimResults = false; // We only want final results
+    recognition.lang = 'en-US'; // Set language to English
+}
+
 const TalkToNotes = () => {
     const navigate = useNavigate();
     const [notes, setNotes] = useState([]);
@@ -12,7 +22,9 @@ const TalkToNotes = () => {
     const [loading, setLoading] = useState(false);
     const [uploadLoading, setUploadLoading] = useState(false);
     const [uploadError, setUploadError] = useState('');
+    const [isRecording, setIsRecording] = useState(false);
     const chatMessagesRef = useRef(null);
+    const recognitionRef = useRef(recognition); // Store recognition instance in ref
 
     useEffect(() => {
         // Initialize notes as empty array - they will be stored in local state
@@ -52,7 +64,43 @@ const TalkToNotes = () => {
         
         // Call the function
         clearVectorStores();
-    }, []);
+
+        // Setup recognition event listeners
+        const currentRecognition = recognitionRef.current;
+        if (currentRecognition) {
+            currentRecognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                console.log('Transcript:', transcript);
+                setQuery(transcript); // Update query input with transcript
+                setIsRecording(false); // Stop recording state after result
+            };
+
+            currentRecognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                // Add user feedback for error
+                if (event.error === 'no-speech' || event.error === 'audio-capture' || event.error === 'not-allowed') {
+                    setChatHistory(prev => [...prev, { type: 'bot', content: `<p>Mic Error: ${event.error}. Please check permissions or try again.</p>` }]);
+                }
+                setIsRecording(false);
+            };
+
+            currentRecognition.onend = () => {
+                console.log('Speech recognition ended.');
+                setIsRecording(false); // Ensure recording state is off when recognition ends
+            };
+        }
+
+        // Cleanup listeners on unmount
+        return () => {
+            if (currentRecognition) {
+                currentRecognition.onresult = null;
+                currentRecognition.onerror = null;
+                currentRecognition.onend = null;
+                currentRecognition.stop(); // Ensure it stops if component unmounts mid-recording
+            }
+        };
+
+    }, []); // Run only on mount
 
     // Auto-scroll to the bottom when chat history updates
     useEffect(() => {
@@ -121,18 +169,24 @@ const TalkToNotes = () => {
 
     const handleNoteSelect = (note) => {
         setSelectedNote(note);
-        setChatHistory([]);
+        setChatHistory([]); // Clear chat when a new note is selected
+        setQuery(''); // Clear query input
     };
 
     const handleQuerySubmit = async (e) => {
         e.preventDefault();
         if (!query.trim() || !selectedNote || !selectedNote.document_id) {
-            setChatHistory(prev => [...prev, { type: 'bot', content: '<p>Please select a processed note first.</p>' }]);
+            // Display message if no note selected or query is empty
+            if (!selectedNote || !selectedNote.document_id) {
+                 setChatHistory(prev => [...prev, { type: 'bot', content: '<p>Please select a processed note first.</p>' }]);
+            } else if (!query.trim()) {
+                 setChatHistory(prev => [...prev, { type: 'bot', content: '<p>Please enter a question.</p>' }]);
+            }
             return;
         }
 
         const userMessage = query.trim();
-        setQuery('');
+        setQuery(''); // Clear input after sending
         setLoading(true);
 
         // Prepare history for backend (last 6 messages, excluding typing indicators)
@@ -172,6 +226,7 @@ const TalkToNotes = () => {
 
             const data = await response.json();
 
+            // Replace typing indicator with bot response
             setChatHistory(prev => {
                 const newHistory = prev.filter(msg => msg.type !== 'typing');
                 return [...newHistory, { type: 'bot', content: data.response }];
@@ -185,6 +240,31 @@ const TalkToNotes = () => {
             });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleMicClick = () => {
+        const currentRecognition = recognitionRef.current;
+        if (!currentRecognition) {
+            console.error("Speech Recognition not supported by this browser.");
+            setChatHistory(prev => [...prev, { type: 'bot', content: '<p>Sorry, voice input is not supported by your browser.</p>' }]);
+            return;
+        }
+
+        if (isRecording) {
+            currentRecognition.stop();
+            console.log("Stopping recording manually.");
+            setIsRecording(false);
+        } else {
+            try {
+                currentRecognition.start();
+                console.log("Starting recording...");
+                setIsRecording(true);
+            } catch (err) {
+                // Handle cases where start() might fail immediately (e.g., already started)
+                console.error("Error starting recognition:", err);
+                setIsRecording(false);
+            }
         }
     };
 
@@ -244,7 +324,7 @@ const TalkToNotes = () => {
                                 onClick={() => handleNoteSelect(note)}
                             >
                                 <h3>{note.title || `Note ${index + 1}`}</h3>
-                                <p>{note.content.substring(0, 100)}...</p>
+                                <p>{note.content ? note.content.substring(0, 100) : 'Processing...'}...</p> {/* Added check for content */}
                                 <a 
                                     href={note.cloudinaryUrl} 
                                     target="_blank" 
@@ -262,21 +342,20 @@ const TalkToNotes = () => {
                 <div className="interaction-area">
                     {selectedNote ? (
                         <>
-                            <div className="selected-note-content">
-                                <h2>{selectedNote.title || 'Selected Note'}</h2>
-                                <p>{selectedNote.content}</p>
-                                <a 
-                                    href={selectedNote.cloudinaryUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="view-original-link"
-                                >
-                                    View Original Document
-                                </a>
-                            </div>
+                            {/* Removed selected note content display from here */}
                             
                             <div className="chat-container">
                                 <div className="chat-messages" ref={chatMessagesRef}>
+                                    {/* Display selected note info at the top of chat */}
+                                    {chatHistory.length === 0 && (
+                                        <div className="message bot selected-note-info">
+                                            <div className="message-content">
+                                                <p><b>Selected Note: {selectedNote.title}</b></p>
+                                                <p>{selectedNote.content ? selectedNote.content.substring(0, 150) + '...' : 'Loading content...'}</p>
+                                                <a href={selectedNote.cloudinaryUrl} target="_blank" rel="noopener noreferrer" className="view-original-link-inline">View Original</a>
+                                            </div>
+                                        </div>
+                                    )}
                                     {chatHistory.map((message, index) => (
                                         message.type === 'typing' ? (
                                             <div key={index} className="message bot typing-message">
@@ -306,10 +385,19 @@ const TalkToNotes = () => {
                                         type="text"
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
-                                        placeholder="Ask a question about your notes..."
-                                        disabled={loading}
+                                        placeholder={isRecording ? "Listening..." : "Ask a question about your notes..."}
+                                        disabled={loading || isRecording}
                                     />
-                                    <button type="submit" disabled={loading}>
+                                    <button 
+                                        type="button" // Change to type="button" to prevent form submission
+                                        onClick={handleMicClick}
+                                        className={`mic-button ${isRecording ? 'recording' : ''}`}
+                                        disabled={loading || !SpeechRecognition} // Disable if loading or not supported
+                                        title={SpeechRecognition ? (isRecording ? "Stop Recording" : "Start Recording") : "Voice input not supported"}
+                                    >
+                                        🎤
+                                    </button>
+                                    <button type="submit" disabled={loading || isRecording}>
                                         Ask
                                     </button>
                                 </form>

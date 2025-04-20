@@ -309,6 +309,9 @@
     flex: 0 0 auto;
     min-width: 60px;
     max-width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .query-form button:hover:not(:disabled) {
@@ -319,6 +322,39 @@
 .query-form button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+/* Microphone Button Specific Styles */
+.mic-button {
+    padding: 0.6rem;
+    min-width: 40px;
+    max-width: 40px;
+    border-radius: 50%;
+    background: #3c2468;
+    font-size: 1.2rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.mic-button:hover:not(:disabled) {
+    background: #573688;
+    box-shadow: 0 0 8px #8868ab;
+}
+
+.mic-button.recording {
+    background: #e74c3c;
+    color: white;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+.mic-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #4a4a6a;
+}
+
+.query-form button[type="submit"] {
+    /* Keep original submit button styles */
 }
 
 /* Animation */
@@ -452,6 +488,52 @@
 
 .view-original-link:hover {
     box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(231, 76, 60, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+    }
+}
+
+/* Style for selected note info shown in chat */
+.selected-note-info .message-content {
+    background: rgba(60, 36, 104, 0.3);
+    border: 1px solid #3c2468;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.selected-note-info p {
+    margin-bottom: 0.5rem;
+}
+
+.selected-note-info b {
+    color: #f1b5fe;
+}
+
+.view-original-link-inline {
+    color: #f1b5fe;
+    text-decoration: none;
+    font-size: 0.9em;
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid #573688;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.view-original-link-inline:hover {
+    background-color: #573688;
+    color: white;
 }
 
 /* Responsive Design */
