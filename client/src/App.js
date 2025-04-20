@@ -4,7 +4,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import TeacherFeaturePage from './pages/teachers/TeacherFeaturePage';
-import TeachingMode from './pages/teachers/TeachingMode';
+import TeachByPart from './pages/teachers/TeachByPart';
 import StudentDashboard from './pages/students/StudentDashboard';
 import LandingPage from './components/LandingPage';
 import ManageStudents from './pages/teachers/ManageStudents';
@@ -29,7 +29,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<TeacherFeaturePage />} />
-          <Route path="/dashboard/teaching" element={<TeachingMode />} />
+          <Route path="/dashboard/teaching" element={<TeachByPart />} />
           <Route path="/dashboard/manage-students" element={<ManageStudents />} />
           <Route path="/dashboard/quiz-mode" element={<QuizTeachingDashboard />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />

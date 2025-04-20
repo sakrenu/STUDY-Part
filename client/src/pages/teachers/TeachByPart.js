@@ -8,8 +8,10 @@ import { auth } from '../../firebase';
 import './TeachByParts.css';
 import { Tooltip } from 'react-tooltip';
 import SelectionComponent from '../../components/SelectionComponent';
+import { useNavigate } from 'react-router-dom';
 
 const TeachByParts = () => {
+  const navigate = useNavigate();
   const [teacherEmail, setTeacherEmail] = useState(null);
   const [currentStep, setCurrentStep] = useState('welcome');
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -91,116 +93,130 @@ const TeachByParts = () => {
   ];
 
   return (
-    <div className="teach-by-parts-container">
-      <motion.div
-        className="sidebar"
-        initial={{ x: -250 }}
-        animate={{ x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h3 className="sidebar-title">TeachByParts</h3>
-        <ul className="sidebar-menu">
-          {sidebarItems.map((item) => (
-            <motion.li
-              key={item.step}
-              className={`sidebar-item ${currentStep === item.step ? 'active' : ''}`}
-              onClick={() => handleStepChange(item.step)}
-              whileHover={{ scale: 1.05 }}
-              data-tooltip-id={`sidebar-${item.step}`}
-              data-tooltip-content={item.description}
-            >
-              {item.icon}
-              <span>{item.name}</span>
-              <Tooltip id={`sidebar-${item.step}`} place="right" />
-            </motion.li>
-          ))}
-        </ul>
-      </motion.div>
+    <>
+      {/* Top Navigation */}
+      <nav className="top-nav">
+        <div className="logo-container">
+          <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+          <a href="/" className="logo">
+            <span className="study">Study</span>
+            <span className="part">Part</span>
+          </a>
+        </div>
+        <button className="back-btn" onClick={() => navigate('/dashboard')}>Back</button>
+      </nav>
 
-      <div className="main-content">
-        <motion.header
-          className="main-header"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+      <div className="teach-by-parts-container">
+        <motion.div
+          className="sidebar"
+          initial={{ x: -250 }}
+          animate={{ x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="header-title">Interactive Lesson Creator</h1>
-          <p className="header-subtitle">Create engaging lessons with annotations, audio, and more.</p>
-        </motion.header>
+          <h3 className="sidebar-title">TeachByParts</h3>
+          <ul className="sidebar-menu">
+            {sidebarItems.map((item) => (
+              <motion.li
+                key={item.step}
+                className={`sidebar-item ${currentStep === item.step ? 'active' : ''}`}
+                onClick={() => handleStepChange(item.step)}
+                whileHover={{ scale: 1.05 }}
+                data-tooltip-id={`sidebar-${item.step}`}
+                data-tooltip-content={item.description}
+              >
+                {item.icon}
+                <span>{item.name}</span>
+                <Tooltip id={`sidebar-${item.step}`} place="right" />
+              </motion.li>
+            ))}
+          </ul>
+        </motion.div>
 
-        {currentStep === 'welcome' && (
-          <motion.div
-            className="welcome-card"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+        <div className="main-content">
+          <motion.header
+            className="main-header"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
           >
-            <h2 className="welcome-title">Welcome to TeachByParts</h2>
-            <p className="welcome-description">
-              Upload an image to start building a lesson, or explore your saved lessons in the Library.
-            </p>
-            <motion.button
-              className="start-button"
-              onClick={() => setCurrentStep('upload')}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+            <h1 className="header-title">Interactive Lesson Creator</h1>
+            <p className="header-subtitle">Create engaging lessons with annotations, audio, and more.</p>
+          </motion.header>
+
+          {currentStep === 'welcome' && (
+            <motion.div
+              className="welcome-card"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
             >
-              Start Creating
-            </motion.button>
-          </motion.div>
-        )}
+              <h2 className="welcome-title">Welcome to TeachByParts</h2>
+              <p className="welcome-description">
+                Upload an image to start building a lesson, or explore your saved lessons in the Library.
+              </p>
+              <motion.button
+                className="start-button"
+                onClick={() => setCurrentStep('upload')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                Start Creating
+              </motion.button>
+            </motion.div>
+          )}
 
-        {currentStep === 'upload' && (
-          <UploadComponent
-            onImageUploaded={handleImageUploaded}
-            onBack={handleBack}
-          />
-        )}
+          {currentStep === 'upload' && (
+            <UploadComponent
+              onImageUploaded={handleImageUploaded}
+              onBack={handleBack}
+            />
+          )}
 
-        {currentStep === 'select' && uploadedImage && uploadedImageId && typeof uploadedImageId === 'string' && uploadedImageId.trim() !== '' && (
-          <SelectionComponent
-            image={uploadedImage}
-            image_id={uploadedImageId}
-            teacherEmail={teacherEmail}
-            onRegionsSegmented={handleRegionsSegmented}
-            onBack={() => {
-              setCurrentStep('upload');
-              setUploadedImage(null);
-              setUploadedImageId(null);
-            }}
-          />
-        )}
+          {currentStep === 'select' && uploadedImage && uploadedImageId && typeof uploadedImageId === 'string' && uploadedImageId.trim() !== '' && (
+            <SelectionComponent
+              image={uploadedImage}
+              image_id={uploadedImageId}
+              teacherEmail={teacherEmail}
+              onRegionsSegmented={handleRegionsSegmented}
+              onBack={() => {
+                setCurrentStep('upload');
+                setUploadedImage(null);
+                setUploadedImageId(null);
+              }}
+            />
+          )}
 
-        {currentStep === 'select' && (!uploadedImage || !uploadedImageId) && (
-          <div>
-            <p>Error: No image uploaded. Please return to the upload step.</p>
-            <motion.button
-              className="start-button"
-              onClick={() => setCurrentStep('upload')}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              Back to Upload
-            </motion.button>
-          </div>
-        )}
+          {currentStep === 'select' && (!uploadedImage || !uploadedImageId) && (
+            <div>
+              <p>Error: No image uploaded. Please return to the upload step.</p>
+              <motion.button
+                className="start-button"
+                onClick={() => setCurrentStep('upload')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                Back to Upload
+              </motion.button>
+            </div>
+          )}
 
-        {currentStep === 'finalPreview' && lessonWithFeatures && (
-          <div className="final-preview">
-            <h2>Lesson Created Successfully</h2>
-            <p>Your lesson with {lessonWithFeatures.regions.length} segments and features has been saved.</p>
-            <button
-              className="start-button"
-              onClick={() => setCurrentStep('welcome')}
-            >
-              Create Another Lesson
-            </button>
-          </div>
-        )}
+          {currentStep === 'finalPreview' && lessonWithFeatures && (
+            <div className="final-preview">
+              <h2>Lesson Created Successfully</h2>
+              <p>Your lesson with {lessonWithFeatures.regions.length} segments and features has been saved.</p>
+              <button
+                className="start-button"
+                onClick={() => setCurrentStep('welcome')}
+              >
+                Create Another Lesson
+              </button>
+            </div>
+          )}
+        </div>
+
+        <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       </div>
-
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
-    </div>
+    </>
   );
 };
 
