@@ -17,6 +17,8 @@ import CreateClass from './pages/admin/CreateClass';
 import EditClass from './pages/admin/EditClass';
 import ViewClass from './pages/admin/ViewClass';
 import CoursePage from './pages/students/CoursePage';
+import QuizDashboard from './pages/students/QuizDashboard';
+import QuizMode from './pages/students/QuizMode';
 
 const App = () => {
   return (
