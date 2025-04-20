@@ -93,13 +93,8 @@ const LearningMode = ({ studentId }) => {
         navigate(`/course/${courseId}`);
     };
 
-    // Add these background colors for course cards
-    const cardColors = [
-        'linear-gradient(135deg, #7367F0, #CE9FFC)', // Purple
-        'linear-gradient(135deg, #45B8EA, #98E1F9)', // Blue
-        'linear-gradient(135deg, #A8A8A8, #D6D6D6)', // Grey
-        'linear-gradient(135deg, #FFA585, #FFEDA0)'  // Orange
-    ];
+    // Light purple gradient for all cards
+    const cardBackground = 'linear-gradient(135deg, #7367F0, #CE9FFC)';
 
     return (
         <div className="student-dashboard">
@@ -127,13 +122,13 @@ const LearningMode = ({ studentId }) => {
             <div className="main-content">
                 <div className="courses-overview">
                     <div className="courses-grid">
-                        {enrolledCourses.map((course, index) => (
+                        {enrolledCourses.map((course) => (
                             <div 
                                 key={course.id} 
                                 className="course-card"
                                 onClick={() => navigate(`/course/${course.id}`)}
                                 style={{ 
-                                    background: cardColors[index % cardColors.length],
+                                    background: cardBackground,
                                     padding: '20px',
                                     borderRadius: '10px',
                                     minHeight: '200px',

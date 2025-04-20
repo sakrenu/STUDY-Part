@@ -176,7 +176,8 @@
   font-size: 1.4rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #f1b5fe;
+  color: #30074d;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .professor-name {
