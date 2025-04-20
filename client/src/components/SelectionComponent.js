@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -23,12 +22,13 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
   const [activeBox, setActiveBox] = useState(null);
   const [showMaskPreview, setShowMaskPreview] = useState(false);
   const [showFeatureAddition, setShowFeatureAddition] = useState(false);
+  const [scaleFactors, setScaleFactors] = useState({ x: 1, y: 1 });
 
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
 
   useEffect(() => {
-    console.log('SelectionComponent received image_id:', image_id);
+    console.log('Received props:', { image_id, image_width: image?.width, image_height: image?.height, image_url: image?.url });
     if (image?.width && image?.height) {
       setImageDimensions({ width: image.width, height: image.height });
     }
@@ -36,7 +36,17 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const img = imageRef.current;
+    if (!canvas || !img) return;
+
+    // Calculate scale factors based on natural vs. displayed image size
+    const scaleX = img.naturalWidth / img.getBoundingClientRect().width;
+    const scaleY = img.naturalHeight / img.getBoundingClientRect().height;
+    setScaleFactors({ x: scaleX, y: scaleY });
+    console.log(`Image dimensions: natural=${img.naturalWidth}x${img.naturalHeight}, displayed=${img.getBoundingClientRect().width}x${img.getBoundingClientRect().height}`);
+    console.log(`Canvas dimensions: ${canvas.width}x${canvas.height}`);
+    console.log(`Scale factors: x=${scaleX}, y=${scaleY}`);
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -44,7 +54,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       ctx.strokeStyle = index === draggingBoxIndex ? '#ffcc00' : '#00ff00';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
-      ctx.strokeRect(box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1);
+      ctx.strokeRect(box.x哈尔, box.y1, box.x2 - box.x1, box.y2 - box.y1);
       ctx.setLineDash([]);
     });
 
@@ -64,16 +74,24 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
         ctx.fill();
       });
     }
-  }, [currentBox, boxes, points, activeTool, draggingBoxIndex]);
+  }, [currentBox, boxes, points, activeTool, draggingBoxIndex, imageDimensions]);
 
   const isPointInBox = (x, y, box) => {
     return x >= box.x1 && x <= box.x2 && y >= box.y1 && y <= box.y2;
   };
 
-  const handleMouseDown = (e) => {
+  const getScaledCoordinates = (clientX, clientY) => {
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const canvasX = clientX - rect.left;
+    const canvasY = clientY - rect.top;
+    const x = canvasX * scaleFactors.x;
+    const y = canvasY * scaleFactors.y;
+    return { x, y, canvasX, canvasY };
+  };
+
+  const handleMouseDown = (e) => {
+    const { x, y, canvasX, canvasY } = getScaledCoordinates(e.clientX, e.clientY);
+    console.log(`Mouse down: canvas=${canvasX},${canvasY}, scaled=${x},${y}`);
 
     if (activeTool === "box") {
       for (let i = 0; i < boxes.length; i++) {
@@ -91,9 +109,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
   };
 
   const handleMouseMove = (e) => {
-    const canvasRect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - canvasRect.left;
-    const y = e.clientY - canvasRect.top;
+    const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
 
     if (activeTool === "box") {
       if (isDrawingBox && boxStart) {
@@ -126,6 +142,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
         if (currentBox && (currentBox.x2 - currentBox.x1 > 5) && (currentBox.y2 - currentBox.y1 > 5)) {
           setBoxes([...boxes, currentBox]);
           setActiveBox(currentBox);
+          console.log(`Box created: ${JSON.stringify(currentBox)}`);
         }
         setCurrentBox(null);
         setBoxStart(null);
@@ -139,18 +156,21 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
   const handlePointClick = (e) => {
     if (activeTool !== "include" && activeTool !== "exclude") return;
     e.preventDefault();
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+    const { x, y, canvasX, canvasY } = getScaledCoordinates(e.clientX, e.clientY);
+    if (x < 0 || y < 0 || x > imageDimensions.width || y > imageDimensions.height) {
+      console.warn(`Point out of bounds: x=${x}, y=${y}`);
+      return;
+    }
     const newPoint = { x, y, label: activeTool === "include" ? 1 : 0 };
     setPoints(prevPoints => [...prevPoints, newPoint]);
+    console.log(`Point added: canvas=${canvasX},${canvasY}, scaled=${x},${y}, label=${newPoint.label}`);
   };
 
   const handleSelectRegion = () => {
     if (currentBox) {
       setActiveBox(currentBox);
       setCurrentBox(null);
+      console.log(`Region selected: ${JSON.stringify(activeBox)}`);
     }
   };
 
@@ -184,11 +204,12 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
           points: pointCoords.length > 0 ? pointCoords : null,
           labels: pointLabels.length > 0 ? pointLabels : null
         };
+        console.log('Sending segment request:', JSON.stringify(payload, null, 2));
         const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });
-        console.log('Segment response:', response.data);
+        console.log('Segment response:', JSON.stringify(response.data, null, 2));
         const incomingRegions = response.data.regions.filter(
           newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
         );
@@ -203,11 +224,12 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
           points: pointCoords,
           labels: pointLabels
         };
+        console.log('Sending segment request:', JSON.stringify(payload, null, 2));
         const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });
-        console.log('Segment response:', response.data);
+        console.log('Segment response:', JSON.stringify(response.data, null, 2));
         const incomingRegions = response.data.regions.filter(
           newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
         );
@@ -220,7 +242,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       setPoints([]);
       setCurrentBox(null);
       setActiveBox(null);
-      console.log('Updated regions:', newRegions); // Debug log
+      console.log('Updated regions:', JSON.stringify(newRegions, null, 2));
     } catch (error) {
       const errorDetail = error.response?.data?.detail || error.message;
       console.error('Error segmenting:', errorDetail);
@@ -335,8 +357,12 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
               onLoad={() => {
                 const img = imageRef.current;
                 if (img && canvasRef.current) {
-                  canvasRef.current.width = img.width;
-                  canvasRef.current.height = img.height;
+                  canvasRef.current.width = img.naturalWidth;
+                  canvasRef.current.height = img.naturalHeight;
+                  const scaleX = img.naturalWidth / img.getBoundingClientRect().width;
+                  const scaleY = img.naturalHeight / img.getBoundingClientRect().height;
+                  setScaleFactors({ x: scaleX, y: scaleY });
+                  console.log(`Image loaded: natural=${img.naturalWidth}x${img.naturalHeight}, displayed=${img.getBoundingClientRect().width}x${img.getBoundingClientRect().height}, scale=${scaleX},${scaleY}`);
                 }
               }}
             />
@@ -360,8 +386,8 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
                   alt={`Mask ${region.region_id}`}
                   className="region-outline"
                   style={{
-                    width: imageRef.current?.width,
-                    height: imageRef.current?.height,
+                    width: imageRef.current?.naturalWidth,
+                    height: imageRef.current?.naturalHeight,
                     opacity: 0.5
                   }}
                   onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
@@ -393,8 +419,8 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
                     alt={`Region ${region.region_id}`}
                     className="region-outline"
                     style={{
-                      width: imageRef.current?.width,
-                      height: imageRef.current?.height,
+                      width: imageRef.current?.naturalWidth,
+                      height: imageRef.current?.naturalHeight,
                       opacity: 0.5
                     }}
                     onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
