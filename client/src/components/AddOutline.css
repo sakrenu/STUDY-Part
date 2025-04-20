@@ -1,0 +1,334 @@
+.add-outline-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: #1a1a1a;
+  padding: 2rem;
+  z-index: 9999;
+  color: #ffffff;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  width: 100%;
+}
+
+.add-outline-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 9998;
+}
+
+.add-outline-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.add-outline-header h2 {
+  font-size: 1.8rem;
+  color: #b3c6d9;
+  margin: 0;
+}
+
+.add-outline-header p {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin: 10px 0 0 0;
+}
+
+.add-outline-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.outline-image-container {
+  position: relative;
+  max-width: 90%;
+  max-height: calc(100vh - 200px);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000000;
+  cursor: default;
+  transition: filter 0.3s ease;
+}
+
+.outline-image-container.clickable {
+  cursor: pointer;
+}
+
+.outline-image-container.segment-selected .outline-base-image {
+  filter: brightness(0.5);
+}
+
+.outline-image-container.segment-selected .outline-mask {
+  opacity: 0.3; /* Dim non-selected masks */
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Remove !important, control opacity via cascade and specificity */
+.outline-image-container.segment-selected .outline-mask-container.selected .outline-mask {
+  opacity: 0.8; /* Highlight selected mask opacity */
+  filter: brightness(1.1); /* Slightly brighten selected mask */
+}
+
+.outline-base-image {
+  max-width: 100%;
+  max-height: calc(100vh - 200px);
+  object-fit: contain;
+  display: block;
+  transition: filter 0.3s ease;
+}
+
+.outline-regions-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.outline-mask-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.outline-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.5; /* Default mask opacity */
+  pointer-events: none;
+  filter: none; /* Ensure no lingering filters */
+  transition: opacity 0.3s ease, filter 0.3s ease, border 0.3s ease;
+  border: 3px solid transparent; /* Add transparent border for smooth transition */
+}
+
+/* Highlight selected segment with a visible yellow border */
+.outline-mask.highlighted-mask {
+  /* Add a yellow border */
+  border: 3px solid #FFFF00; /* Yellow border, 3px thick */
+  box-sizing: border-box; /* Ensure border is inside */
+  opacity: 0.8; /* Keep mask slightly visible */
+  transition: border 0.3s ease, opacity 0.3s ease;
+  z-index: 5; /* Ensure border is visible */
+}
+
+.outline-image-container:hover {
+  /* Cursor change handled by .clickable now */
+}
+
+.add-outline-footer {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.outline-back-button,
+.outline-add-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.outline-back-button {
+  background-color: #4a545e;
+  color: #ffffff;
+}
+
+.outline-add-button {
+  background-color: #7f4ae2;
+  color: #ffffff;
+}
+
+.outline-back-button:hover,
+.outline-add-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.outline-back-button:active,
+.outline-add-button:active {
+  transform: translateY(1px);
+}
+
+.generating-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 10;
+}
+
+.generating-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid transparent;
+  border-top-color: #6f42c1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.generating-overlay p {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.error-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 0, 0, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ff4444;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ff4444;
+  z-index: 10;
+}
+
+.error-message svg {
+  flex-shrink: 0;
+}
+
+.error-message p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.save-button:disabled {
+  background: #495670;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.control-group input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.outline-cropper-container {
+  width: 100%;
+  height: 500px;
+  background: #000000;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.outline-result {
+  max-width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  border: 1px solid rgba(111, 66, 193, 0.3);
+  border-radius: 4px;
+  margin: 0 auto;
+  display: block;
+}
+
+.cropper-container {
+  margin: 0 auto;
+}
+
+/* Remove blue outline from cropper */
+.cropper-view-box,
+.cropper-face {
+  outline: none !important;
+  border: none !important;
+}
+
+.cropper-line,
+.cropper-point {
+  background-color: #ffffff !important;
+  opacity: 0.7;
+}
+
+.cropper-view-box {
+  box-shadow: 0 0 0 1px #fff;
+  outline: 0;
+}
+
+.generating-spinner.small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: #ffffff;
+  margin-right: 8px;
+  display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .add-outline-container {
+    width: 95%;
+    padding: 1rem;
+  }
+  
+  .add-outline-content {
+    flex-direction: column;
+  }
+  
+  .outline-controls {
+    flex: 1;
+    width: 100%;
+  }
+}
+
+.outline-mask-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.outline-mask-container.selected .outline-mask {
+  opacity: 0.7;
+}
+
+/* Make sure the outline button is properly disabled */
+.outline-add-button:disabled {
+  background-color: #4a545e;
+  opacity: 0.7;
+  cursor: not-allowed;
+} 

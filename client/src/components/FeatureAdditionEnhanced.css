@@ -83,8 +83,7 @@
     border: 2px solid #e982c8;
   }
   
-  .featadd-mask,
-  .featadd-preview-mask {
+  .featadd-mask {
     position: absolute;
     top: 0;
     left: 0;
@@ -92,12 +91,18 @@
     height: 100%;
     object-fit: contain;
     pointer-events: none;
+    transition: border 0.3s ease;
+    border: 3px solid transparent;
+    box-sizing: border-box;
   }
   
   .featadd-selected .featadd-mask,
   .featadd-preview-selected .featadd-preview-mask {
-    border: 3px solid #e982c8;
     opacity: 0.7;
+  }
+  
+  .featadd-mask.featadd-mask-outlined {
+    border-color: #FFFF00;
   }
   
   .featadd-adding.featadd-region,
@@ -282,4 +287,19 @@
   
   .featadd-notes-close-button:hover {
     background-color: #4a4a4a;
+  }
+  
+  .featadd-outline-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+  }
+  
+  .featadd-outline-image {
+    max-width: 100%;
+    height: auto;
+    margin-top: 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(111, 66, 193, 0.3);
   }
