@@ -123,12 +123,6 @@ embeddings = HuggingFaceEmbeddings(
     cache_folder=cache_dir
 )
 
-# Configure Cloudinary
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET')
-)
 
 @app.get("/health")
 async def health_check():
@@ -455,7 +449,13 @@ async def upload_audio(file: UploadFile = File(...)):
     try:
         if not file:
             raise HTTPException(status_code=400, detail="No file provided")
-        
+        # Configure Cloudinary
+        cloudinary.config(
+            cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.getenv('CLOUDINARY_API_KEY'),
+            api_secret=os.getenv('CLOUDINARY_API_SECRET')
+        )
+
         if file.filename == '':
             raise HTTPException(status_code=400, detail="No selected file")
 
@@ -478,7 +478,13 @@ async def upload_audio(file: UploadFile = File(...)):
         if not file:
             logger.error("No file provided")
             raise HTTPException(status_code=400, detail="No file provided")
-        
+        # Configure Cloudinary
+        cloudinary.config(
+            cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.getenv('CLOUDINARY_API_KEY'),
+            api_secret=os.getenv('CLOUDINARY_API_SECRET')
+        )
+
         contents = await file.read()
         
         # Upload to Cloudinary
