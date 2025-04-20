@@ -13,14 +13,12 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   const [clickCoordinates, setClickCoordinates] = useState({});
   const [isAddingNotes, setIsAddingNotes] = useState(false);
   const [isAddingLabels, setIsAddingLabels] = useState(false);
-  const [showAddNotes, setShowAddNotes] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const imageRef = useRef(null);
 
   const handleRegionClick = (regionId, e) => {
-    if (isAddingNotes) {
-      setSelectedRegionId(regionId);
-      setShowAddNotes(true);
+    if (!isAddingNotes && !isAddingLabels) {
+      setSelectedRegionId(regionId === selectedRegionId ? null : regionId);
     } else if (isPreviewing) {
       setSelectedRegionId(regionId);
     } else {
@@ -42,20 +40,14 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
     setSelectedRegionId(null);
   };
 
-  const handleSaveNote = (regionId, note) => {
+  const handleSaveNote = (regionId, note, coordinates) => {
     setNotes((prev) => ({ ...prev, [regionId]: note }));
-    setShowAddNotes(false);
-    setSelectedRegionId(null);
+    setClickCoordinates((prev) => ({ ...prev, [regionId]: coordinates }));
   };
 
   const handleSaveLabel = (regionId, label, coordinates) => {
     setLabels((prev) => ({ ...prev, [regionId]: label }));
     setClickCoordinates((prev) => ({ ...prev, [regionId]: coordinates }));
-  };
-
-  const handleCancelAddNotes = () => {
-    setShowAddNotes(false);
-    setSelectedRegionId(null);
   };
 
   const handleDoneAddingNotes = () => {
@@ -339,56 +331,59 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   );
 
   return (
-    <>
-      <AnimatePresence>
-        {isAddingLabels ? (
-          <motion.div
-            key="add-label"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <AddLabel
-              image={image}
-              lessonId={lessonId}
-              regions={regions}
-              teacherEmail={teacherEmail}
-              onSave={handleSaveLabel}
-              onDone={handleDoneAddingLabels}
-              onBack={handleBackToFeatures}
-              existingLabels={labels}
-              existingCoordinates={clickCoordinates}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="main-interface"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {isPreviewing ? renderPreview() : renderMainInterface()}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {showAddNotes && (
-        <AddNotes
-          regionId={selectedRegionId}
-          lessonId={lessonId}
-          teacherEmail={teacherEmail}
-          regionIndex={regions.findIndex((r) => r.region_id === selectedRegionId)}
-          maskUrl={regions.find((r) => r.region_id === selectedRegionId)?.mask_url}
-          cutoutUrl={regions.find((r) => r.region_id === selectedRegionId)?.cutout_url}
-          position={regions.find((r) => r.region_id === selectedRegionId)?.position}
-          onSave={handleSaveNote}
-          onCancel={handleCancelAddNotes}
-          initialNote={notes[selectedRegionId] || ''}
-        />
+    <AnimatePresence>
+      {isAddingNotes ? (
+        <motion.div
+          key="add-notes"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <AddNotes
+            image={image}
+            lessonId={lessonId}
+            regions={regions}
+            teacherEmail={teacherEmail}
+            onSave={handleSaveNote}
+            onDone={handleDoneAddingNotes}
+            onCancel={handleBackToFeatures}
+            existingNotes={notes}
+            existingCoordinates={clickCoordinates}
+          />
+        </motion.div>
+      ) : isAddingLabels ? (
+        <motion.div
+          key="add-label"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <AddLabel
+            image={image}
+            lessonId={lessonId}
+            regions={regions}
+            teacherEmail={teacherEmail}
+            onSave={handleSaveLabel}
+            onDone={handleDoneAddingLabels}
+            onBack={handleBackToFeatures}
+            existingLabels={labels}
+            existingCoordinates={clickCoordinates}
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="main-interface"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {isPreviewing ? renderPreview() : renderMainInterface()}
+        </motion.div>
       )}
-    </>
+    </AnimatePresence>
   );
 };
 
