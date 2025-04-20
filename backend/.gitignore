@@ -13,3 +13,4 @@ spvenv/
 .env
 model_cache/
 routes/model_cache
+vector_stores/
