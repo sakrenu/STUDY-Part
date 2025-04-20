@@ -9,6 +9,7 @@ import cloudinary
 import cloudinary.uploader
 import os
 import uuid
+import random
 import logging
 from typing import List, Optional, Dict
 from sam import Segmenter
@@ -224,7 +225,10 @@ async def segment(request: SegmentRequest):
                 (255, 165, 0),
                 (128, 0, 128)
             ]
-            color = colors[i % len(colors)]
+            
+            
+            color = random.choice(colors)
+
 
             rgba_mask = np.zeros((*mask.shape, 4), dtype=np.uint8)
             rgba_mask[:, :, 0] = mask.astype(np.uint8) * color[0]

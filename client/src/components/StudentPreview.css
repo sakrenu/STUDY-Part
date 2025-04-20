@@ -98,7 +98,7 @@
 
 .student-preview-segment.selected {
   animation: none;
-  box-shadow: 0 0 10px #9b4ae2, 0 0 20px #9b4ae2;
+  /* box-shadow: 0 0 10px #9b4ae2, 0 0 20px #9b4ae2; */
 }
 
 @keyframes blink {
