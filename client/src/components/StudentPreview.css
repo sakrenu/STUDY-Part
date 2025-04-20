@@ -19,9 +19,25 @@
   box-shadow: 0 10px 40px rgba(155, 74, 226, 0.4);
   width: 900px;
   max-width: 95%;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+}
+
+.student-preview-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.student-preview-container::-webkit-scrollbar-track {
+  background: #4a545e;
+  border-radius: 4px;
+}
+
+.student-preview-container::-webkit-scrollbar-thumb {
+  background: #9b4ae2;
+  border-radius: 4px;
 }
 
 .student-preview-header {
@@ -47,12 +63,12 @@
   overflow: hidden;
   background-color: #2a2a2a;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
 }
 
 .student-preview-base-image {
   max-width: 100%;
-  max-height: 60vh;
-  object-fit: contain;
+  height: auto;
   display: block;
 }
 
