@@ -32,7 +32,7 @@ const UploadComponent = ({ onImageUploaded, onBack }) => {
     let progress = 0;
     const progressInterval = setInterval(() => {
       if (progress < 90) {
-        progress += progress < 25 ? 2 : 1;
+        progress += progress < 25 ? 1 : 0.5;
         setSimulationProgress(progress);
         setSimulationMessage(
           progress < 25 ? 
@@ -42,7 +42,7 @@ const UploadComponent = ({ onImageUploaded, onBack }) => {
           `Processing upload... (${Math.round(progress)}%)`
         );
       }
-    }, 50);
+    }, 100);
 
     try {
       const formData = new FormData();
