@@ -153,80 +153,184 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
       setCurrentBox(null);
     }
   };
-
   const handleSegment = async () => {
-    const pointCoords = points.map(p => [p.x, p.y]);
+    const img = imageRef.current;
+    const canvas = canvasRef.current;
+  
+    if (!img || !canvas) {
+      toast.error("Image or canvas not found.");
+      return;
+    }
+  
+    const scaleX = img.naturalWidth / canvas.width;
+    const scaleY = img.naturalHeight / canvas.height;
+  
+    // Scale point coordinates
+    const pointCoords = points.map(p => [p.x * scaleX, p.y * scaleY]);
     const pointLabels = points.map(p => p.label);
-
+  
     if (!image_id || typeof image_id !== 'string' || image_id.trim() === '') {
       console.error('Invalid image_id:', image_id);
       toast.error("Image is not uploaded properly. Please try uploading again.");
       return;
     }
-
+  
     if (boxes.length === 0 && pointCoords.length === 0 && !activeBox) {
       toast.error("Please select at least one bounding box or point.");
       return;
     }
-
+  
     try {
       let newRegions = [...regions];
       let boxesToProcess = boxes;
-
+  
       if (activeBox && pointCoords.length > 0) {
         boxesToProcess = [...boxes, activeBox];
       }
-
+  
       for (const box of boxesToProcess) {
+        const scaledBox = [
+          box.x1 * scaleX,
+          box.y1 * scaleY,
+          box.x2 * scaleX,
+          box.y2 * scaleY
+        ];
+  
         const payload = {
           image_id,
-          box: [box.x1, box.y1, box.x2, box.y2],
+          box: scaledBox,
           points: pointCoords.length > 0 ? pointCoords : null,
           labels: pointLabels.length > 0 ? pointLabels : null
         };
+  
         const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });
-        console.log('Segment response:', response.data);
+  
         const incomingRegions = response.data.regions.filter(
           newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
         );
         newRegions = [...newRegions, ...incomingRegions];
         if (!lessonId) setLessonId(response.data.lesson_id);
       }
-
+  
       if (boxesToProcess.length === 0 && pointCoords.length > 0) {
+        const scaledBox = activeBox
+          ? [
+              activeBox.x1 * scaleX,
+              activeBox.y1 * scaleY,
+              activeBox.x2 * scaleX,
+              activeBox.y2 * scaleY
+            ]
+          : null;
+  
         const payload = {
           image_id,
-          box: activeBox ? [activeBox.x1, activeBox.y1, activeBox.x2, activeBox.y2] : null,
+          box: scaledBox,
           points: pointCoords,
           labels: pointLabels
         };
+  
         const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });
-        console.log('Segment response:', response.data);
+  
         const incomingRegions = response.data.regions.filter(
           newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
         );
         newRegions = [...newRegions, ...incomingRegions];
         if (!lessonId) setLessonId(response.data.lesson_id);
       }
-
+  
       setRegions(newRegions);
       setBoxes([]);
       setPoints([]);
       setCurrentBox(null);
       setActiveBox(null);
-      console.log('Updated regions:', newRegions); // Debug log
+      console.log('Updated regions:', newRegions);
     } catch (error) {
       const errorDetail = error.response?.data?.detail || error.message;
       console.error('Error segmenting:', errorDetail);
       toast.error(`Segmentation failed: ${errorDetail}`);
     }
   };
+  
+
+  // const handleSegment = async () => {
+  //   const pointCoords = points.map(p => [p.x, p.y]);
+  //   const pointLabels = points.map(p => p.label);
+
+  //   if (!image_id || typeof image_id !== 'string' || image_id.trim() === '') {
+  //     console.error('Invalid image_id:', image_id);
+  //     toast.error("Image is not uploaded properly. Please try uploading again.");
+  //     return;
+  //   }
+
+  //   if (boxes.length === 0 && pointCoords.length === 0 && !activeBox) {
+  //     toast.error("Please select at least one bounding box or point.");
+  //     return;
+  //   }
+
+  //   try {
+  //     let newRegions = [...regions];
+  //     let boxesToProcess = boxes;
+
+  //     if (activeBox && pointCoords.length > 0) {
+  //       boxesToProcess = [...boxes, activeBox];
+  //     }
+
+  //     for (const box of boxesToProcess) {
+  //       const payload = {
+  //         image_id,
+  //         box: [box.x1, box.y1, box.x2, box.y2],
+  //         points: pointCoords.length > 0 ? pointCoords : null,
+  //         labels: pointLabels.length > 0 ? pointLabels : null
+  //       };
+  //       const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+  //       const response = await axios.post(`${API_URL}/segment`, payload, {
+  //         headers: { 'Content-Type': 'application/json' }
+  //       });
+  //       console.log('Segment response:', response.data);
+  //       const incomingRegions = response.data.regions.filter(
+  //         newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
+  //       );
+  //       newRegions = [...newRegions, ...incomingRegions];
+  //       if (!lessonId) setLessonId(response.data.lesson_id);
+  //     }
+
+  //     if (boxesToProcess.length === 0 && pointCoords.length > 0) {
+  //       const payload = {
+  //         image_id,
+  //         box: activeBox ? [activeBox.x1, activeBox.y1, activeBox.x2, activeBox.y2] : null,
+  //         points: pointCoords,
+  //         labels: pointLabels
+  //       };
+  //       const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+  //       const response = await axios.post(`${API_URL}/segment`, payload, {
+  //         headers: { 'Content-Type': 'application/json' }
+  //       });
+  //       console.log('Segment response:', response.data);
+  //       const incomingRegions = response.data.regions.filter(
+  //         newRegion => !newRegions.some(existing => existing.region_id === newRegion.region_id)
+  //       );
+  //       newRegions = [...newRegions, ...incomingRegions];
+  //       if (!lessonId) setLessonId(response.data.lesson_id);
+  //     }
+
+  //     setRegions(newRegions);
+  //     setBoxes([]);
+  //     setPoints([]);
+  //     setCurrentBox(null);
+  //     setActiveBox(null);
+  //     console.log('Updated regions:', newRegions); // Debug log
+  //   } catch (error) {
+  //     const errorDetail = error.response?.data?.detail || error.message;
+  //     console.error('Error segmenting:', errorDetail);
+  //     toast.error(`Segmentation failed: ${errorDetail}`);
+  //   }
+  // };
 
   const handleAddPart = () => {
     setCurrentBox(null);
