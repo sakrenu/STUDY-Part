@@ -16,7 +16,9 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import CreateClass from './pages/admin/CreateClass';
 import EditClass from './pages/admin/EditClass';
 import ViewClass from './pages/admin/ViewClass';
-
+import CoursePage from './pages/students/CoursePage';
+import QuizDashboard from './pages/students/QuizDashboard';
+import QuizMode from './pages/students/QuizMode';
 
 const App = () => {
   return (
@@ -33,6 +35,11 @@ const App = () => {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/learning-mode" element={<LearningMode />} />
           <Route path="/notes-mode" element={<NotesMode />} />
+
+          {/* Student Quiz Routes */}
+          <Route path="/student-dashboard/quiz-mode" element={<QuizDashboard />} />
+          <Route path="/student-dashboard/quiz-mode/:quizId" element={<QuizMode />} />
+          <Route path="/course/:courseId" element={<CoursePage />} />
           <Route path="/talk-to-notes" element={<TalkToNotes />} />
 
           {/* Admin Route */}
