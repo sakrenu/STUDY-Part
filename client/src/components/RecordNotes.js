@@ -7,8 +7,8 @@ import './RecordNotes.css';
 
 const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCancel, existingNotes, existingCoordinates }) => {
   const [currentNote, setCurrentNote] = useState(null);
-  const [recordings, setRecordings] = useState({}); // Store recordings for each segment
-  const [notes, setNotes] = useState(existingNotes || {});
+  const [recordings, setRecordings] = useState({}); 
+  const [notes, setNotes] = useState({});
   const [clickCoordinates, setClickCoordinates] = useState(existingCoordinates || {});
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState(null);
@@ -22,14 +22,24 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
 
   useEffect(() => {
     const initialRecordings = {};
+    const initialNotes = {};
     if (existingNotes) {
       Object.entries(existingNotes).forEach(([regionId, note]) => {
-        if (note.audioUrl) {
+        if (typeof note === 'object' && note.audioUrl) {
           initialRecordings[regionId] = note.audioUrl;
         }
+        initialNotes[regionId] = note;
       });
     }
     setRecordings(initialRecordings);
+    setNotes(initialNotes);
+
+    return () => {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+        mediaRecorderRef.current = null;
+      }
+    };
   }, [existingNotes]);
 
   const handleImageClick = (e) => {

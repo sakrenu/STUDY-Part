@@ -7,7 +7,7 @@ import RecordNotes from './RecordNotes';
 import './FeatureAdditionEnhanced.css';
 import axios from 'axios';
 
-const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onComplete }) => {
+const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onComplete, onBack }) => {
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [notes, setNotes] = useState({});
   const [labels, setLabels] = useState({});
@@ -17,6 +17,7 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   const [isRecordingNotes, setIsRecordingNotes] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const imageRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
   const handleRegionClick = (regionId, e) => {
     if (!isAddingNotes && !isAddingLabels) {
@@ -45,6 +46,11 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   };
 
   const handleRecordNotes = () => {
+    // First cleanup any existing media streams in case they exist
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current = null;
+    }
     setIsRecordingNotes(true);
     setIsAddingNotes(false);
     setIsAddingLabels(false);
