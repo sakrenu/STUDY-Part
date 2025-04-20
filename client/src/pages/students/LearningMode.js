@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 import './StudentDashboard.css';
 
 const LearningMode = ({ studentId }) => {
@@ -12,6 +13,7 @@ const LearningMode = ({ studentId }) => {
     const [notifications, setNotifications] = useState([]);
     const [enrolledCourses, setEnrolledCourses] = useState([]);
     const auth = getAuth();
+    const navigate = useNavigate();
 
     // Fetch student data
     useEffect(() => {
@@ -65,6 +67,18 @@ const LearningMode = ({ studentId }) => {
     const handlePartClick = (notes) => {
         setSelectedNotes(notes);
     };
+
+    const handleCourseClick = (courseId) => {
+        navigate(`/course/${courseId}`);
+    };
+
+    // Add these background colors for course cards
+    const cardColors = [
+        'linear-gradient(135deg, #7367F0, #CE9FFC)', // Purple
+        'linear-gradient(135deg, #45B8EA, #98E1F9)', // Blue
+        'linear-gradient(135deg, #A8A8A8, #D6D6D6)', // Grey
+        'linear-gradient(135deg, #FFA585, #FFEDA0)'  // Orange
+    ];
 
     // Render content based on active tab
     const renderContent = () => {
@@ -130,22 +144,39 @@ const LearningMode = ({ studentId }) => {
                 );
             case 'courses':
                 return (
-                    <div className="courses-section card-neon">
-                        <h2>Enrolled Courses</h2>
-                        {enrolledCourses.length > 0 ? (
-                            <div className="courses-grid">
-                                {enrolledCourses.map((course) => (
-                                    <div key={course.id} className="course-card">
-                                        <h3>{course.courseName}</h3>
+                    <div className="courses-overview">
+                        <div className="courses-header">
+                            <h2>Course Overview</h2>
+                        </div>
+                        <div className="courses-grid">
+                            {enrolledCourses.map((course, index) => (
+                                <div 
+                                    key={course.id} 
+                                    className="course-card"
+                                    onClick={() => handleCourseClick(course.id)}
+                                    style={{ 
+                                        background: cardColors[index % cardColors.length],
+                                        padding: '20px',
+                                        borderRadius: '10px',
+                                        minHeight: '200px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'space-between',
+                                        cursor: 'pointer',
+                                        transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                                    }}
+                                >
+                                    <div>
+                                        <div className="course-department">Information Technology</div>
+                                        <h3 className="course-name">{course.courseName}</h3>
+                                    </div>
+                                    <div className="course-details">
                                         <p>Class: {course.className}</p>
                                         <p>Students: {course.students?.length || 0}</p>
-                                        <p>Created: {course.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</p>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p>You are not enrolled in any courses.</p>
-                        )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 );
             default:

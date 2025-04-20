@@ -17,7 +17,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import CreateClass from './pages/admin/CreateClass';
 import EditClass from './pages/admin/EditClass';
 import ViewClass from './pages/admin/ViewClass';
-
+import CoursePage from './pages/students/CoursePage';
 
 const App = () => {
   return (
@@ -38,6 +38,7 @@ const App = () => {
           {/* Student Quiz Routes */}
           <Route path="/student-dashboard/quiz-mode" element={<QuizDashboard />} />
           <Route path="/student-dashboard/quiz-mode/:quizId" element={<QuizMode />} />
+          <Route path="/course/:courseId" element={<CoursePage />} />
 
           {/* Admin Route */}
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
