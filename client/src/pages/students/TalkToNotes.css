@@ -213,25 +213,49 @@
 
 .message.bot {
     align-self: flex-start;
-}
-
-.message-content {
-    padding: 1rem;
-    border-radius: 12px;
-    line-height: 1.4;
-    position: relative;
-}
-
-.message.user .message-content {
-    background: linear-gradient(90deg, #573688, #520c5b);
-    color: #ffffff;
-    border-radius: 12px 12px 0 12px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
 }
 
 .message.bot .message-content {
     background: #3c2468;
     color: #ffffff;
     border-radius: 12px 12px 12px 0;
+    position: relative;
+    padding-right: 1rem;
+}
+
+/* Speak Button Styles */
+.speak-button {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ffffff;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+}
+
+.speak-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.speak-button:active {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.speak-button svg {
+    display: block;
+    width: 16px;
+    height: 16px;
 }
 
 /* Styles for HTML content within bot messages */
@@ -257,7 +281,7 @@
 .message.bot .bot-html-content b, 
 .message.bot .bot-html-content strong {
     font-weight: 600;
-    color: #f1b5fe; /* Highlight bold text slightly */
+    color: #f1b5fe;
 }
 
 /* Update Query Form Styles */
@@ -326,14 +350,28 @@
 
 /* Microphone Button Specific Styles */
 .mic-button {
-    padding: 0.6rem;
+    padding: 0;
+    width: 40px;
+    height: 40px;
     min-width: 40px;
     max-width: 40px;
     border-radius: 50%;
     background: #3c2468;
-    font-size: 1.2rem;
+    color: #ffffff;
     margin-left: 0.5rem;
     margin-right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mic-button svg {
+    display: block;
+    width: 18px;
+    height: 18px;
 }
 
 .mic-button:hover:not(:disabled) {
@@ -347,10 +385,15 @@
     animation: pulse 1.5s infinite ease-in-out;
 }
 
+.mic-button.recording:hover:not(:disabled) {
+    background: #c0392b;
+}
+
 .mic-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     background: #4a4a6a;
+    color: #a0a0a0;
 }
 
 .query-form button[type="submit"] {

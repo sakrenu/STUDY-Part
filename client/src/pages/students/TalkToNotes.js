@@ -98,6 +98,10 @@ const TalkToNotes = () => {
                 currentRecognition.onend = null;
                 currentRecognition.stop(); // Ensure it stops if component unmounts mid-recording
             }
+            // Cancel any ongoing speech synthesis on unmount
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
         };
 
     }, []); // Run only on mount
@@ -268,6 +272,36 @@ const TalkToNotes = () => {
         }
     };
 
+    // Function to handle speaking text
+    const handleSpeakClick = (htmlContent) => {
+        if (!('speechSynthesis' in window)) {
+            console.error("Speech Synthesis not supported by this browser.");
+            // Optionally show a message to the user
+            alert("Sorry, your browser doesn\'t support text-to-speech.");
+            return;
+        }
+
+        // Extract text content from HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        const textToSpeak = tempDiv.textContent || tempDiv.innerText || "";
+
+        if (!textToSpeak.trim()) {
+            console.log("No text content to speak.");
+            return;
+        }
+
+        // Stop any currently speaking utterance before starting a new one
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'en-US'; // Ensure English voice if possible
+        // You could add options here to select voice, pitch, rate etc.
+        // utterance.voice = window.speechSynthesis.getVoices().find(voice => voice.lang === 'en-US');
+        
+        window.speechSynthesis.speak(utterance);
+    };
+
     // Typing indicator component
     const TypingIndicator = () => (
         <div className="typing-indicator">
@@ -370,10 +404,26 @@ const TalkToNotes = () => {
                                                         {message.content}
                                                     </div>
                                                 ) : (
-                                                    <div 
-                                                        className="message-content bot-html-content"
-                                                        dangerouslySetInnerHTML={{ __html: message.content }}
-                                                    />
+                                                    <>
+                                                        <div 
+                                                            className="message-content bot-html-content"
+                                                            dangerouslySetInnerHTML={{ __html: message.content }}
+                                                        />
+                                                        {/* Speak button moved outside message-content */}
+                                                        {message.content && !message.content.includes('Sorry, there was an error') && !message.content.includes('Please select a processed note') && !message.content.includes('Please enter a question') && !message.content.includes('Mic Error') && (
+                                                            <button 
+                                                                className="speak-button"
+                                                                onClick={() => handleSpeakClick(message.content)}
+                                                                title="Speak this message aloud"
+                                                                aria-label="Speak this message aloud"
+                                                            >
+                                                                {/* Speaker Icon SVG */}
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16px" height="16px">
+                                                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                                                                </svg>
+                                                            </button>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         )
@@ -395,7 +445,18 @@ const TalkToNotes = () => {
                                         disabled={loading || !SpeechRecognition} // Disable if loading or not supported
                                         title={SpeechRecognition ? (isRecording ? "Stop Recording" : "Start Recording") : "Voice input not supported"}
                                     >
-                                        🎤
+                                        {/* Modern Mic SVG Icon */}
+                                        <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
+                                            viewBox="0 0 24 24" 
+                                            fill="currentColor" 
+                                            width="18px" 
+                                            height="18px"
+                                            aria-hidden="true" // Hide from screen readers as title is present
+                                        >
+                                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                          <path d="M19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V22h-3v2h8v-2h-3v-1.06A9 9 0 0 0 21 12v-2h-2z"/>
+                                        </svg>
                                     </button>
                                     <button type="submit" disabled={loading || isRecording}>
                                         Ask
