@@ -101,7 +101,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
       setShowPreview(false);
       setGeneratedNotes(null);
       setActiveTab('manual');
-      setAudioUrl(null);
+      setAudioUrl(notes[regionId]?.audioUrl || null);
     }
   };
 
@@ -606,6 +606,29 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
                       </motion.button>
                     </div>
                   </div>
+                  <motion.button
+                    className="addnotes-record-button"
+                    onClick={isRecording ? handleStopRecording : handleStartRecording}
+                    disabled={isGenerating || isSaving}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label={isRecording ? 'Stop recording' : 'Record notes'}
+                  >
+                    {isRecording ? (
+                      <>
+                        <MdStop size={20} /> Stop Recording
+                      </>
+                    ) : (
+                      <>
+                        <MdMic size={20} /> Record Notes
+                      </>
+                    )}
+                  </motion.button>
+                  {audioUrl && (
+                    <div className="addnotes-audio-preview">
+                      <audio controls src={audioUrl} className="addnotes-audio-player" />
+                    </div>
+                  )}
                 </div>
               )}
               {error && (
