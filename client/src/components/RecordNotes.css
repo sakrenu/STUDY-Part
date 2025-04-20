@@ -67,6 +67,18 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.recordnotes-region.recordnotes-has-recording::after {
+  content: '🎵';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  color: #ffffff;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  z-index: 40;
+  pointer-events: none;
+}
+
 .recordnotes-selected {
   background-color: rgba(127, 74, 226, 0.2);
 }

@@ -7,6 +7,7 @@ import './RecordNotes.css';
 
 const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCancel, existingNotes, existingCoordinates }) => {
   const [currentNote, setCurrentNote] = useState(null);
+  const [recordings, setRecordings] = useState({}); // Store recordings for each segment
   const [notes, setNotes] = useState(existingNotes || {});
   const [clickCoordinates, setClickCoordinates] = useState(existingCoordinates || {});
   const [isRecording, setIsRecording] = useState(false);
@@ -15,6 +16,19 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
   const imageRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+
+  // Initialize recordings from existing notes
+  useEffect(() => {
+    const initialRecordings = {};
+    if (existingNotes) {
+      Object.entries(existingNotes).forEach(([regionId, note]) => {
+        if (note.audioUrl) {
+          initialRecordings[regionId] = note.audioUrl;
+        }
+      });
+    }
+    setRecordings(initialRecordings);
+  }, [existingNotes]);
 
   const handleImageClick = (e) => {
     if (!imageRef.current || !regions || regions.length === 0) return;
@@ -40,7 +54,6 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
 
     if (clickedRegion) {
       const regionId = clickedRegion.region_id;
-      const existingAudioUrl = notes[regionId]?.audioUrl;
       
       setCurrentNote({
         regionId,
@@ -49,12 +62,10 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         maskUrl: clickedRegion.mask_url,
         position: clickedRegion.position,
         regionIndex: regions.findIndex((r) => r.region_id === regionId),
-        audioUrl: existingAudioUrl || null,
       });
 
-      if (existingAudioUrl) {
-        setAudioUrl(existingAudioUrl);
-      }
+      // Set the audio URL for the current segment if it exists
+      setAudioUrl(recordings[regionId] || null);
     }
   };
 
@@ -107,9 +118,16 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       }
 
       const data = await response.json();
-      const audioUrl = data.url;
-      setAudioUrl(audioUrl);
-      setCurrentNote((prev) => ({ ...prev, audioUrl }));
+      const newAudioUrl = data.url;
+      setAudioUrl(newAudioUrl);
+      
+      // Store the new recording for this segment
+      if (currentNote?.regionId) {
+        setRecordings(prev => ({
+          ...prev,
+          [currentNote.regionId]: newAudioUrl
+        }));
+      }
     } catch (err) {
       console.error('Upload error:', err);
       setError('Failed to upload audio: ' + err.message);
@@ -122,20 +140,21 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       return;
     }
 
-    if (!currentNote.audioUrl) {
+    if (!audioUrl && !recordings[currentNote.regionId]) {
       setError('Please record audio before saving');
       return;
     }
 
     try {
-      const { regionId, clickX, clickY, maskUrl, position, regionIndex, audioUrl } = currentNote;
+      const { regionId, clickX, clickY, maskUrl, position, regionIndex } = currentNote;
+      const currentAudioUrl = audioUrl || recordings[regionId];
       
       await setDoc(
         doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId, 'Segments', regionId),
         {
           regionId,
           segmentIndex: regionIndex,
-          audioNote: audioUrl,
+          audioNote: currentAudioUrl,
           annotation: { x: clickX, y: clickY },
           maskUrl,
           position,
@@ -143,9 +162,17 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         { merge: true }
       );
 
-      setNotes((prev) => ({ ...prev, [regionId]: { audioUrl } }));
-      setClickCoordinates((prev) => ({ ...prev, [regionId]: { x: clickX, y: clickY } }));
-      onSave(regionId, { audioUrl }, { x: clickX, y: clickY });
+      setNotes(prev => ({
+        ...prev,
+        [regionId]: { audioUrl: currentAudioUrl }
+      }));
+      
+      setClickCoordinates(prev => ({
+        ...prev,
+        [regionId]: { x: clickX, y: clickY }
+      }));
+      
+      onSave(regionId, { audioUrl: currentAudioUrl }, { x: clickX, y: clickY });
       setCurrentNote(null);
       setAudioUrl(null);
     } catch (err) {
@@ -188,7 +215,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                 key={region.region_id}
                 className={`recordnotes-region ${
                   currentNote?.regionId === region.region_id ? 'recordnotes-selected' : ''
-                }`}
+                } ${recordings[region.region_id] ? 'recordnotes-has-recording' : ''}`}
               >
                 <img
                   src={region.mask_url}
@@ -210,7 +237,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
               transition={{ duration: 0.3 }}
             >
               <h3>
-                {currentNote.audioUrl 
+                {recordings[currentNote.regionId] 
                   ? `Existing Recording for Segment ${currentNote.regionIndex + 1}` 
                   : `Record Notes for Segment ${currentNote.regionIndex + 1}`}
               </h3>
@@ -221,9 +248,13 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                   className="recordnotes-preview-image"
                 />
               </div>
-              {audioUrl && (
+              {(audioUrl || recordings[currentNote.regionId]) && (
                 <div className="recordnotes-audio-preview">
-                  <audio controls src={audioUrl} className="recordnotes-audio-player" />
+                  <audio 
+                    controls 
+                    src={audioUrl || recordings[currentNote.regionId]} 
+                    className="recordnotes-audio-player"
+                  />
                 </div>
               )}
               <motion.button
@@ -238,7 +269,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                   </>
                 ) : (
                   <>
-                    <MdMic size={24} /> {currentNote.audioUrl ? 'Record New' : 'Start Recording'}
+                    <MdMic size={24} /> {recordings[currentNote.regionId] ? 'Record New' : 'Start Recording'}
                   </>
                 )}
               </motion.button>
@@ -256,11 +287,11 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                 <motion.button
                   className="recordnotes-save-button"
                   onClick={handleSave}
-                  disabled={isRecording || (!audioUrl && !currentNote.audioUrl)}
+                  disabled={isRecording}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  {currentNote.audioUrl ? 'Update Recording' : 'Save Recording'}
+                  {recordings[currentNote.regionId] ? 'Update Recording' : 'Save Recording'}
                 </motion.button>
                 <motion.button
                   className="recordnotes-cancel-button"
