@@ -17,7 +17,8 @@ const ManageStudents = () => {
   const [students, setStudents] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [expandedClass, setExpandedClass] = useState(null);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
   const auth = getAuth();
 
   useEffect(() => {
@@ -66,6 +67,15 @@ const ManageStudents = () => {
   }, [auth]);
 
   const getStudentEmail = (id) => students.find(s => s.id === id)?.email || 'Unknown';
+  
+  const handleClassSelect = (cls) => {
+    setSelectedClass(cls);
+    setShowDetails(true);
+  };
+  
+  const closeDetails = () => {
+    setShowDetails(false);
+  };
 
   return (
     <div className="teacher-dashboard view-classes-page">
@@ -77,7 +87,7 @@ const ManageStudents = () => {
             <span className="part">Part</span>
           </a>
         </div>
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
+        <button className="back-btn" onClick={() => navigate('/dashboard')}>Back</button>
       </nav>
 
       <div className="welcome-section">
@@ -90,66 +100,69 @@ const ManageStudents = () => {
         {error && <div className="error-message">{error}</div>}
 
         {!loading && !error && (
-          <div className="table-container">
-            <table className="class-table">
-              <thead>
-                <tr>
-                  <th>Course Name</th>
-                  <th>Class Name</th>
-                  <th>Created</th>
-                  <th>Students</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classes.map((cls) => (
-                  <React.Fragment key={cls.id}>
-                    <tr>
-                      <td>{cls.courseName || 'Untitled Course'}</td>
-                      <td>{cls.className || 'N/A'}</td>
-                      <td className="date-column">
-                        {cls.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}
-                      </td>
-                      <td>{cls.students?.length || 0}</td>
-                      <td>
-                        <button 
-                          className="expand-btn"
-                          onClick={() => setExpandedClass(expandedClass === cls.id ? null : cls.id)}
-                        >
-                          {expandedClass === cls.id ? '▲' : '▼'}
-                        </button>
-                      </td>
-                    </tr>
-                    {expandedClass === cls.id && (
-                      <tr className="expanded-row">
-                        <td colSpan="5">
-                          <div className="expanded-content">
-                            <div className="detail-section">
-                              <h4>Course Details</h4>
-                              <p><strong>Course Name:</strong> {cls.courseName}</p>
-                              <p><strong>Class Name:</strong> {cls.className}</p>
-                              <p><strong>Created:</strong> {cls.createdAt?.toDate?.().toLocaleDateString()}</p>
-                            </div>
-                            <div className="students-section">
-                              <h4>Enrolled Students ({cls.students?.length || 0})</h4>
-                              {cls.students?.length > 0 ? (
-                                <ul className="student-list">
-                                  {cls.students.map((sid) => (
-                                    <li key={sid}>{getStudentEmail(sid)}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p>No students enrolled</p>
-                              )}
-                            </div>
+          <div className="classes-grid">
+            {classes.map((cls) => (
+              <div 
+                key={cls.id} 
+                className="class-card"
+                onClick={() => handleClassSelect(cls)}
+              >
+                <div className="class-card-header">
+                  <h3>{cls.courseName || 'Untitled Course'}</h3>
+                  <span className="students-badge">{cls.students?.length || 0} Students</span>
+                </div>
+                <div className="class-card-content">
+                  <p><strong>Class Name:</strong> {cls.className || 'N/A'}</p>
+                  <p><strong>Created:</strong> {cls.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</p>
+                </div>
+                <div className="class-card-footer">
+                  <button className="view-details-btn">View Details</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {showDetails && selectedClass && (
+          <div className="details-overlay">
+            <div className="details-panel">
+              <button className="close-btn" onClick={closeDetails}>×</button>
+              
+              <div className="details-header">
+                <h2>{selectedClass.courseName}</h2>
+                <span className="class-name">{selectedClass.className}</span>
+              </div>
+              
+              <div className="details-content">
+                <div className="details-section">
+                  <h3>Course Details</h3>
+                  <div className="details-info">
+                    <p><strong>Course Name:</strong> {selectedClass.courseName}</p>
+                    <p><strong>Class Name:</strong> {selectedClass.className}</p>
+                    <p><strong>Created:</strong> {selectedClass.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</p>
+                    <p><strong>Total Students:</strong> {selectedClass.students?.length || 0}</p>
+                  </div>
+                </div>
+                
+                <div className="students-section">
+                  <h3>Enrolled Students</h3>
+                  {selectedClass.students?.length > 0 ? (
+                    <div className="students-grid">
+                      {selectedClass.students.map((sid) => (
+                        <div key={sid} className="student-card">
+                          <div className="student-avatar">
+                            {getStudentEmail(sid).charAt(0).toUpperCase()}
                           </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+                          <span className="student-email">{getStudentEmail(sid)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="no-students">No students enrolled</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>
