@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MdNoteAdd, MdLabel, MdBorderOuter, MdAnimation, MdMic, MdDone } from 'react-icons/md';
+import { MdNoteAdd, MdLabel, MdAnimation, MdMic, MdDone } from 'react-icons/md';
 import AddNotes from './AddNotes';
 import AddLabel from './AddLabel';
-import AddOutline from './AddOutline';
 import './FeatureAdditionEnhanced.css';
 import axios from 'axios';
 
@@ -16,8 +15,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
   const [isAddingLabels, setIsAddingLabels] = useState(false);
   const [showAddNotes, setShowAddNotes] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
-  const [showAddOutline, setShowAddOutline] = useState(false);
-  const [outlines, setOutlines] = useState({});
   const imageRef = useRef(null);
 
   const handleRegionClick = (regionId, e) => {
@@ -92,32 +89,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
     setSelectedRegionId(null);
   };
 
-  const handleAddOutlineClick = () => {
-    setIsAddingNotes(false);
-    setIsAddingLabels(false);
-    setIsPreviewing(false);
-    setShowAddOutline(true);
-  };
-
-  const handleOutlineSelected = (regionId) => {
-    console.log('Outline selected for region:', regionId);
-    setOutlines(prev => {
-      const updatedOutlines = {...prev};
-      if (updatedOutlines[regionId]) {
-        delete updatedOutlines[regionId];
-      } else {
-        updatedOutlines[regionId] = true;
-      }
-      return updatedOutlines;
-    });
-    setShowAddOutline(false);
-    setIsPreviewing(true);
-  };
-
-  const handleCancelOutline = () => {
-    setShowAddOutline(false);
-  };
-
   const handleAnimate = () => {
     console.log(`Animate region ${selectedRegionId}`);
   };
@@ -135,9 +106,8 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
         notes: notes[region.region_id] || '',
         label: labels[region.region_id] || '',
         annotation: clickCoordinates[region.region_id] || null,
-        outline: outlines[region.region_id] === true ? true : false,
       })),
-      features: { notes, labels, annotations: clickCoordinates, outlines },
+      features: { notes, labels, annotations: clickCoordinates },
     });
   };
 
@@ -162,7 +132,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
           />
           <div className="featadd-preview-regions-overlay">
             {regions.map((region) => {
-              const isOutlined = outlines[region.region_id] === true;
               return (
                 <div
                   key={region.region_id}
@@ -174,7 +143,7 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
                   <img
                     src={region.mask_url}
                     alt={`Region ${region.region_id}`}
-                    className={`featadd-preview-mask ${isOutlined ? 'featadd-mask-outlined' : ''}`}
+                    className={`featadd-preview-mask`}
                     style={{ opacity: 0.5 }}
                     onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
                   />
@@ -215,7 +184,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
                 {clickCoordinates[selectedRegionId] && (
                   <p><strong>Annotation:</strong> Clicked at ({clickCoordinates[selectedRegionId].x.toFixed(0)}, {clickCoordinates[selectedRegionId].y.toFixed(0)})</p>
                 )}
-                <p><strong>Outline:</strong> {outlines[selectedRegionId] ? 'Yes' : 'No'}</p>
               </div>
               <motion.button
                 className="featadd-notes-close-button"
@@ -270,20 +238,19 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
           />
           <div className="featadd-regions-overlay">
             {regions.map((region) => {
-              const isOutlined = outlines[region.region_id] === true;
               const isActive = isAddingNotes || isAddingLabels;
               return (
                 <div
                   key={region.region_id}
-                  className={`featadd-region ${
-                    selectedRegionId === region.region_id ? 'featadd-selected featadd-active' : ''
-                  } ${isActive ? 'featadd-active' : ''} ${isAddingNotes ? 'featadd-adding' : ''}`}
+                  className={`featadd-region${
+                    selectedRegionId === region.region_id ? ' featadd-selected' : ''
+                  }${isActive ? ' featadd-active' : ''}${isAddingNotes ? ' featadd-adding' : ''}`}
                   onClick={(e) => handleRegionClick(region.region_id, e)}
                 >
                   <img
                     src={region.mask_url}
                     alt={`Region ${region.region_id}`}
-                    className={`featadd-mask ${isOutlined ? 'featadd-mask-outlined' : ''}`}
+                    className={`featadd-mask`}
                     style={{ opacity: 0.5 }}
                     onError={() => console.error(`Failed to load mask: ${region.mask_url}`)}
                   />
@@ -319,14 +286,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
                 whileTap={{ scale: 0.9 }}
               >
                 <MdLabel size={20} /> Add Labels
-              </motion.button>
-              <motion.button
-                className="featadd-action-button"
-                onClick={handleAddOutlineClick}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <MdBorderOuter size={20} /> Add Outline
               </motion.button>
               <motion.button
                 className="featadd-action-button"
@@ -378,17 +337,6 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onBack, onCom
       </div>
     </motion.div>
   );
-
-  if (showAddOutline) {
-    return (
-      <AddOutline
-        image={image}
-        regions={regions}
-        onSave={handleOutlineSelected}
-        onCancel={handleCancelOutline}
-      />
-    );
-  }
 
   return (
     <>

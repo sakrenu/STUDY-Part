@@ -101,13 +101,10 @@
     opacity: 0.7;
   }
   
-  .featadd-mask.featadd-mask-outlined {
-    border-color: #FFFF00;
-  }
-  
   .featadd-adding.featadd-region,
   .featadd-adding.featadd-preview-region {
     animation: pulse 1.5s infinite ease-in-out;
+    background-color: #4a4a4a;
   }
   
   @keyframes pulse {
@@ -287,19 +284,4 @@
   
   .featadd-notes-close-button:hover {
     background-color: #4a4a4a;
-  }
-  
-  .featadd-outline-preview {
-    margin-top: 1rem;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-  }
-  
-  .featadd-outline-image {
-    max-width: 100%;
-    height: auto;
-    margin-top: 0.5rem;
-    border-radius: 4px;
-    box-shadow: 0 0 10px rgba(111, 66, 193, 0.3);
   }
