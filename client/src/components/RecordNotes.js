@@ -13,11 +13,13 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [isPreview, setIsPreview] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const imageRef = useRef(null);
+  const containerRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
-  // Initialize recordings from existing notes
   useEffect(() => {
     const initialRecordings = {};
     if (existingNotes) {
@@ -31,7 +33,10 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
   }, [existingNotes]);
 
   const handleImageClick = (e) => {
-    if (!imageRef.current || !regions || regions.length === 0) return;
+    e.stopPropagation();
+    if (isPreview || !imageRef.current || !regions || regions.length === 0) {
+      return;
+    }
     
     const rect = imageRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -59,10 +64,17 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         regionId,
         clickX: x,
         clickY: y,
+        labelX: x + 100,
+        labelY: y - 30,
         maskUrl: clickedRegion.mask_url,
         position: clickedRegion.position,
         regionIndex: regions.findIndex((r) => r.region_id === regionId),
       });
+
+      setClickCoordinates(prev => ({
+        ...prev,
+        [regionId]: { x, y }
+      }));
 
       // Set the audio URL for the current segment if it exists
       setAudioUrl(recordings[regionId] || null);
@@ -121,7 +133,6 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       const newAudioUrl = data.url;
       setAudioUrl(newAudioUrl);
       
-      // Store the new recording for this segment
       if (currentNote?.regionId) {
         setRecordings(prev => ({
           ...prev,
@@ -145,26 +156,24 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       return;
     }
 
+    setIsSaving(true);
     try {
-      const { regionId, clickX, clickY, maskUrl, position, regionIndex } = currentNote;
+      const { regionId, clickX, clickY } = currentNote;
       const currentAudioUrl = audioUrl || recordings[regionId];
       
       await setDoc(
         doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId, 'Segments', regionId),
         {
           regionId,
-          segmentIndex: regionIndex,
           audioNote: currentAudioUrl,
           annotation: { x: clickX, y: clickY },
-          maskUrl,
-          position,
         },
         { merge: true }
       );
-
-      setNotes(prev => ({
+      
+      setRecordings(prev => ({
         ...prev,
-        [regionId]: { audioUrl: currentAudioUrl }
+        [regionId]: currentAudioUrl
       }));
       
       setClickCoordinates(prev => ({
@@ -177,6 +186,8 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       setAudioUrl(null);
     } catch (err) {
       setError('Failed to save recording: ' + err.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -189,79 +200,239 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
     setAudioUrl(null);
   };
 
-  return (
-    <motion.div
-      className="recordnotes-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="recordnotes-header">
-        <h2>Record Audio Notes</h2>
-        <p>Click a segment to record audio notes.</p>
-      </div>
-      <div className="recordnotes-content">
-        <div className="recordnotes-image-container" onClick={handleImageClick}>
+  const handleDoneRecording = () => {
+    setIsPreview(true);
+  };
+
+  const handleSaveAll = () => {
+    const allData = regions.map(region => ({
+      regionId: region.region_id,
+      audioNote: recordings[region.region_id] || '',
+      annotation: clickCoordinates[region.region_id] || null,
+    }));
+    onSave(allData);
+    setIsPreview(false);
+    onCancel();
+  };
+
+  const handleBackToFeatures = () => {
+    setIsPreview(false);
+    setCurrentNote(null);
+    setAudioUrl(null);
+    setError(null);
+    setIsRecording(false);
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+    }
+    onCancel();
+  };
+
+  const AudioIndicator = () => (
+    <span role="img" aria-label="sound" style={{ marginLeft: '8px', fontSize: '20px' }}>
+      🔊
+    </span>
+  );
+
+  if (isPreview) {
+    return (
+      <motion.div
+        className="recordnotes-container"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="recordnotes-header">
+          <h2>Preview Recordings</h2>
+          <p>Review the recorded segments as they will appear to students.</p>
+        </div>
+        <div className="recordnotes-image-container" ref={containerRef}>
           <img
-            ref={imageRef}
             src={image.url}
             alt="Segmented Image"
             className="recordnotes-base-image"
+            ref={imageRef}
           />
           <div className="recordnotes-regions-overlay">
             {regions.map((region) => (
-              <div
+              <img
                 key={region.region_id}
-                className={`recordnotes-region ${
-                  currentNote?.regionId === region.region_id ? 'recordnotes-selected' : ''
-                } ${recordings[region.region_id] ? 'recordnotes-has-recording' : ''}`}
-              >
-                <img
-                  src={region.mask_url}
-                  alt={`Region ${region.region_id}`}
-                  className="recordnotes-mask"
-                  style={{ opacity: 0.5 }}
-                />
-              </div>
+                src={region.mask_url}
+                alt={`Segment ${region.region_id}`}
+                className="recordnotes-mask"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  opacity: 0.5,
+                  pointerEvents: 'none',
+                }}
+              />
             ))}
+            {Object.entries(recordings).map(([regionId, audioUrl]) => {
+              const coords = clickCoordinates[regionId];
+              if (!coords) return null;
+              const labelX = coords.x + 100;
+              const labelY = coords.y - 20;
+              return (
+                <div key={`preview-audio-${regionId}`} className="recordnotes-preview-wrapper">
+                  <svg className="recordnotes-line">
+                    <motion.line
+                      x1={coords.x}
+                      y1={coords.y}
+                      x2={labelX}
+                      y2={labelY}
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div
+                    className="recordnotes-preview-audio"
+                    style={{
+                      position: 'absolute',
+                      top: labelY,
+                      left: labelX,
+                      zIndex: 15,
+                    }}
+                  >
+                    <audio controls src={audioUrl} className="recordnotes-audio-player" />
+                    <AudioIndicator />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <AnimatePresence>
-          {currentNote && (
-            <motion.div
-              className="recordnotes-controls"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h3>
-                {recordings[currentNote.regionId] 
-                  ? `Existing Recording for Segment ${currentNote.regionIndex + 1}` 
-                  : `Record Notes for Segment ${currentNote.regionIndex + 1}`}
-              </h3>
-              <div className="recordnotes-preview">
-                <img
-                  src={currentNote.maskUrl}
-                  alt={`Segment ${currentNote.regionIndex + 1} preview`}
-                  className="recordnotes-preview-image"
-                />
-              </div>
-              {(audioUrl || recordings[currentNote.regionId]) && (
-                <div className="recordnotes-audio-preview">
-                  <audio 
-                    controls 
-                    src={audioUrl || recordings[currentNote.regionId]} 
-                    className="recordnotes-audio-player"
-                  />
+        <div className="recordnotes-footer">
+          <button className="recordnotes-back-button" onClick={handleBackToFeatures}>
+            Back to Features
+          </button>
+          <button className="recordnotes-save-button" onClick={handleSaveAll}>
+            Save Recordings
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div className="recordnotes-container" onClick={(e) => e.stopPropagation()}>
+      <div className="recordnotes-header">
+        <h2>Record Audio Notes</h2>
+        <p>Click directly on a colored segment to add or edit an audio note.</p>
+      </div>
+      <div className="recordnotes-content-wrapper">
+        <div className="recordnotes-image-container" onClick={handleImageClick} ref={containerRef}>
+          <img
+            src={image.url}
+            alt="Segmented Image"
+            className="recordnotes-base-image"
+            ref={imageRef}
+          />
+          <div className="recordnotes-regions-overlay">
+            {regions.map((region) => (
+              <img
+                key={region.region_id}
+                src={region.mask_url}
+                alt={`Segment ${region.region_id}`}
+                className="recordnotes-mask"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  opacity: 0.5,
+                  pointerEvents: 'none',
+                }}
+              />
+            ))}
+            <AnimatePresence>
+              {currentNote && (
+                <motion.div
+                  className="recordnotes-recording-wrapper"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <svg className="recordnotes-line">
+                    <motion.line
+                      x1={currentNote.clickX}
+                      y1={currentNote.clickY}
+                      x2={currentNote.labelX}
+                      y2={currentNote.labelY}
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                    />
+                  </svg>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {Object.entries(recordings).map(([regionId, audioUrl]) => {
+              const coords = clickCoordinates[regionId];
+              if (!coords || regionId === currentNote?.regionId) return null;
+              const labelX = coords.x + 100;
+              const labelY = coords.y - 20;
+              return (
+                <div key={`audio-${regionId}`} className="recordnotes-wrapper">
+                  <svg className="recordnotes-svg">
+                    <line
+                      x1={coords.x}
+                      y1={coords.y}
+                      x2={labelX}
+                      y2={labelY}
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      className="recordnotes-line"
+                    />
+                  </svg>
+                  <div
+                    className="recordnotes-audio-preview"
+                    style={{
+                      position: 'absolute',
+                      top: labelY,
+                      left: labelX,
+                      zIndex: 15,
+                    }}
+                  >
+                    <audio controls src={audioUrl} className="recordnotes-audio-player" />
+                    <AudioIndicator />
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+        {currentNote && (
+          <div 
+            className="recordnotes-controls-wrapper"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="recordnotes-controls">
+              {audioUrl && (
+                <audio 
+                  controls 
+                  src={audioUrl} 
+                  className="recordnotes-audio-player"
+                />
               )}
               <motion.button
                 className="recordnotes-record-button"
                 onClick={isRecording ? handleStopRecording : handleStartRecording}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
+                disabled={isSaving}
               >
                 {isRecording ? (
                   <>
@@ -273,56 +444,30 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
                   </>
                 )}
               </motion.button>
-              {error && (
-                <motion.div
-                  className="recordnotes-error"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <MdErrorOutline size={20} /> {error}
-                </motion.div>
-              )}
-              <div className="recordnotes-buttons">
-                <motion.button
-                  className="recordnotes-save-button"
-                  onClick={handleSave}
-                  disabled={isRecording}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  {recordings[currentNote.regionId] ? 'Update Recording' : 'Save Recording'}
-                </motion.button>
-                <motion.button
-                  className="recordnotes-cancel-button"
-                  onClick={handleCancel}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  {isRecording ? 'Cancel' : 'Clear'}
-                </motion.button>
+            </div>
+            <div className="recordnotes-button-group">
+              <button onClick={handleSave} disabled={isSaving || isRecording}>
+                {recordings[currentNote.regionId] ? 'Update' : 'Save'}
+              </button>
+              <button onClick={handleCancel} disabled={isSaving}>
+                Cancel
+              </button>
+            </div>
+            {error && (
+              <div className="recordnotes-error">
+                <MdErrorOutline size={20} /> {error}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </div>
+        )}
       </div>
       <div className="recordnotes-footer">
-        <motion.button
-          className="recordnotes-back-button"
-          onClick={onCancel}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
+        <button className="recordnotes-back-button" onClick={onCancel}>
           Back to Features
-        </motion.button>
-        <motion.button
-          className="recordnotes-done-button"
-          onClick={onDone}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
+        </button>
+        <button className="recordnotes-done-button" onClick={handleDoneRecording}>
           Done Recording
-        </motion.button>
+        </button>
       </div>
     </motion.div>
   );
