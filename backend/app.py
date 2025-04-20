@@ -1,5 +1,4 @@
-
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -15,16 +14,19 @@ from typing import List, Optional
 from sam import Segmenter
 from dotenv import load_dotenv
 from deprecated_app import deprecated_router
+import PyPDF2
+from sentence_transformers import SentenceTransformer
+import faiss
+from gemini_service import generate_notes_with_gemini
+from huggingface_hub import login
 
 load_dotenv()
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -33,15 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include deprecated router with proper prefix 
 app.include_router(
     deprecated_router,
-    prefix="/v1",  # This combines with the router's prefix to make /v1/deprecated
+    prefix="/v1",
     tags=["deprecated"],
     responses={404: {"description": "Not found"}}
 )
 
-# Add deprecation warning middleware
 @app.middleware("http")
 async def add_deprecation_header(request, call_next):
     response = await call_next(request)
@@ -49,7 +49,6 @@ async def add_deprecation_header(request, call_next):
         response.headers["Warning"] = '299 - "This endpoint is deprecated and will be removed in future versions"'
     return response
 
-# Initialize SAM segmenter
 try:
     checkpoint_path = os.path.join(os.path.dirname(__file__), "sam_vit_b_01ec64.pth")
     logger.info(f"Loading SAM model from {checkpoint_path}")
@@ -59,10 +58,23 @@ except Exception as e:
     logger.error(f"Failed to initialize Segmenter: {str(e)}")
     raise
 
-# In-memory storage for images (use a database in production)
-image_storage = {}
+try:
+    hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    if hf_token:
+        login(token=hf_token)
+    os.environ["HF_HOME"] = os.path.expanduser("~/.cache/huggingface")
+    embedder = SentenceTransformer('all-MiniLM-L6-v2')
+    logger.info("SentenceTransformer initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize SentenceTransformer: {str(e)}")
+    raise
 
-# Pydantic model for /segment request body
+dimension = 384
+faiss_index = faiss.IndexFlatL2(dimension)
+
+image_storage = {}
+rag_storage = {}
+
 class SegmentRequest(BaseModel):
     image_id: str
     box: Optional[List[float]] = None
@@ -83,12 +95,10 @@ async def deprecated_upload():
 async def upload_image(file: UploadFile = File(...)):
     try:
         logger.info(f"Received upload request for file: {file.filename}")
-        # Read and process image
         contents = await file.read()
         image = Image.open(BytesIO(contents)).convert("RGB")
         image_np = np.array(image)
 
-        # Generate embeddings
         image_id = str(uuid.uuid4())
         logger.info(f"Generating embeddings for image_id: {image_id}")
         segmenter.set_image(image_np)
@@ -97,26 +107,21 @@ async def upload_image(file: UploadFile = File(...)):
             "embeddings": segmenter.get_embedding()
         }
 
-        # Configure Cloudinary
-        try:
-            cloudinary.config(
-                cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME", "your_cloud_name"),
-                api_key=os.getenv("CLOUDINARY_API_KEY", "your_api_key"),
-                api_secret=os.getenv("CLOUDINARY_API_SECRET", "your_api_secret")
-            )
-            image_buffer = BytesIO()
-            image.save(image_buffer, format="PNG")
-            image_buffer.seek(0)
-            logger.info(f"Uploading image to Cloudinary for image_id: {image_id}")
-            upload_result = cloudinary.uploader.upload(
-                image_buffer,
-                public_id=f"lessons/{image_id}/original",
-                resource_type="image"
-            )
-            logger.info(f"Image uploaded to Cloudinary: {upload_result['secure_url']}")
-        except Exception as e:
-            logger.error(f"Cloudinary upload failed: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Cloudinary error: {str(e)}")
+        cloudinary.config(
+            cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME", "your_cloud_name"),
+            api_key=os.getenv("CLOUDINARY_API_KEY", "your_api_key"),
+            api_secret=os.getenv("CLOUDINARY_API_SECRET", "your_api_secret")
+        )
+        image_buffer = BytesIO()
+        image.save(image_buffer, format="PNG")
+        image_buffer.seek(0)
+        logger.info(f"Uploading image to Cloudinary for image_id: {image_id}")
+        upload_result = cloudinary.uploader.upload(
+            image_buffer,
+            public_id=f"lessons/{image_id}/original",
+            resource_type="image"
+        )
+        logger.info(f"Image uploaded to Cloudinary: {upload_result['secure_url']}")
 
         return {
             "image_id": image_id,
@@ -156,9 +161,6 @@ async def segment(request: SegmentRequest):
             raise HTTPException(status_code=422, detail="labels must be a list of integers")
 
         image_np = image_storage[image_id]["image"]
-
-        # Perform segmentation
-        logger.info("Performing segmentation")
         masks, scores = segmenter.predict(
             image=image_np,
             box=box,
@@ -166,29 +168,26 @@ async def segment(request: SegmentRequest):
             labels=labels
         )
 
-        # Process masks and cutouts
         regions = []
         lesson_id = str(uuid.uuid4())
         for i, mask in enumerate(masks):
-            # Define color palette
             colors = [
-                (255, 0, 0),     # Red
-                (0, 255, 0),     # Green
-                (0, 0, 255),     # Blue
-                (255, 255, 0),   # Yellow
-                (255, 0, 255),   # Magenta
-                (0, 255, 255),   # Cyan
-                (255, 165, 0),   # Orange
-                (128, 0, 128)    # Purple
+                (255, 0, 0),
+                (0, 255, 0),
+                (0, 0, 255),
+                (255, 255, 0),
+                (255, 0, 255),
+                (0, 255, 255),
+                (255, 165, 0),
+                (128, 0, 128)
             ]
             color = colors[i % len(colors)]
 
-            # Generate RGBA mask image
             rgba_mask = np.zeros((*mask.shape, 4), dtype=np.uint8)
-            rgba_mask[:, :, 0] = mask.astype(np.uint8) * color[0]  # R
-            rgba_mask[:, :, 1] = mask.astype(np.uint8) * color[1]  # G
-            rgba_mask[:, :, 2] = mask.astype(np.uint8) * color[2]  # B
-            rgba_mask[:, :, 3] = mask.astype(np.uint8) * 255       # A (fully opaque where mask=1)
+            rgba_mask[:, :, 0] = mask.astype(np.uint8) * color[0]
+            rgba_mask[:, :, 1] = mask.astype(np.uint8) * color[1]
+            rgba_mask[:, :, 2] = mask.astype(np.uint8) * color[2]
+            rgba_mask[:, :, 3] = mask.astype(np.uint8) * 255
 
             mask_img = Image.fromarray(rgba_mask, mode='RGBA')
             mask_buffer = BytesIO()
@@ -201,7 +200,6 @@ async def segment(request: SegmentRequest):
                 resource_type="image"
             )
 
-            # Create cutout
             cutout = image_np.copy()
             cutout[~mask] = 0
             cutout_img = Image.fromarray(cutout)
@@ -215,7 +213,6 @@ async def segment(request: SegmentRequest):
                 resource_type="image"
             )
 
-            # Calculate position in expected format
             if box:
                 position = {
                     "x": box[0],
@@ -257,3 +254,149 @@ async def segment(request: SegmentRequest):
     except Exception as e:
         logger.error(f"Unexpected error during segmentation: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to segment: {str(e)}")
+
+@app.post("/upload_document")
+async def upload_document(file: UploadFile = File(...), lesson_id: str = Form(...)):
+    try:
+        logger.info(f"Received document upload request for lesson_id: {lesson_id}")
+        if file.content_type not in ['application/pdf', 'text/plain']:
+            logger.error(f"Invalid file type: {file.content_type}")
+            raise HTTPException(status_code=422, detail="Only PDF or TXT files are allowed")
+
+        contents = await file.read()
+        text = ""
+        if file.content_type == 'application/pdf':
+            try:
+                pdf_reader = PyPDF2.PdfReader(BytesIO(contents))
+                for page in pdf_reader.pages:
+                    extracted_text = page.extract_text()
+                    if extracted_text:
+                        text += extracted_text
+            except Exception as e:
+                logger.error(f"Failed to extract text from PDF: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
+        else:
+            try:
+                text = contents.decode('utf-8')
+            except Exception as e:
+                logger.error(f"Failed to decode text file: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to process text file: {str(e)}")
+
+        document_id = str(uuid.uuid4())
+        cloudinary.config(
+            cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME", "your_cloud_name"),
+            api_key=os.getenv("CLOUDINARY_API_KEY", "your_api_key"),
+            api_secret=os.getenv("CLOUDINARY_API_SECRET", "your_api_secret")
+        )
+        file.file.seek(0)
+        try:
+            upload_result = cloudinary.uploader.upload(
+                file.file,
+                public_id=f"lessons/{lesson_id}/documents/{document_id}",
+                resource_type="raw"
+            )
+        except Exception as e:
+            logger.error(f"Failed to upload document to Cloudinary: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to upload document to Cloudinary: {str(e)}")
+
+        sentences = [s.strip() for s in text.split('. ') if s.strip()]
+        if not sentences:
+            logger.warning(f"No sentences extracted from document for lesson_id: {lesson_id}")
+        try:
+            embeddings = embedder.encode(sentences)
+            faiss_index.add(np.array(embeddings, dtype=np.float32))
+        except Exception as e:
+            logger.error(f"Failed to generate embeddings: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to generate embeddings: {str(e)}")
+
+        if lesson_id not in rag_storage:
+            rag_storage[lesson_id] = []
+        rag_storage[lesson_id].append({
+            "document_id": document_id,
+            "sentences": sentences,
+            "embeddings": embeddings,
+            "url": upload_result["secure_url"]
+        })
+
+        logger.info(f"Document uploaded and processed for lesson_id: {lesson_id}")
+        return {"document_id": document_id, "url": upload_result["secure_url"]}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Unexpected error uploading document: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload document: {str(e)}")
+
+@app.post("/generate_notes")
+async def generate_notes(
+    region_id: str = Form(...),
+    mask_url: str = Form(...),
+    base_image_url: str = Form(...),
+    use_image: bool = Form(...),
+    custom_prompt: Optional[str] = Form(None),
+    document: Optional[UploadFile] = File(None)
+):
+    try:
+        logger.info(f"Generating notes for region_id: {region_id}")
+        
+        # Validate inputs
+        if not region_id or not isinstance(region_id, str) or region_id.strip() == '':
+            logger.error("Invalid or missing region_id")
+            raise HTTPException(status_code=422, detail="region_id must be a non-empty string")
+        if not mask_url or not isinstance(mask_url, str):
+            logger.error("Invalid or missing mask_url")
+            raise HTTPException(status_code=422, detail="mask_url must be a valid URL")
+        if not base_image_url or not isinstance(base_image_url, str):
+            logger.error("Invalid or missing base_image_url")
+            raise HTTPException(status_code=422, detail="base_image_url must be a valid URL")
+
+        context = ""
+        if document:
+            lesson_id = region_id.split('_')[0]
+            if not lesson_id:
+                logger.error("Invalid region_id format, cannot extract lesson_id")
+                raise HTTPException(status_code=422, detail="Invalid region_id format")
+            try:
+                await upload_document(document, lesson_id)
+            except Exception as e:
+                logger.error(f"Failed to upload document for lesson_id {lesson_id}: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to upload document: {str(e)}")
+            
+            if lesson_id in rag_storage and rag_storage[lesson_id]:
+                try:
+                    query_embedding = embedder.encode("Describe the segment in the context of the lesson")
+                    D, I = faiss_index.search(np.array([query_embedding], dtype=np.float32), k=5)
+                    context = ". ".join([
+                        rag_storage[lesson_id][-1]["sentences"][i]
+                        for i in I[0] if i < len(rag_storage[lesson_id][-1]["sentences"])
+                    ])
+                    logger.info(f"RAG context generated for lesson_id: {lesson_id}")
+                except Exception as e:
+                    logger.error(f"Failed to generate RAG context: {str(e)}")
+                    raise HTTPException(status_code=500, detail=f"Failed to generate RAG context: {str(e)}")
+            else:
+                logger.warning(f"No RAG data available for lesson_id: {lesson_id}")
+        
+        try:
+            notes, composite_image_url = await generate_notes_with_gemini(
+                region_id=region_id,
+                mask_url=mask_url,
+                base_image_url=base_image_url,
+                use_image=use_image,
+                context=context,
+                custom_prompt=custom_prompt
+            )
+        except Exception as e:
+            logger.error(f"Failed to generate notes with Gemini: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to generate notes with Gemini: {str(e)}")
+
+        logger.info(f"Notes generated successfully for region_id: {region_id}")
+        return {
+            "notes": notes,
+            "composite_image_url": composite_image_url
+        }
+    except HTTPException as e:
+        logger.error(f"HTTP error in generate_notes: {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Unexpected error in generate_notes: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate notes: {str(e)}")
