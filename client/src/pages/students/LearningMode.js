@@ -113,7 +113,7 @@ const LearningMode = ({ studentId }) => {
                     </a>
                 </div>
                 <button className="logout-btn" onClick={() => navigate('/student-dashboard')}>
-                    Back to Dashboard
+                    Back
                 </button>
             </nav>
 

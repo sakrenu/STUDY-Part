@@ -43,7 +43,7 @@ const CoursePage = () => {
                     </a>
                 </div>
                 <button className="back-btn" onClick={() => navigate(-1)}>
-                    Back to Dashboard
+                    Back
                 </button>
             </nav>
             
