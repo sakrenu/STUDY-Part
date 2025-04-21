@@ -24,7 +24,7 @@ const StudentAnimationPreview = ({ image, regions, recordings, onClose, onSave }
       } else {
         setTimeout(() => {
           setCurrentPartIndex((prev) => prev + 1);
-        }, 2000);
+        }, 2000); // Default 2-second delay for parts without recordings
       }
     }
   }, [isAnimationStarted, currentPartIndex, parts]);
@@ -36,8 +36,6 @@ const StudentAnimationPreview = ({ image, regions, recordings, onClose, onSave }
 
   const handleSaveAnimation = async () => {
     try {
-      // Placeholder for saving animation data to Firebase
-      // Adjust the structure based on your backend requirements
       const animationData = {
         imageUrl: image.url,
         regions: parts.map((part) => ({
@@ -48,8 +46,6 @@ const StudentAnimationPreview = ({ image, regions, recordings, onClose, onSave }
         })),
         createdAt: new Date().toISOString(),
       };
-      // Example: Save to Firebase (adjust path as needed)
-      // await setDoc(doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId, 'Animations', 'animationId'), animationData);
       console.log('Saving animation:', animationData);
       onSave();
     } catch (err) {
