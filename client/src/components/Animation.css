@@ -39,6 +39,7 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+    filter: brightness(0.5); /* Darken the base image */
   }
   
   .animation-mask {
