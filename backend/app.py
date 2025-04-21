@@ -618,7 +618,7 @@ async def save_lesson_to_course(request: SaveLessonRequest):
             region_ref.set(region)
         
         # Add lesson to course
-        course_ref = db.collection("Courses").document(request.course_id)
+        course_ref = db.collection("classes").document(request.course_id)
         course_ref.update({
             "lessons": firestore.ArrayUnion([lesson_id])
         })
