@@ -1,0 +1,370 @@
+.recordnotes-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  max-width: 100%;
+}
+
+.recordnotes-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.recordnotes-header h2 {
+  font-size: 1.8rem;
+  color: #b3c6d9;
+}
+
+.recordnotes-header p {
+  font-size: 1rem;
+  color: #7f8c8d;
+}
+
+.recordnotes-content-wrapper {
+  display: flex;
+  width: 100%;
+  gap: 20px;
+  align-items: flex-start;
+  position: relative;
+  margin-top: 20px;
+}
+
+.recordnotes-content {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  min-height: 0;
+}
+
+.recordnotes-image-container {
+  flex: 1;
+  position: relative;
+  border-radius: 8px;
+  overflow: visible;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.recordnotes-base-image {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+}
+
+.recordnotes-regions-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 30;
+}
+
+.recordnotes-region {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.recordnotes-region:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.recordnotes-region.recordnotes-has-recording::after {
+  content: '🎵';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  color: #ffffff;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  z-index: 40;
+  pointer-events: none;
+}
+
+.recordnotes-selected {
+  background-color: rgba(127, 74, 226, 0.2);
+}
+
+.recordnotes-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.recordnotes-controls-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 50;
+}
+
+.recordnotes-controls {
+  width: 100%;
+  padding: 5px;
+  background-color: #404040;
+  border: 1px solid #666;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.recordnotes-preview {
+  margin: 15px 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #404040;
+}
+
+.recordnotes-preview-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.recordnotes-record-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #dc3545;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.recordnotes-record-button:hover {
+  background-color: #c82333;
+}
+
+.recordnotes-record-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+}
+
+.recordnotes-audio-preview,
+.recordnotes-preview-audio {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 6px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.recordnotes-audio-player {
+  width: 200px;
+  height: 32px;
+}
+
+.recordnotes-sound-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 20px;
+  margin-left: 4px;
+  color: #ffffff;
+}
+
+.recordnotes-error {
+  color: #ff4444;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.recordnotes-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.recordnotes-save-button,
+.recordnotes-cancel-button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.recordnotes-save-button {
+  background-color: #7f4ae2;
+  color: white;
+}
+
+.recordnotes-save-button:hover {
+  background-color: #9b4ae2;
+}
+
+.recordnotes-cancel-button {
+  background-color: #4a545e;
+  color: white;
+}
+
+.recordnotes-cancel-button:hover {
+  background-color: #5a646e;
+}
+
+.recordnotes-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.recordnotes-back-button,
+.recordnotes-done-button,
+.recordnotes-save-button {
+  padding: 10px 20px;
+  background-color: #4a545e;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.recordnotes-done-button,
+.recordnotes-save-button {
+  background-color: #7f4ae2;
+}
+
+.recordnotes-back-button:hover,
+.recordnotes-done-button:hover,
+.recordnotes-save-button:hover {
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.recordnotes-recording-wrapper {
+  position: absolute;
+  pointer-events: auto;
+  overflow: visible;
+  z-index: 35;
+}
+
+.recordnotes-line {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: drawLine 0.7s ease-in-out forwards;
+}
+
+@keyframes drawLine {
+  0% {
+    stroke-dashoffset: 120;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.recordnotes-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+  overflow: visible !important;
+}
+
+.recordnotes-line,
+.recordnotes-svg line {
+  stroke-width: 2px;
+  stroke: #ffffff;
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5));
+}
+
+.recordnotes-preview-wrapper,
+.recordnotes-wrapper {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 35;
+}
+
+.recordnotes-audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recordnotes-volume-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s ease;
+}
+
+.recordnotes-volume-button:hover {
+  transform: scale(1.1);
+}
+
+.recordnotes-volume-button:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .recordnotes-content {
+    flex-direction: column;
+  }
+
+  .recordnotes-controls {
+    width: 100%;
+  }
+}
