@@ -354,16 +354,19 @@ const Library = () => {
                         const { annotation, label } = segment;
                         if (!annotation) return null;
                         
-                        // Exactly match the label offsets from AddLabel
-                        const labelX = annotation.x + 100;
-                        const labelY = annotation.y - 20;
+                        // Use the exact saved coordinates from AddLabel
+                        const { x, y } = annotation;
+                        
+                        // Apply the same label positioning formula as in AddLabel
+                        const labelX = x + 100;
+                        const labelY = y - 20;
                         
                         return (
                           <div key={`label-${segment.id}`} className="addlabel-preview-wrapper">
                             <svg className="addlabel-line">
                               <line
-                                x1={annotation.x}
-                                y1={annotation.y}
+                                x1={x}
+                                y1={y}
                                 x2={labelX}
                                 y2={labelY}
                                 stroke="#ffffff"

@@ -70,18 +70,29 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
     if (clickedRegion) {
       console.log('Found region:', clickedRegion.region_id);
       
+      // Store both display coordinates for UI and image coordinates for saving
       setCurrentLabel({
         regionId: clickedRegion.region_id,
         text: labels[clickedRegion.region_id] || '',
         clickX: x,
         clickY: y,
+        imageX: imageX,
+        imageY: imageY,
         labelX: x + 100,
         labelY: y - 30
       });
 
+      // Save both display coordinates for the UI and normalized coordinates for consistency
       setClickCoordinates(prev => ({
         ...prev,
-        [clickedRegion.region_id]: { x, y }
+        [clickedRegion.region_id]: { 
+          x: x, 
+          y: y,
+          imageX: imageX,
+          imageY: imageY,
+          scaleX: scaleX,
+          scaleY: scaleY
+        }
       }));
     }
   };
@@ -99,25 +110,48 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
     setIsSaving(true);
     setError(null);
     try {
-      const { regionId, text, clickX, clickY } = currentLabel;
+      const { regionId, text, imageX, imageY, clickX, clickY } = currentLabel;
       
-      // Save to Firestore
+      // Save to Firestore with the normalized image coordinates
       await setDoc(
         doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId, 'Segments', regionId),
         {
           regionId,
           label: text,
-          annotation: { x: clickX, y: clickY },
+          annotation: { 
+            x: clickX, 
+            y: clickY,
+            imageX: imageX,
+            imageY: imageY
+          },
         },
         { merge: true }
       );
 
       // Update local state
       setLabels(prev => ({ ...prev, [regionId]: text }));
-      setClickCoordinates(prev => ({ ...prev, [regionId]: { x: clickX, y: clickY } }));
+      // Keep both display and normalized coordinates
+      setClickCoordinates(prev => {
+        const coords = prev[regionId] || {};
+        return {
+          ...prev, 
+          [regionId]: { 
+            ...coords,
+            x: clickX, 
+            y: clickY,
+            imageX: imageX,
+            imageY: imageY
+          }
+        };
+      });
       
-      // Notify parent component
-      onSave(regionId, text, { x: clickX, y: clickY });
+      // Notify parent component with complete coordinate info
+      onSave(regionId, text, { 
+        x: clickX, 
+        y: clickY,
+        imageX: imageX,
+        imageY: imageY
+      });
       setCurrentLabel(null);
     } catch (err) {
       console.error('Save error:', err);
