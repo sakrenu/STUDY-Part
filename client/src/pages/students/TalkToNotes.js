@@ -40,7 +40,7 @@ const TalkToNotes = () => {
                 }
                 
                 console.log('Clearing vector stores...');
-                const response = await fetch('http://127.0.0.1:8000/api/rag/clear_vector_store', {
+                const response = await fetch('http://57.159.24.129:8000/api/rag/clear_vector_store', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ const TalkToNotes = () => {
 
             let endpoint = file.type.includes('pdf') ? '/api/rag/process_pdf' : '/api/rag/process_ppt';
 
-            const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
+            const response = await fetch(`http://57.159.24.129:8000${endpoint}`, {
                 method: 'POST',
                 body: formData,
             });
@@ -210,7 +210,7 @@ const TalkToNotes = () => {
             const user = auth.currentUser;
             if (!user) throw new Error('No user logged in');
 
-            const response = await fetch('http://127.0.0.1:8000/api/rag/query_notes', {
+            const response = await fetch('http://57.159.24.129:8000/api/rag/query_notes', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -332,7 +332,7 @@ const TalkToNotes = () => {
         setChatHistory(prev => [...prev, { type: 'typing', content: '' }]);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/rag/general_query', {
+            const response = await fetch('http://57.159.24.129:8000/api/rag/general_query', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -526,4 +526,4 @@ const TalkToNotes = () => {
     );
 };
 
-export default TalkToNotes; 
+export default TalkToNotes;

@@ -10,7 +10,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const BACKEND_URL = 'http://127.0.0.1:8000'; // Define this at the top level, after imports
+const BACKEND_URL = 'http://57.159.24.129:8000'; // Define this at the top level, after imports
 
 const NotesMode = () => {
     const navigate = useNavigate();
