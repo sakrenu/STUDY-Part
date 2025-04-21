@@ -1,6 +1,4 @@
-# Core requirements for RAG application
-# Add protobuf with a version that satisfies the dependencies
-protobuf==4.25.3
+# requirements.txt (Updated - Verified Compatibility)
 fastapi==0.115.12
 uvicorn==0.34.0
 PyPDF2==3.0.1
@@ -11,26 +9,34 @@ langchain==0.1.13
 langchain-community==0.0.29
 faiss-cpu==1.7.4
 
-# Google Gemini integration
+# Google Gemini - Updated versions
 google-generativeai==0.3.2
+google-ai-generativelanguage==0.4.0
 langchain-google-genai==0.0.9
 
-# HuggingFace ecosystem for embeddings (minimal)
+# HuggingFace - Fixed versions for compatibility
 transformers==4.37.2
-# torch already installed separately in Dockerfile
-sentence-transformers==2.2.2  # Required for HuggingFaceEmbeddings
+sentence-transformers==2.2.2
+huggingface-hub==0.19.4  # Fixed version for sentence-transformers compatibility
 
-# Additional dependencies
+# Protobuf and Google Cloud stack
+protobuf==4.25.3  # Fixed version that works with all dependencies
+google-api-core==2.11.1  # Compatible with protobuf<5.0.0
+google-cloud-firestore>=2.19.0
+grpcio-status==1.62.0  # Supports protobuf>=4.21.0
+
+# Other dependencies
 python-dotenv==1.0.1
 numpy==1.26.4
 tqdm==4.66.2
 cloudinary==1.44.0
 segment-anything==1.0
 firebase-admin==6.7.0
-opencv-python-headless # Headless version for servers
-ultralytics
+opencv-python-headless==4.9.0.80
+ultralytics==8.2.3
 python-multipart==0.0.20
 
+# Remaining packages (unchanged)
 annotated-types==0.7.0
 anyio==4.9.0
 CacheControl==0.14.2
@@ -62,11 +68,7 @@ six==1.17.0
 sniffio==1.3.1
 starlette==0.46.1
 sympy==1.13.1
-# torchvision is now installed separately in Dockerfile
-# triton
 typing-inspection==0.4.0
 typing_extensions==4.13.1
 uritemplate==4.1.1
 urllib3==2.3.0
-
-# Add any other dependencies your project uses

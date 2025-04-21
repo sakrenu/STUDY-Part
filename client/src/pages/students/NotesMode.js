@@ -10,7 +10,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const BACKEND_URL = 'http://127.0.0.1:8000'; // Define this at the top level, after imports
+const BACKEND_URL = 'http://57.159.24.129:8000'; // Define this at the top level, after imports
 
 const NotesMode = () => {
     const navigate = useNavigate();
@@ -421,7 +421,7 @@ const NotesMode = () => {
     const handleDeleteNote = async (noteId, imageUrl) => {
         try {
             const publicId = imageUrl.split('/').pop().split('.')[0];
-            await axios.delete('http://127.0.0.1:8000/v1/deprecated/delete-image', {
+            await axios.delete('http://57.159.24.129:8000/v1/deprecated/delete-image', {
                 data: { public_id: publicId }
             });
 

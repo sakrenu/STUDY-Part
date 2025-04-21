@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MdNoteAdd, MdLabel, MdMic, MdPlayArrow, MdPause, MdDelete, MdInfo } from 'react-icons/md';
 import './Library.css';
 import '../../components/AddLabel.css'; // Import AddLabel styles
+import axios from 'axios';
 
 const Library = () => {
   const [teacherEmail, setTeacherEmail] = useState(null);
@@ -37,6 +38,21 @@ const Library = () => {
 
   useEffect(() => {
     if (!teacherEmail) return;
+
+    const fetchLessons = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/get_lessons', {
+          params: { teacher_id: teacherEmail },
+        });
+        setLessons(response.data.lessons);
+      } catch (err) {
+        setError('Failed to fetch lessons: ' + (err.response?.data?.error || err.message));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchLessons();
   }, [teacherEmail]);
 
@@ -64,34 +80,27 @@ const Library = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Query Firestore directly
       const lessonQuery = query(
         collection(db, 'Teachers', teacherEmail, 'Lessons')
       );
       const lessonDocs = await getDocs(lessonQuery);
-      
       const lessonsData = [];
-      
-      // Process each lesson document
+
       for (const lessonDoc of lessonDocs.docs) {
         const lessonData = lessonDoc.data();
-        
-        // Get segments for this lesson
         const segmentsQuery = query(
           collection(db, 'Teachers', teacherEmail, 'Lessons', lessonDoc.id, 'Segments')
         );
         const segmentDocs = await getDocs(segmentsQuery);
-        
-        // Get student view data if available
         const studentViewRef = doc(db, 'Teachers', teacherEmail, 'Lessons', lessonDoc.id, 'StudentView', 'config');
         const studentViewDoc = await getDoc(studentViewRef);
         const studentViewData = studentViewDoc.exists() ? studentViewDoc.data() : null;
-        
+
         const segments = segmentDocs.docs.map(segDoc => ({
           id: segDoc.id,
           ...segDoc.data()
         }));
-        
+
         lessonsData.push({
           id: lessonDoc.id,
           title: lessonData.title || `Lesson ${new Date(lessonData.createdAt).toLocaleDateString()}`,
@@ -107,12 +116,11 @@ const Library = () => {
           courseId: lessonData.course_id,
         });
       }
-      
-      // Sort by creation date (newest first)
+
       lessonsData.sort((a, b) => {
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
-      
+
       setLessons(lessonsData);
     } catch (err) {
       console.error('Error fetching lessons:', err);
