@@ -250,27 +250,40 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
   const handleUploadAudio = async (audioBlob) => {
     try {
       const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.webm');
-      formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'your_upload_preset');
+      formData.append('file', new File([audioBlob], 'recording.webm', { type: 'audio/webm' }));
 
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'your_cloud_name'}/upload`,
-        formData
-      );
+      const response = await fetch('http://127.0.0.1:8000/api/upload-audio', {
+        method: 'POST',
+        body: formData,
+      });
 
-      const audioUrl = response.data.secure_url;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to upload audio');
+      }
+
+      const data = await response.json();
+      const audioUrl = data.url;
       setAudioUrl(audioUrl);
       setCurrentNote((prev) => ({ ...prev, audioUrl }));
     } catch (err) {
+      console.error('Upload error:', err);
       setError('Failed to upload audio: ' + err.message);
     }
   };
 
   const handleSave = async () => {
-    if (!currentNote || !currentNote.text.trim()) {
-      setError('Note cannot be empty');
+    if (!currentNote) {
+      setError('Please select a segment first');
       return;
     }
+
+    // Allow saving if there's either text or audio
+    if (!currentNote.text && !currentNote.audioUrl) {
+      setError('Please add text or record audio before saving');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
     try {
@@ -280,12 +293,12 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
         {
           regionId,
           segmentIndex: regionIndex,
-          notes: text,
+          notes: text || '',  // Save empty string if no text
+          audioUrl: audioUrl || null,  // Save null if no audio
           annotation: { x: clickX, y: clickY },
           maskUrl,
           cutoutUrl,
           position,
-          audioUrl: audioUrl || null,
         },
         { merge: true }
       );
