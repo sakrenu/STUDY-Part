@@ -243,6 +243,10 @@
   padding: 20px;
 }
 
+.lesson-detail-content.full-width {
+  justify-content: center;
+}
+
 .lesson-detail-image {
   flex: 3;
   position: relative;
@@ -251,9 +255,54 @@
   overflow: hidden;
 }
 
+.full-width .lesson-detail-image {
+  max-width: 90%;
+  flex: none;
+}
+
+.lesson-detail-image .image-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
 .lesson-detail-image img {
   width: 100%;
   display: block;
+}
+
+.library-label-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+  overflow: visible;
+}
+
+.library-label-svg {
+  overflow: visible;
+}
+
+.library-label-line {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 0;
+  animation: libraryDrawLine 0.7s ease-in-out forwards;
+}
+
+.library-label-text {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes libraryDrawLine {
+  0% {
+    stroke-dashoffset: 120;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 .segment-hotspot {

@@ -70,18 +70,29 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
     if (clickedRegion) {
       console.log('Found region:', clickedRegion.region_id);
       
+      // Store both display coordinates for UI and image coordinates for saving
       setCurrentLabel({
         regionId: clickedRegion.region_id,
         text: labels[clickedRegion.region_id] || '',
         clickX: x,
         clickY: y,
+        imageX: imageX,
+        imageY: imageY,
         labelX: x + 100,
         labelY: y - 30
       });
 
+      // Save both display coordinates for the UI and normalized coordinates for consistency
       setClickCoordinates(prev => ({
         ...prev,
-        [clickedRegion.region_id]: { x, y }
+        [clickedRegion.region_id]: { 
+          x: x, 
+          y: y,
+          imageX: imageX,
+          imageY: imageY,
+          scaleX: scaleX,
+          scaleY: scaleY
+        }
       }));
     }
   };
@@ -99,25 +110,62 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
     setIsSaving(true);
     setError(null);
     try {
-      const { regionId, text, clickX, clickY } = currentLabel;
+      const { regionId, text, imageX, imageY, clickX, clickY } = currentLabel;
       
-      // Save to Firestore
+      // Get the natural dimensions of the image for normalization
+      const naturalWidth = imageRef.current.naturalWidth;
+      const naturalHeight = imageRef.current.naturalHeight;
+      
+      // Save normalized coordinates (0-1) relative to image dimensions
+      const normalizedX = imageX / naturalWidth;
+      const normalizedY = imageY / naturalHeight;
+      
+      // Save to Firestore with the normalized image coordinates
       await setDoc(
         doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId, 'Segments', regionId),
         {
           regionId,
           label: text,
-          annotation: { x: clickX, y: clickY },
+          annotation: { 
+            normalizedX: normalizedX, 
+            normalizedY: normalizedY,
+            originalX: clickX, 
+            originalY: clickY,
+            imageX: imageX,
+            imageY: imageY
+          },
         },
         { merge: true }
       );
 
       // Update local state
       setLabels(prev => ({ ...prev, [regionId]: text }));
-      setClickCoordinates(prev => ({ ...prev, [regionId]: { x: clickX, y: clickY } }));
+      // Keep both display and normalized coordinates
+      setClickCoordinates(prev => {
+        const coords = prev[regionId] || {};
+        return {
+          ...prev, 
+          [regionId]: { 
+            ...coords,
+            x: clickX, 
+            y: clickY,
+            imageX: imageX,
+            imageY: imageY,
+            normalizedX: normalizedX,
+            normalizedY: normalizedY
+          }
+        };
+      });
       
-      // Notify parent component
-      onSave(regionId, text, { x: clickX, y: clickY });
+      // Notify parent component with complete coordinate info
+      onSave(regionId, text, { 
+        x: clickX, 
+        y: clickY,
+        imageX: imageX,
+        imageY: imageY,
+        normalizedX: normalizedX,
+        normalizedY: normalizedY
+      });
       setCurrentLabel(null);
     } catch (err) {
       console.error('Save error:', err);
@@ -139,11 +187,27 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
   const handleSaveAll = async () => {
     setIsSaving(true);
     setError(null);
-    const allData = regions.map(region => ({
-      regionId: region.region_id,
-      label: labels[region.region_id] || '',
-      annotation: clickCoordinates[region.region_id] || null,
-    }));
+    const allData = regions.map(region => {
+      const regionId = region.region_id;
+      const coords = clickCoordinates[regionId] || {};
+      const naturalWidth = imageRef.current.naturalWidth;
+      const naturalHeight = imageRef.current.naturalHeight;
+      const normalizedX = coords.imageX ? coords.imageX / naturalWidth : 0;
+      const normalizedY = coords.imageY ? coords.imageY / naturalHeight : 0;
+      
+      return {
+        regionId: regionId,
+        label: labels[regionId] || '',
+        annotation: coords.imageX ? {
+          normalizedX: normalizedX,
+          normalizedY: normalizedY,
+          originalX: coords.x || 0,
+          originalY: coords.y || 0,
+          imageX: coords.imageX || 0,
+          imageY: coords.imageY || 0
+        } : null,
+      };
+    });
     try {
       // Persist all labels to Firestore
       const savePromises = allData.map(({ regionId, label, annotation }) => {

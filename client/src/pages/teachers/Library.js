@@ -4,7 +4,8 @@ import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'fireb
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdNoteAdd, MdLabel, MdMic, MdPlayArrow, MdPause, MdDelete, MdInfo } from 'react-icons/md';
 import './Library.css';
-import axios from 'axios'; // Keep axios import in case it's needed elsewhere
+import '../../components/AddLabel.css'; // Import AddLabel styles
+import axios from 'axios';
 
 const Library = () => {
   const [teacherEmail, setTeacherEmail] = useState(null);
@@ -20,6 +21,8 @@ const Library = () => {
   const [playing, setPlaying] = useState(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const audioRef = useRef(null);
+  const imageRef = useRef(null);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -35,6 +38,60 @@ const Library = () => {
 
   useEffect(() => {
     if (!teacherEmail) return;
+
+    const fetchLessons = async () => {
+      setIsLoading(true);
+      try {
+        // First get lessons from API (Azure VM)
+        const response = await axios.get('http://57.159.24.129:8000/get_lessons', {
+          params: { teacher_id: teacherEmail },
+        });
+        
+        // Then enrich with Firestore data
+        const enrichedLessons = await Promise.all(response.data.lessons.map(async (lesson) => {
+          try {
+            // Get segments from Firestore
+            const segmentsQuery = query(
+              collection(db, 'Teachers', teacherEmail, 'Lessons', lesson.id, 'Segments')
+            );
+            const segmentDocs = await getDocs(segmentsQuery);
+            const segments = segmentDocs.docs.map(segDoc => ({
+              id: segDoc.id,
+              ...segDoc.data()
+            }));
+
+            // Get student view data
+            const studentViewRef = doc(db, 'Teachers', teacherEmail, 'Lessons', lesson.id, 'StudentView', 'config');
+            const studentViewDoc = await getDoc(studentViewRef);
+            const studentViewData = studentViewDoc.exists() ? studentViewDoc.data() : null;
+
+            return {
+              ...lesson,
+              segments: segments,
+              hasNotes: segments.some(seg => seg.notes),
+              hasLabels: segments.some(seg => seg.label),
+              hasAudio: segments.some(seg => seg.audioUrl),
+              studentView: studentViewData,
+              thumbnailUrl: lesson.thumbnailUrl || lesson.originalImageUrl,
+              previewUrl: studentViewData?.previewImageUrl || lesson.previewUrl || lesson.originalImageUrl,
+            };
+          } catch (err) {
+            console.error(`Error enriching lesson ${lesson.id}:`, err);
+            return lesson; // Return original lesson if enrichment fails
+          }
+        }));
+
+        // Sort by creation date (newest first)
+        enrichedLessons.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        setLessons(enrichedLessons);
+      } catch (err) {
+        setError('Failed to fetch lessons: ' + (err.response?.data?.error || err.message));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchLessons();
   }, [teacherEmail]);
 
@@ -57,67 +114,6 @@ const Library = () => {
     };
     fetchCourses();
   }, [teacherUid]);
-
-  const fetchLessons = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const lessonQuery = query(
-        collection(db, 'Teachers', teacherEmail, 'Lessons')
-      );
-      const lessonDocs = await getDocs(lessonQuery);
-      
-      const lessonsData = [];
-      
-      // Process each lesson document
-      for (const lessonDoc of lessonDocs.docs) {
-        const lessonData = lessonDoc.data();
-        
-        // Get segments for this lesson
-        const segmentsQuery = query(
-          collection(db, 'Teachers', teacherEmail, 'Lessons', lessonDoc.id, 'Segments')
-        );
-        const segmentDocs = await getDocs(segmentsQuery);
-        
-        // Get student view data if available
-        const studentViewRef = doc(db, 'Teachers', teacherEmail, 'Lessons', lessonDoc.id, 'StudentView', 'config');
-        const studentViewDoc = await getDoc(studentViewRef);
-        const studentViewData = studentViewDoc.exists() ? studentViewDoc.data() : null;
-        
-        const segments = segmentDocs.docs.map(segDoc => ({
-          id: segDoc.id,
-          ...segDoc.data()
-        }));
-        
-        lessonsData.push({
-          id: lessonDoc.id,
-          title: lessonData.title || `Lesson ${new Date(lessonData.createdAt).toLocaleDateString()}`,
-          createdAt: lessonData.createdAt,
-          originalImageUrl: lessonData.originalImageUrl,
-          thumbnailUrl: lessonData.thumbnailUrl || lessonData.originalImageUrl,
-          previewUrl: studentViewData?.previewImageUrl || lessonData.previewUrl || lessonData.originalImageUrl,
-          segments: segments,
-          hasNotes: segments.some(seg => seg.notes),
-          hasLabels: segments.some(seg => seg.label),
-          hasAudio: segments.some(seg => seg.audioUrl),
-          studentView: studentViewData,
-          courseId: lessonData.course_id,
-        });
-      }
-      
-      // Sort by creation date (newest first)
-      lessonsData.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
-      
-      setLessons(lessonsData);
-    } catch (err) {
-      console.error('Error fetching lessons:', err);
-      setError('Failed to fetch lessons: ' + err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSegmentClick = (lesson, segment) => {
     setSelectedLesson(lesson);
@@ -168,8 +164,16 @@ const Library = () => {
     
     setIsLoading(true);
     try {
-      // Delete from Firestore
-      await deleteDoc(doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId));
+      // Delete from both API (Azure VM) and Firestore
+      await Promise.all([
+        axios.delete('http://57.159.24.129:8000/delete_lesson', {
+          params: { 
+            teacher_id: teacherEmail,
+            lesson_id: lessonId
+          }
+        }),
+        deleteDoc(doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId))
+      ]);
       
       // Update local state
       setLessons(prevLessons => prevLessons.filter(lesson => lesson.id !== lessonId));
@@ -304,115 +308,94 @@ const Library = () => {
                 <button className="close-button" onClick={handleClosePopup}>×</button>
               </div>
               
-              <div className="lesson-detail-content">
+              <div className="lesson-detail-content full-width">
                 <div className="lesson-detail-image">
-                  <img 
-                    src={selectedLesson.previewUrl || selectedLesson.originalImageUrl} 
-                    alt={selectedLesson.title} 
-                  />
-                  
-                  {!selectedSegment && selectedLesson.segments.map((segment) => (
-                    <div
-                      key={segment.id}
-                      className="segment-hotspot"
-                      style={{
-                        top: `${(segment.position?.y / 100) * 100}%`,
-                        left: `${(segment.position?.x / 100) * 100}%`,
-                        width: `${(segment.position?.width / 100) * 100}%`,
-                        height: `${(segment.position?.height / 100) * 100}%`,
+                  <div className="image-container" style={{ position: 'relative' }}>
+                    <img 
+                      src={selectedLesson.previewUrl || selectedLesson.originalImageUrl} 
+                      alt={selectedLesson.title} 
+                      className="base-image"
+                      ref={imageRef}
+                      onLoad={(e) => {
+                        // Capture the displayed image dimensions for scaling
+                        if (imageRef.current) {
+                          const rect = imageRef.current.getBoundingClientRect();
+                          setImageDimensions({ width: rect.width, height: rect.height });
+                        }
                       }}
-                      onClick={() => handleSegmentClick(selectedLesson, segment)}
-                    >
-                      <div className="segment-number">{segment.segmentIndex + 1}</div>
-                    </div>
-                  ))}
-                </div>
-                
-                {selectedSegment ? (
-                  <div className="segment-detail">
-                    <div className="segment-detail-header">
-                      <h3>Segment {selectedSegment.segmentIndex + 1}</h3>
-                      <button 
-                        className="back-button"
-                        onClick={() => setSelectedSegment(null)}
-                      >
-                        Back to Lesson
-                      </button>
-                    </div>
+                    />
                     
-                    <div className="segment-features">
-                      {selectedSegment.label && (
-                        <div className="segment-feature label">
-                          <h4><MdLabel /> Label</h4>
-                          <p>{selectedSegment.label}</p>
-                        </div>
-                      )}
-                      
-                      {selectedSegment.notes && (
-                        <div className="segment-feature notes">
-                          <h4><MdNoteAdd /> Notes</h4>
-                          <div className="segment-notes-content">{selectedSegment.notes}</div>
-                        </div>
-                      )}
-                      
-                      {selectedSegment.audioUrl && (
-                        <div className="segment-feature audio">
-                          <h4><MdMic /> Audio Notes</h4>
-                          <button 
-                            className="audio-play-button"
-                            onClick={() => handlePlayPauseAudio(selectedSegment.audioUrl)}
-                          >
-                            {playing === selectedSegment.audioUrl ? (
-                              <><MdPause size={20} /> Pause Audio</>
-                            ) : (
-                              <><MdPlayArrow size={20} /> Play Audio</>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                      
-                      {!selectedSegment.label && !selectedSegment.notes && !selectedSegment.audioUrl && (
-                        <div className="segment-no-features">
-                          <p>No features available for this segment.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="lesson-segments-list">
-                    <h3>Lesson Segments</h3>
-                    <div className="segments-list">
-                      {selectedLesson.segments.map((segment) => (
-                        <div 
-                          key={segment.id}
-                          className="segment-list-item"
-                          onClick={() => handleSegmentClick(selectedLesson, segment)}
-                        >
-                          <span className="segment-number">{segment.segmentIndex + 1}</span>
-                          <div className="segment-list-info">
-                            {segment.label ? (
-                              <span className="segment-list-label">{segment.label}</span>
-                            ) : (
-                              <span className="segment-list-label-empty">No label</span>
-                            )}
-                            <div className="segment-list-badges">
-                              {segment.notes && (
-                                <span className="segment-list-badge notes">
-                                  <MdNoteAdd size={14} />
-                                </span>
-                              )}
-                              {segment.audioUrl && (
-                                <span className="segment-list-badge audio">
-                                  <MdMic size={14} />
-                                </span>
-                              )}
+                    {/* Overlay masks */}
+                    {selectedLesson.segments.map((segment) => (
+                      <img
+                        key={segment.id}
+                        src={segment.mask_url}
+                        alt={`Segment ${segment.segmentIndex + 1}`}
+                        className="segment-mask-overlay"
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          opacity: 0.6,
+                          pointerEvents: 'auto',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => handleSegmentClick(selectedLesson, segment)}
+                        onError={() => console.error(`Failed to load mask: ${segment.mask_url}`)}
+                      />
+                    ))}
+                    
+                    {/* Display labels at correct positions by mapping natural pixel coords to current image size */}
+                    {imageRef.current && selectedLesson.segments
+                      .filter(segment => segment.label && segment.annotation)
+                      .map(segment => {
+                        const { annotation, label } = segment;
+                        if (!annotation) return null;
+                        // Get current image dimensions
+                        const rect = imageRef.current.getBoundingClientRect();
+                        const naturalW = imageRef.current.naturalWidth;
+                        const naturalH = imageRef.current.naturalHeight;
+                        // Compute display coordinates: prefer natural pixel coords, then normalized, then saved display coords
+                        let x, y;
+                        if (annotation.imageX !== undefined && annotation.imageY !== undefined) {
+                          x = annotation.imageX / naturalW * rect.width;
+                          y = annotation.imageY / naturalH * rect.height;
+                        } else if (annotation.normalizedX !== undefined && annotation.normalizedY !== undefined) {
+                          x = annotation.normalizedX * rect.width;
+                          y = annotation.normalizedY * rect.height;
+                        } else {
+                          x = annotation.originalX ?? annotation.x ?? 0;
+                          y = annotation.originalY ?? annotation.y ?? 0;
+                        }
+                        // Label offset
+                        const labelX = x + 100;
+                        const labelY = y - 20;
+                        return (
+                          <div key={`label-${segment.id}`} className="addlabel-preview-wrapper">
+                            <svg className="addlabel-line">
+                              <line
+                                x1={x}
+                                y1={y}
+                                x2={labelX}
+                                y2={labelY}
+                                stroke="#ffffff"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                            <div
+                              className="addlabel-preview-text"
+                              style={{ position: 'absolute', top: labelY, left: labelX, zIndex: 15 }}
+                            >
+                              {label}
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        );
+                      })}
                   </div>
-                )}
+                </div>
               </div>
             </motion.div>
           </motion.div>
