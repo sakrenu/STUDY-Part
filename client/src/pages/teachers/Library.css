@@ -260,6 +260,12 @@
   flex: none;
 }
 
+.lesson-detail-image .image-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
 .lesson-detail-image img {
   width: 100%;
   display: block;

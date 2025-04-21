@@ -4,6 +4,7 @@ import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'fireb
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdNoteAdd, MdLabel, MdMic, MdPlayArrow, MdPause, MdDelete, MdInfo } from 'react-icons/md';
 import './Library.css';
+import '../../components/AddLabel.css'; // Import AddLabel styles
 
 const Library = () => {
   const [teacherEmail, setTeacherEmail] = useState(null);
@@ -19,6 +20,8 @@ const Library = () => {
   const [playing, setPlaying] = useState(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const audioRef = useRef(null);
+  const imageRef = useRef(null);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -306,93 +309,82 @@ const Library = () => {
               
               <div className="lesson-detail-content full-width">
                 <div className="lesson-detail-image">
-                  <img 
-                    src={selectedLesson.previewUrl || selectedLesson.originalImageUrl} 
-                    alt={selectedLesson.title} 
-                    className="base-image"
-                  />
-                  
-                  {/* Overlay masks */}
-                  {selectedLesson.segments.map((segment) => (
-                    <img
-                      key={segment.id}
-                      src={segment.mask_url}
-                      alt={`Segment ${segment.segmentIndex + 1}`}
-                      className="segment-mask-overlay"
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        opacity: 0.6,
-                        pointerEvents: 'auto',
-                        cursor: 'pointer'
+                  <div className="image-container" style={{ position: 'relative' }}>
+                    <img 
+                      src={selectedLesson.previewUrl || selectedLesson.originalImageUrl} 
+                      alt={selectedLesson.title} 
+                      className="base-image"
+                      ref={imageRef}
+                      onLoad={(e) => {
+                        // Capture the displayed image dimensions for scaling
+                        if (imageRef.current) {
+                          const rect = imageRef.current.getBoundingClientRect();
+                          setImageDimensions({ width: rect.width, height: rect.height });
+                        }
                       }}
-                      onClick={() => handleSegmentClick(selectedLesson, segment)}
-                      onError={() => console.error(`Failed to load mask: ${segment.mask_url}`)}
                     />
-                  ))}
-                  
-                  {/* Display labels with lines in the exact same position as in AddLabel */}
-                  {selectedLesson.segments
-                    .filter(segment => segment.label && segment.annotation)
-                    .map(segment => {
-                      const { annotation, label } = segment;
-                      if (!annotation) return null;
-                      
-                      const labelX = annotation.x + 100;
-                      const labelY = annotation.y - 20;
-                      
-                      return (
-                        <div key={`label-${segment.id}`} className="library-label-wrapper">
-                          <svg
-                            className="library-label-svg"
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
-                              pointerEvents: 'none',
-                              zIndex: 15,
-                              overflow: 'visible',
-                            }}
-                          >
-                            <line
-                              x1={annotation.x}
-                              y1={annotation.y}
-                              x2={labelX}
-                              y2={labelY}
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                              className="library-label-line"
-                            />
-                          </svg>
-                          <div
-                            className="library-label-text"
-                            style={{
-                              position: 'absolute',
-                              top: labelY,
-                              left: labelX,
-                              zIndex: 15,
-                              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                              color: 'white',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '0.9rem',
-                              maxWidth: '200px',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {label}
+                    
+                    {/* Overlay masks */}
+                    {selectedLesson.segments.map((segment) => (
+                      <img
+                        key={segment.id}
+                        src={segment.mask_url}
+                        alt={`Segment ${segment.segmentIndex + 1}`}
+                        className="segment-mask-overlay"
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          opacity: 0.6,
+                          pointerEvents: 'auto',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => handleSegmentClick(selectedLesson, segment)}
+                        onError={() => console.error(`Failed to load mask: ${segment.mask_url}`)}
+                      />
+                    ))}
+                    
+                    {/* Display labels with lines in the exact same position as in AddLabel */}
+                    {imageDimensions.width > 0 && selectedLesson.segments
+                      .filter(segment => segment.label && segment.annotation)
+                      .map(segment => {
+                        const { annotation, label } = segment;
+                        if (!annotation) return null;
+                        
+                        // Exactly match the label offsets from AddLabel
+                        const labelX = annotation.x + 100;
+                        const labelY = annotation.y - 20;
+                        
+                        return (
+                          <div key={`label-${segment.id}`} className="addlabel-preview-wrapper">
+                            <svg className="addlabel-line">
+                              <line
+                                x1={annotation.x}
+                                y1={annotation.y}
+                                x2={labelX}
+                                y2={labelY}
+                                stroke="#ffffff"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                            <div
+                              className="addlabel-preview-text"
+                              style={{
+                                position: 'absolute',
+                                top: labelY,
+                                left: labelX,
+                                zIndex: 15,
+                              }}
+                            >
+                              {label}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                  </div>
                 </div>
               </div>
             </motion.div>
