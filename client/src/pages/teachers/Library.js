@@ -4,6 +4,7 @@ import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'fireb
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdNoteAdd, MdLabel, MdMic, MdPlayArrow, MdPause, MdDelete, MdInfo } from 'react-icons/md';
 import './Library.css';
+import axios from 'axios'; // Keep axios import in case it's needed elsewhere
 
 const Library = () => {
   const [teacherEmail, setTeacherEmail] = useState(null);
@@ -61,7 +62,6 @@ const Library = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Query Firestore directly
       const lessonQuery = query(
         collection(db, 'Teachers', teacherEmail, 'Lessons')
       );

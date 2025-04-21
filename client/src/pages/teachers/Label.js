@@ -64,7 +64,7 @@ const Label = ({ teacherEmail }) => {
       try {
         const formData = new FormData();
         formData.append('image', file);
-        const response = await axios.post('http://127.0.0.1:8000/upload', formData);
+        const response = await axios.post('http://57.159.24.129:8000/upload', formData);
         const imageUrl = response.data.image_url;
         setCurrentImageUrl(imageUrl);
         setImage(file);
@@ -96,7 +96,7 @@ const Label = ({ teacherEmail }) => {
       setIsLoading(true);
       const processedResults = await Promise.all(
         selectedRegions.map((region, index) =>
-          axios.post('http://127.0.0.1:8000/segment_label', {
+          axios.post('http://57.159.24.129:8000/segment_label', {
             image_url: currentImageUrl,
             bounding_box: {
               x: Math.round(region.x),
@@ -138,7 +138,7 @@ const Label = ({ teacherEmail }) => {
         const formData = new FormData();
         formData.append('audio', blob, 'recording.webm');
         try {
-          const response = await axios.post('http://127.0.0.1:8000/upload_audio', formData);
+          const response = await axios.post('http://57.159.24.129:8000/upload_audio', formData);
           setCurrentLabel((prev) => ({ ...prev, recordingUrl: response.data.audio_url }));
         } catch (error) {
           setError('Failed to upload recording: ' + error.message);
