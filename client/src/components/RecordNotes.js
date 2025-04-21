@@ -129,7 +129,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       const formData = new FormData();
       formData.append('file', new File([audioBlob], 'recording.webm', { type: 'audio/webm' }));
 
-      const response = await fetch('http://127.0.0.1:8000/api/upload-audio', {
+      const response = await fetch('http://57.159.24.129:8000/api/upload-audio', {
         method: 'POST',
         body: formData,
       });

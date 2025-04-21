@@ -16,3 +16,4 @@ routes/model_cache
 .env
 model_cache/
 vector_stores/
+mobile_sam.pt
