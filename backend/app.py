@@ -124,6 +124,7 @@ embeddings = HuggingFaceEmbeddings(
     cache_folder=cache_dir
 )
 
+
 @app.get("/health")
 async def health_check():
     logger.info("Health check requested")
@@ -446,3 +447,67 @@ async def generate_notes(
     except Exception as e:
         logger.error(f"Unexpected error in generate_notes: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate notes: {str(e)}")
+
+@app.post("/upload_audio")
+async def upload_audio(file: UploadFile = File(...)):
+    try:
+        if not file:
+            raise HTTPException(status_code=400, detail="No file provided")
+        # Configure Cloudinary
+        cloudinary.config(
+            cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.getenv('CLOUDINARY_API_KEY'),
+            api_secret=os.getenv('CLOUDINARY_API_SECRET')
+        )
+
+        if file.filename == '':
+            raise HTTPException(status_code=400, detail="No selected file")
+
+        # Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            file.file,
+            resource_type="auto",
+            folder="audio_notes"
+        )
+
+        return {"success": True, "url": result['secure_url']}
+    except Exception as e:
+        logger.error(f"Error uploading audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading audio: {str(e)}")
+
+@app.post("/api/upload-audio")
+async def upload_audio(file: UploadFile = File(...)):
+    try:
+        logger.info(f"Received audio upload request")
+        if not file:
+            logger.error("No file provided")
+            raise HTTPException(status_code=400, detail="No file provided")
+
+        # Configure Cloudinary
+        cloudinary.config(
+            cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.getenv('CLOUDINARY_API_KEY'),
+            api_secret=os.getenv('CLOUDINARY_API_SECRET')
+        )
+
+        # Read file contents
+        contents = await file.read()
+        
+        # Upload to Cloudinary
+        try:
+            result = cloudinary.uploader.upload(
+                contents,
+                resource_type="video",  # Use video for audio files
+                folder="audio_notes",
+                public_id=f"audio_{uuid.uuid4()}",
+                format="mp3"  # Convert to mp3 format
+            )
+            logger.info(f"Audio uploaded successfully to Cloudinary")
+            return {"url": result['secure_url']}
+        except Exception as e:
+            logger.error(f"Cloudinary upload failed: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to upload to Cloudinary: {str(e)}")
+
+    except Exception as e:
+        logger.error(f"Error in upload_audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
