@@ -421,7 +421,7 @@ const NotesMode = () => {
     const handleDeleteNote = async (noteId, imageUrl) => {
         try {
             const publicId = imageUrl.split('/').pop().split('.')[0];
-            await axios.delete('http://127.0.0.1:8000/v1/deprecated/delete-image', {
+            await axios.delete('http://57.159.24.129:8000/v1/deprecated/delete-image', {
                 data: { public_id: publicId }
             });
 
