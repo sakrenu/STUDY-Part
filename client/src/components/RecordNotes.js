@@ -1,19 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MdMic, MdStop, MdErrorOutline, MdVolumeUp, MdPlayArrow } from 'react-icons/md';
+import { MdMic, MdStop, MdErrorOutline } from 'react-icons/md';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import './RecordNotes.css';
+import './Animation.css';
 
 const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCancel, existingNotes, existingCoordinates }) => {
   const [currentNote, setCurrentNote] = useState(null);
-  const [recordings, setRecordings] = useState({}); 
+  const [recordings, setRecordings] = useState({});
   const [notes, setNotes] = useState({});
   const [clickCoordinates, setClickCoordinates] = useState(existingCoordinates || {});
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
   const [isPreview, setIsPreview] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimationStarted, setIsAnimationStarted] = useState(false);
+  const [currentPartIndex, setCurrentPartIndex] = useState(-1);
   const [isSaving, setIsSaving] = useState(false);
   const imageRef = useRef(null);
   const containerRef = useRef(null);
@@ -42,9 +46,34 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
     };
   }, [existingNotes]);
 
+  useEffect(() => {
+    if (isAnimating && isAnimationStarted && currentPartIndex >= 0 && regions) {
+      const parts = regions.map((region, index) => ({
+        ...region,
+        audioUrl: recordings[region.region_id] || null,
+      }));
+      if (currentPartIndex < parts.length) {
+        const currentPart = parts[currentPartIndex];
+        if (currentPart.audioUrl) {
+          const audio = new Audio(currentPart.audioUrl);
+          audio.play();
+          audio.onended = () => {
+            setCurrentPartIndex((prev) => prev + 1);
+          };
+        } else {
+          setTimeout(() => {
+            setCurrentPartIndex((prev) => prev + 1);
+          }, 2000); // Default 2-second delay for parts without recordings
+        }
+      } else {
+        setIsAnimationStarted(false);
+      }
+    }
+  }, [isAnimating, isAnimationStarted, currentPartIndex, regions, recordings]);
+
   const handleImageClick = (e) => {
     e.stopPropagation();
-    if (isPreview || !imageRef.current || !regions || regions.length === 0) {
+    if (isPreview || isAnimating || !imageRef.current || !regions || regions.length === 0 || isRecording) {
       return;
     }
     
@@ -86,7 +115,6 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         [regionId]: { x, y }
       }));
 
-      // Set the audio URL for the current segment if it exists
       setAudioUrl(recordings[regionId] || null);
     }
   };
@@ -129,7 +157,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       const formData = new FormData();
       formData.append('file', new File([audioBlob], 'recording.webm', { type: 'audio/webm' }));
 
-      const response = await fetch('http://127.0.0.1:8000/api/upload-audio', {
+      const response = await fetch('http://57.159.24.129:8000/api/upload-audio', {
         method: 'POST',
         body: formData,
       });
@@ -161,15 +189,14 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       return;
     }
 
-    // Allow saving if there's either audio or text
-    if (!audioUrl && !recordings[currentNote.regionId] && !currentNote.text) {
-      setError('Please record audio or add text before saving');
+    if (!audioUrl && !recordings[currentNote.regionId]) {
+      setError('Please record audio before saving');
       return;
     }
 
     setIsSaving(true);
     try {
-      const { regionId, clickX, clickY, text } = currentNote;
+      const { regionId, clickX, clickY } = currentNote;
       const currentAudioUrl = audioUrl || recordings[regionId];
       
       await setDoc(
@@ -177,7 +204,6 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         {
           regionId,
           audioNote: currentAudioUrl,
-          text: text || '',  // Include text if present
           annotation: { x: clickX, y: clickY },
         },
         { merge: true }
@@ -193,9 +219,10 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         [regionId]: { x: clickX, y: clickY }
       }));
       
-      onSave(regionId, { audioUrl: currentAudioUrl, text }, { x: clickX, y: clickY });
+      onSave(regionId, { audioUrl: currentAudioUrl }, { x: clickX, y: clickY });
       setCurrentNote(null);
       setAudioUrl(null);
+      setError(null);
     } catch (err) {
       setError('Failed to save: ' + err.message);
     } finally {
@@ -203,7 +230,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
     }
   };
 
-  const handleCancel = () => {
+  const handleCancelNote = () => {
     if (isRecording) {
       handleStopRecording();
     }
@@ -213,7 +240,24 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
   };
 
   const handleDoneRecording = () => {
+    if (isRecording) {
+      handleStopRecording();
+    }
+    setCurrentNote(null);
+    setAudioUrl(null);
+    setError(null);
     setIsPreview(true);
+  };
+
+  const handleAnimate = () => {
+    setIsAnimating(true);
+    setCurrentPartIndex(-1);
+    setIsAnimationStarted(false);
+  };
+
+  const handleStartAnimation = () => {
+    setIsAnimationStarted(true);
+    setCurrentPartIndex(0);
   };
 
   const handleSaveAll = () => {
@@ -229,10 +273,13 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
 
   const handleBackToFeatures = () => {
     setIsPreview(false);
+    setIsAnimating(false);
     setCurrentNote(null);
     setAudioUrl(null);
     setError(null);
     setIsRecording(false);
+    setCurrentPartIndex(-1);
+    setIsAnimationStarted(false);
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
     }
@@ -265,6 +312,117 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       </div>
     );
   };
+
+  const renderAnimation = () => {
+    if (!image || !regions) return null;
+
+    const parts = regions.map((region, index) => ({
+      ...region,
+      audioUrl: recordings[region.region_id] || null,
+      label: `Part ${index + 1}`,
+    }));
+
+    const imageRect = imageRef.current?.getBoundingClientRect() || { width: 600, height: 450 };
+    const scaleX = imageRect.width / image.width;
+    const scaleY = imageRect.height / image.height;
+
+    return (
+      <motion.div
+        className="animation-container"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="animation-left">
+          <h3>Original Image</h3>
+          <div className="animation-image-container">
+            <img
+              src={image.url}
+              alt="Original"
+              className="animation-base-image"
+              ref={imageRef}
+            />
+            {parts.map((part, index) => (
+              <motion.img
+                key={index}
+                src={part.mask_url}
+                alt={`Part ${index}`}
+                className="animation-mask"
+                initial={{
+                  opacity: 0,
+                  x: 600, // Start from right side
+                  y: index * 120 * scaleY,
+                }}
+                animate={{
+                  opacity: index <= currentPartIndex ? 0.5 : 0,
+                  x: index <= currentPartIndex ? part.position.x * scaleX : 600,
+                  y: index <= currentPartIndex ? part.position.y * scaleY : index * 120 * scaleY,
+                }}
+                transition={{
+                  x: { duration: 1, ease: 'easeInOut' },
+                  y: { duration: 1, ease: 'easeInOut' },
+                  opacity: { duration: 0.5 },
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="animation-right">
+          <h3>Segmented Parts</h3>
+          <div className="animation-stack">
+            {parts.map((part, index) => (
+              <motion.div
+                key={index}
+                className="animation-part"
+                initial={{
+                  x: 0,
+                  y: index * 120,
+                  opacity: 1,
+                }}
+                animate={{
+                  x: index <= currentPartIndex ? -600 : 0,
+                  y: index * 120,
+                  opacity: index <= currentPartIndex ? 0 : 1,
+                }}
+                transition={{
+                  x: { duration: 1, ease: 'easeInOut' },
+                  opacity: { duration: 0.5 },
+                }}
+              >
+                <img
+                  src={part.mask_url}
+                  alt={`Part ${index}`}
+                  className="animation-part-image"
+                />
+                <p>{part.label}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="animation-controls">
+            {!isAnimationStarted && (
+              <button
+                className="animation-start-button"
+                onClick={handleStartAnimation}
+              >
+                Start Animation
+              </button>
+            )}
+            <button
+              className="animation-exit-button"
+              onClick={handleBackToFeatures}
+            >
+              Exit Animation
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  if (isAnimating) {
+    return renderAnimation();
+  }
 
   if (isPreview) {
     return (
@@ -344,6 +502,9 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
         <div className="recordnotes-footer">
           <button className="recordnotes-back-button" onClick={handleBackToFeatures}>
             Back to Features
+          </button>
+          <button className="recordnotes-animate-button" onClick={handleAnimate}>
+            Animate
           </button>
           <button className="recordnotes-save-button" onClick={handleSaveAll}>
             Save Recordings
@@ -480,7 +641,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
               <button onClick={handleSave} disabled={isSaving || isRecording}>
                 {recordings[currentNote.regionId] ? 'Update' : 'Save'}
               </button>
-              <button onClick={handleCancel} disabled={isSaving}>
+              <button onClick={handleCancelNote} disabled={isSaving}>
                 Cancel
               </button>
             </div>
