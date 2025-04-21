@@ -53,14 +53,14 @@ const QuizCreation = () => {
       
       const uploadForm = new FormData();
       uploadForm.append('image', selectedFile);
-      const uploadResponse = await axios.post('http://127.0.0.1:8000/upload', uploadForm, {
+      const uploadResponse = await axios.post('http://57.159.24.129:8000/upload', uploadForm, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const imageUrl = uploadResponse.data.image_url;
       setUploadedImageUrl(imageUrl);
     
       const payload = { image_url: imageUrl, teacher_id: teacherId };
-      const segmentResponse = await axios.post('http://127.0.0.1:8000/segment_quiz', payload);
+      const segmentResponse = await axios.post('http://57.159.24.129:8000/segment_quiz', payload);
     
       setSegmentedImages(segmentResponse.data.segmented_urls);
       setPuzzleOutline(segmentResponse.data.puzzle_outline_url);
@@ -99,7 +99,7 @@ const QuizCreation = () => {
       };
       
       // Send to the new /save_quiz endpoint
-      const response = await axios.post('http://127.0.0.1:8000/save_quiz', quizData);
+      const response = await axios.post('http://57.159.24.129:8000/save_quiz', quizData);
       
       setSuccessMessage('Quiz saved successfully!');
       
