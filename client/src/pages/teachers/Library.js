@@ -42,10 +42,49 @@ const Library = () => {
     const fetchLessons = async () => {
       setIsLoading(true);
       try {
+        // First get lessons from API
         const response = await axios.get('http://127.0.0.1:8000/get_lessons', {
           params: { teacher_id: teacherEmail },
         });
-        setLessons(response.data.lessons);
+        
+        // Then enrich with Firestore data
+        const enrichedLessons = await Promise.all(response.data.lessons.map(async (lesson) => {
+          try {
+            // Get segments from Firestore
+            const segmentsQuery = query(
+              collection(db, 'Teachers', teacherEmail, 'Lessons', lesson.id, 'Segments')
+            );
+            const segmentDocs = await getDocs(segmentsQuery);
+            const segments = segmentDocs.docs.map(segDoc => ({
+              id: segDoc.id,
+              ...segDoc.data()
+            }));
+
+            // Get student view data
+            const studentViewRef = doc(db, 'Teachers', teacherEmail, 'Lessons', lesson.id, 'StudentView', 'config');
+            const studentViewDoc = await getDoc(studentViewRef);
+            const studentViewData = studentViewDoc.exists() ? studentViewDoc.data() : null;
+
+            return {
+              ...lesson,
+              segments: segments,
+              hasNotes: segments.some(seg => seg.notes),
+              hasLabels: segments.some(seg => seg.label),
+              hasAudio: segments.some(seg => seg.audioUrl),
+              studentView: studentViewData,
+              thumbnailUrl: lesson.thumbnailUrl || lesson.originalImageUrl,
+              previewUrl: studentViewData?.previewImageUrl || lesson.previewUrl || lesson.originalImageUrl,
+            };
+          } catch (err) {
+            console.error(`Error enriching lesson ${lesson.id}:`, err);
+            return lesson; // Return original lesson if enrichment fails
+          }
+        }));
+
+        // Sort by creation date (newest first)
+        enrichedLessons.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        setLessons(enrichedLessons);
       } catch (err) {
         setError('Failed to fetch lessons: ' + (err.response?.data?.error || err.message));
       } finally {
@@ -75,60 +114,6 @@ const Library = () => {
     };
     fetchCourses();
   }, [teacherUid]);
-
-  const fetchLessons = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const lessonQuery = query(
-        collection(db, 'Teachers', teacherEmail, 'Lessons')
-      );
-      const lessonDocs = await getDocs(lessonQuery);
-      const lessonsData = [];
-
-      for (const lessonDoc of lessonDocs.docs) {
-        const lessonData = lessonDoc.data();
-        const segmentsQuery = query(
-          collection(db, 'Teachers', teacherEmail, 'Lessons', lessonDoc.id, 'Segments')
-        );
-        const segmentDocs = await getDocs(segmentsQuery);
-        const studentViewRef = doc(db, 'Teachers', teacherEmail, 'Lessons', lessonDoc.id, 'StudentView', 'config');
-        const studentViewDoc = await getDoc(studentViewRef);
-        const studentViewData = studentViewDoc.exists() ? studentViewDoc.data() : null;
-
-        const segments = segmentDocs.docs.map(segDoc => ({
-          id: segDoc.id,
-          ...segDoc.data()
-        }));
-
-        lessonsData.push({
-          id: lessonDoc.id,
-          title: lessonData.title || `Lesson ${new Date(lessonData.createdAt).toLocaleDateString()}`,
-          createdAt: lessonData.createdAt,
-          originalImageUrl: lessonData.originalImageUrl,
-          thumbnailUrl: lessonData.thumbnailUrl || lessonData.originalImageUrl,
-          previewUrl: studentViewData?.previewImageUrl || lessonData.previewUrl || lessonData.originalImageUrl,
-          segments: segments,
-          hasNotes: segments.some(seg => seg.notes),
-          hasLabels: segments.some(seg => seg.label),
-          hasAudio: segments.some(seg => seg.audioUrl),
-          studentView: studentViewData,
-          courseId: lessonData.course_id,
-        });
-      }
-
-      lessonsData.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
-
-      setLessons(lessonsData);
-    } catch (err) {
-      console.error('Error fetching lessons:', err);
-      setError('Failed to fetch lessons: ' + err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSegmentClick = (lesson, segment) => {
     setSelectedLesson(lesson);
@@ -179,8 +164,16 @@ const Library = () => {
     
     setIsLoading(true);
     try {
-      // Delete from Firestore
-      await deleteDoc(doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId));
+      // Delete from both API and Firestore
+      await Promise.all([
+        axios.delete('http://127.0.0.1:8000/delete_lesson', {
+          params: { 
+            teacher_id: teacherEmail,
+            lesson_id: lessonId
+          }
+        }),
+        deleteDoc(doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId))
+      ]);
       
       // Update local state
       setLessons(prevLessons => prevLessons.filter(lesson => lesson.id !== lessonId));
