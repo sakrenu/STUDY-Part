@@ -347,20 +347,31 @@ const Library = () => {
                       />
                     ))}
                     
-                    {/* Display labels with lines in the exact same position as in AddLabel */}
-                    {imageDimensions.width > 0 && selectedLesson.segments
+                    {/* Display labels at correct positions by mapping natural pixel coords to current image size */}
+                    {imageRef.current && selectedLesson.segments
                       .filter(segment => segment.label && segment.annotation)
                       .map(segment => {
                         const { annotation, label } = segment;
                         if (!annotation) return null;
-                        
-                        // Use the exact saved coordinates from AddLabel
-                        const { x, y } = annotation;
-                        
-                        // Apply the same label positioning formula as in AddLabel
+                        // Get current image dimensions
+                        const rect = imageRef.current.getBoundingClientRect();
+                        const naturalW = imageRef.current.naturalWidth;
+                        const naturalH = imageRef.current.naturalHeight;
+                        // Compute display coordinates: prefer natural pixel coords, then normalized, then saved display coords
+                        let x, y;
+                        if (annotation.imageX !== undefined && annotation.imageY !== undefined) {
+                          x = annotation.imageX / naturalW * rect.width;
+                          y = annotation.imageY / naturalH * rect.height;
+                        } else if (annotation.normalizedX !== undefined && annotation.normalizedY !== undefined) {
+                          x = annotation.normalizedX * rect.width;
+                          y = annotation.normalizedY * rect.height;
+                        } else {
+                          x = annotation.originalX ?? annotation.x ?? 0;
+                          y = annotation.originalY ?? annotation.y ?? 0;
+                        }
+                        // Label offset
                         const labelX = x + 100;
                         const labelY = y - 20;
-                        
                         return (
                           <div key={`label-${segment.id}`} className="addlabel-preview-wrapper">
                             <svg className="addlabel-line">
@@ -375,12 +386,7 @@ const Library = () => {
                             </svg>
                             <div
                               className="addlabel-preview-text"
-                              style={{
-                                position: 'absolute',
-                                top: labelY,
-                                left: labelX,
-                                zIndex: 15,
-                              }}
+                              style={{ position: 'absolute', top: labelY, left: labelX, zIndex: 15 }}
                             >
                               {label}
                             </div>
