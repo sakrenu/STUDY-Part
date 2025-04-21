@@ -14,10 +14,10 @@ google-generativeai==0.3.2
 google-ai-generativelanguage==0.4.0
 langchain-google-genai==0.0.9
 
-# HuggingFace
+# HuggingFace - Fixed versions for compatibility
 transformers==4.37.2
 sentence-transformers==2.2.2
-huggingface-hub>=0.19.3,<1.0
+huggingface-hub==0.19.4  # Fixed version for sentence-transformers compatibility
 
 # Protobuf and Google Cloud stack
 protobuf==4.25.3  # Fixed version that works with all dependencies
