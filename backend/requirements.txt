@@ -32,8 +32,8 @@ tqdm==4.66.2
 cloudinary==1.44.0
 segment-anything==1.0
 firebase-admin==6.7.0
-opencv-python-headless==4.9.0.80
-ultralytics==8.2.3
+opencv-python-headless==4.8.1.78  # Changed from opencv-python to headless version
+ultralytics==8.3.111
 python-multipart==0.0.20
 
 # Remaining packages (unchanged)
