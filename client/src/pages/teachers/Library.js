@@ -304,7 +304,7 @@ const Library = () => {
                 <button className="close-button" onClick={handleClosePopup}>×</button>
               </div>
               
-              <div className="lesson-detail-content">
+              <div className="lesson-detail-content full-width">
                 <div className="lesson-detail-image">
                   <img 
                     src={selectedLesson.previewUrl || selectedLesson.originalImageUrl} 
@@ -312,8 +312,8 @@ const Library = () => {
                     className="base-image"
                   />
                   
-                  {/* Overlay masks when no specific segment is selected */}
-                  {!selectedSegment && selectedLesson.segments.map((segment) => (
+                  {/* Overlay masks */}
+                  {selectedLesson.segments.map((segment) => (
                     <img
                       key={segment.id}
                       src={segment.mask_url}
@@ -334,93 +334,66 @@ const Library = () => {
                       onError={() => console.error(`Failed to load mask: ${segment.mask_url}`)}
                     />
                   ))}
-                </div>
-                
-                {selectedSegment ? (
-                  <div className="segment-detail">
-                    <div className="segment-detail-header">
-                      <h3>Segment {selectedSegment.segmentIndex + 1}</h3>
-                      <button 
-                        className="back-button"
-                        onClick={() => setSelectedSegment(null)}
-                      >
-                        Back to Lesson
-                      </button>
-                    </div>
-                    
-                    <div className="segment-features">
-                      {selectedSegment.label && (
-                        <div className="segment-feature label">
-                          <h4><MdLabel /> Label</h4>
-                          <p>{selectedSegment.label}</p>
-                        </div>
-                      )}
+                  
+                  {/* Display labels with lines in the exact same position as in AddLabel */}
+                  {selectedLesson.segments
+                    .filter(segment => segment.label && segment.annotation)
+                    .map(segment => {
+                      const { annotation, label } = segment;
+                      if (!annotation) return null;
                       
-                      {selectedSegment.notes && (
-                        <div className="segment-feature notes">
-                          <h4><MdNoteAdd /> Notes</h4>
-                          <div className="segment-notes-content">{selectedSegment.notes}</div>
-                        </div>
-                      )}
+                      const labelX = annotation.x + 100;
+                      const labelY = annotation.y - 20;
                       
-                      {selectedSegment.audioUrl && (
-                        <div className="segment-feature audio">
-                          <h4><MdMic /> Audio Notes</h4>
-                          <button 
-                            className="audio-play-button"
-                            onClick={() => handlePlayPauseAudio(selectedSegment.audioUrl)}
+                      return (
+                        <div key={`label-${segment.id}`} className="library-label-wrapper">
+                          <svg
+                            className="library-label-svg"
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              pointerEvents: 'none',
+                              zIndex: 15,
+                              overflow: 'visible',
+                            }}
                           >
-                            {playing === selectedSegment.audioUrl ? (
-                              <><MdPause size={20} /> Pause Audio</>
-                            ) : (
-                              <><MdPlayArrow size={20} /> Play Audio</>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                      
-                      {!selectedSegment.label && !selectedSegment.notes && !selectedSegment.audioUrl && (
-                        <div className="segment-no-features">
-                          <p>No features available for this segment.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="lesson-segments-list">
-                    <h3>Lesson Segments</h3>
-                    <div className="segments-list">
-                      {selectedLesson.segments.map((segment) => (
-                        <div 
-                          key={segment.id}
-                          className="segment-list-item"
-                          onClick={() => handleSegmentClick(selectedLesson, segment)}
-                        >
-                          <span className="segment-number">{segment.segmentIndex + 1}</span>
-                          <div className="segment-list-info">
-                            {segment.label ? (
-                              <span className="segment-list-label">{segment.label}</span>
-                            ) : (
-                              <span className="segment-list-label-empty">No label</span>
-                            )}
-                            <div className="segment-list-badges">
-                              {segment.notes && (
-                                <span className="segment-list-badge notes">
-                                  <MdNoteAdd size={14} />
-                                </span>
-                              )}
-                              {segment.audioUrl && (
-                                <span className="segment-list-badge audio">
-                                  <MdMic size={14} />
-                                </span>
-                              )}
-                            </div>
+                            <line
+                              x1={annotation.x}
+                              y1={annotation.y}
+                              x2={labelX}
+                              y2={labelY}
+                              stroke="#ffffff"
+                              strokeWidth="2"
+                              className="library-label-line"
+                            />
+                          </svg>
+                          <div
+                            className="library-label-text"
+                            style={{
+                              position: 'absolute',
+                              top: labelY,
+                              left: labelX,
+                              zIndex: 15,
+                              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                              color: 'white',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.9rem',
+                              maxWidth: '200px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {label}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      );
+                    })}
+                </div>
               </div>
             </motion.div>
           </motion.div>
