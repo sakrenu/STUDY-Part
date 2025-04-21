@@ -1,90 +1,569 @@
 .library-container {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: #fff;
 }
 
-.lesson-item {
-  margin-bottom: 40px;
-  border: 1px solid #ccc;
-  padding: 15px;
-  border-radius: 5px;
+.library-header {
+  text-align: center;
+  margin-bottom: 30px;
 }
 
-.image-container {
+.library-header h1 {
+  font-size: 2.4rem;
+  color: #cab7ce;
+  margin-bottom: 8px;
+}
+
+.library-header p {
+  color: #dde7e8;
+  opacity: 0.8;
+  font-size: 1.1rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(155, 74, 226, 0.3);
+  border-radius: 50%;
+  border-top-color: #9b4ae2;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-library {
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.empty-library p {
+  color: #dde7e8;
+  font-size: 1.1rem;
+}
+
+.lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.lesson-card {
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.lesson-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(155, 74, 226, 0.3);
+}
+
+.lesson-thumbnail {
   position: relative;
-  margin-top: 10px;
+  height: 180px;
+  overflow: hidden;
 }
 
-.original-image,
-.highlighted-outline {
+.lesson-thumbnail img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 
-.segment-overlay {
+.lesson-badges {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.lesson-badge {
+  background-color: rgba(42, 42, 42, 0.8);
+  backdrop-filter: blur(4px);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lesson-badge.notes {
+  background-color: rgba(155, 74, 226, 0.8);
+}
+
+.lesson-badge.labels {
+  background-color: rgba(76, 175, 80, 0.8);
+}
+
+.lesson-badge.audio {
+  background-color: rgba(33, 150, 243, 0.8);
+}
+
+.lesson-info {
+  padding: 16px;
+}
+
+.lesson-info h3 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: #cab7ce;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lesson-info p {
+  color: #dde7e8;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.lesson-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.view-button {
+  flex: 1;
+  padding: 8px 12px;
+  background-color: #9b4ae2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.view-button:hover {
+  background-color: #8a32d4;
+}
+
+.delete-button {
+  padding: 8px;
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #f44336;
+}
+
+/* Lesson Detail Modal */
+.lesson-detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 40px;
+}
+
+.lesson-detail-modal {
+  background-color: #1a1a1a;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 1100px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(155, 74, 226, 0.5);
+}
+
+.lesson-detail-header {
+  padding: 20px;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.lesson-detail-header h2 {
+  flex: 1;
+  font-size: 1.6rem;
+  color: #cab7ce;
+}
+
+.lesson-detail-header p {
+  margin-right: 40px;
+  color: #dde7e8;
+  opacity: 0.7;
+}
+
+.close-button {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
   cursor: pointer;
 }
 
-.notes-popup {
-  position: fixed;
+.lesson-detail-content {
+  display: flex;
+  gap: 24px;
+  padding: 20px;
+}
+
+.lesson-detail-image {
+  flex: 3;
+  position: relative;
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lesson-detail-image img {
+  width: 100%;
+  display: block;
+}
+
+.segment-hotspot {
+  position: absolute;
+  background-color: rgba(155, 74, 226, 0.2);
+  border: 2px solid rgba(155, 74, 226, 0.6);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.segment-hotspot:hover {
+  background-color: rgba(155, 74, 226, 0.4);
+}
+
+.segment-number {
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  max-width: 500px;
-  width: 90%;
-}
-
-.notes-textarea {
-  width: 100%;
-  height: 100px;
-  margin-bottom: 10px;
-  padding: 5px;
-}
-
-.notes-content {
-  margin-bottom: 10px;
-  white-space: pre-wrap;
-}
-
-.popup-buttons {
+  background-color: rgba(42, 42, 42, 0.8);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: white;
+}
+
+.lesson-segments-list {
+  flex: 2;
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.lesson-segments-list h3 {
+  color: #cab7ce;
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.segments-list {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.save-button,
-.edit-button,
-.close-button {
-  padding: 5px 10px;
+.segment-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #3a3a3a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.segment-list-item:hover {
+  background-color: #4a4a4a;
+}
+
+.segment-list-item .segment-number {
+  position: relative;
+  transform: none;
+  top: 0;
+  left: 0;
+  margin-right: 8px;
+}
+
+.segment-list-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.segment-list-label {
+  font-size: 0.9rem;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.segment-list-label-empty {
+  font-size: 0.9rem;
+  color: #999;
+  font-style: italic;
+}
+
+.segment-list-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.segment-list-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.segment-list-badge.notes {
+  background-color: rgba(155, 74, 226, 0.8);
+}
+
+.segment-list-badge.audio {
+  background-color: rgba(33, 150, 243, 0.8);
+}
+
+.segment-detail {
+  flex: 2;
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.segment-detail-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.segment-detail-header h3 {
+  color: #cab7ce;
+  font-size: 1.3rem;
+}
+
+.back-button {
+  background-color: #3a3a3a;
   border: none;
-  border-radius: 3px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.back-button:hover {
+  background-color: #4a4a4a;
+}
+
+.segment-features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.segment-feature {
+  background-color: #3a3a3a;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.segment-feature h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: #cab7ce;
+}
+
+.segment-feature.label h4 {
+  color: #76ff03;
+}
+
+.segment-feature.notes h4 {
+  color: #9b4ae2;
+}
+
+.segment-feature.audio h4 {
+  color: #2196f3;
+}
+
+.segment-feature p {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.segment-notes-content {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.audio-play-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2196f3;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.audio-play-button:hover {
+  background-color: #1976d2;
+}
+
+.segment-no-features {
+  background-color: #3a3a3a;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}
+
+/* Confirm Delete Modal */
+.confirm-delete-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 40px;
+}
+
+.confirm-delete-modal {
+  background-color: #1a1a1a;
+  border-radius: 16px;
+  padding: 24px;
+  width: 400px;
+  box-shadow: 0 10px 30px rgba(244, 67, 54, 0.5);
+}
+
+.confirm-delete-modal h3 {
+  color: #f44336;
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+}
+
+.confirm-delete-modal p {
+  margin-bottom: 8px;
+  color: #dde7e8;
+}
+
+.confirm-delete-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.cancel-button,
+.confirm-button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
   cursor: pointer;
 }
 
-.save-button {
-  background-color: #4caf50;
+.cancel-button {
+  background-color: #3a3a3a;
   color: white;
 }
 
-.edit-button {
-  background-color: #2196f3;
-  color: white;
+.cancel-button:hover {
+  background-color: #4a4a4a;
 }
 
-.close-button {
+.confirm-button {
   background-color: #f44336;
   color: white;
 }
 
-.error-message {
-  color: red;
-  margin-bottom: 10px;
+.confirm-button:hover {
+  background-color: #d32f2f;
 }
 
-.loading-message {
-  font-style: italic;
-  color: #666;
+.confirm-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background-color: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
+  color: #ff8a80;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

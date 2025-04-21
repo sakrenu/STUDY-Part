@@ -136,15 +136,35 @@ const AddLabel = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onBa
     setIsPreview(true);
   };
 
-  const handleSaveAll = () => {
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    setError(null);
     const allData = regions.map(region => ({
       regionId: region.region_id,
       label: labels[region.region_id] || '',
       annotation: clickCoordinates[region.region_id] || null,
     }));
-    onSave(allData);
-    setIsPreview(false);
-    onBack();
+    try {
+      // Persist all labels to Firestore
+      const savePromises = allData.map(({ regionId, label, annotation }) => {
+        return setDoc(
+          doc(db, 'Teachers', teacherEmail, 'Lessons', lessonId, 'Segments', regionId),
+          { regionId, label, annotation },
+          { merge: true }
+        );
+      });
+      await Promise.all(savePromises);
+      // Notify parent of saved data
+      onSave(allData);
+      // Exit preview and go back
+      setIsPreview(false);
+      onBack();
+    } catch (err) {
+      console.error('Failed to save labels:', err);
+      setError(`Failed to save labels: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleBackToFeatures = () => {

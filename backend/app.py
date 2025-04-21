@@ -511,3 +511,131 @@ async def upload_audio(file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Error in upload_audio: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# New endpoint to save lesson to course with all features
+class SaveLessonRequest(BaseModel):
+    teacher_id: str
+    course_id: str
+    lesson_data: dict
+    original_image_url: str
+    image_id: str
+
+@app.post("/save_lesson_to_course")
+async def save_lesson_to_course(request: SaveLessonRequest):
+    try:
+        logger.info(f"Saving lesson to course for teacher: {request.teacher_id}, course: {request.course_id}")
+        
+        # Generate a unique lesson ID if not provided
+        lesson_id = request.lesson_data.get('lessonId') or str(uuid.uuid4())
+        
+        # Create a thumbnail image for the library listing
+        try:
+            cloudinary.config(
+                cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME", "your_cloud_name"),
+                api_key=os.getenv("CLOUDINARY_API_KEY", "your_api_key"),
+                api_secret=os.getenv("CLOUDINARY_API_SECRET", "your_api_secret")
+            )
+            
+            # Create a thumbnail with highlighted segments overlaid
+            transformation = [
+                {"width": 400, "height": 300, "crop": "fill"},
+                {"quality": "auto", "fetch_format": "auto"}
+            ]
+            
+            thumbnail_result = cloudinary.uploader.upload(
+                request.original_image_url,
+                public_id=f"lessons/{lesson_id}/thumbnail",
+                transformation=transformation
+            )
+            
+            thumbnail_url = thumbnail_result["secure_url"]
+            logger.info(f"Thumbnail created: {thumbnail_url}")
+        except Exception as e:
+            logger.error(f"Failed to create thumbnail: {str(e)}")
+            thumbnail_url = request.original_image_url
+        
+        # Create a preview image that shows all segments for library display
+        preview_url = request.original_image_url
+        
+        # Extract and format regions data
+        regions = []
+        for region in request.lesson_data.get("regions", []):
+            region_data = {
+                "region_id": region.get("region_id"),
+                "segmentIndex": region.get("segmentIndex", 0),
+                "mask_url": region.get("mask_url", ""),
+                "cutout_url": region.get("cutout_url", ""),
+                "position": region.get("position", {}),
+                "notes": region.get("notes", ""),
+                "audioUrl": region.get("audioUrl"),
+                "label": region.get("label", ""),
+                "annotation": region.get("annotation", {})
+            }
+            regions.append(region_data)
+        
+        # Format timestamp for Firestore
+        import datetime
+        current_time = datetime.datetime.now().isoformat()
+        
+        # Lesson document data
+        lesson_doc = {
+            "id": lesson_id,
+            "teacher_id": request.teacher_id,
+            "course_id": request.course_id,
+            "title": f"Lesson {current_time.split('T')[0]}",
+            "description": f"Interactive lesson created on {current_time.split('T')[0]}",
+            "createdAt": current_time,
+            "originalImageUrl": request.original_image_url,
+            "previewUrl": preview_url,
+            "thumbnailUrl": thumbnail_url,
+            "imageId": request.image_id,
+            "segmentCount": len(regions),
+            "hasNotes": any(region.get("notes") for region in regions),
+            "hasLabels": any(region.get("label") for region in regions),
+            "hasAudio": any(region.get("audioUrl") for region in regions)
+        }
+        
+        # Store in Firestore
+        from firebase_admin import credentials, firestore, initialize_app
+        import firebase_admin
+        
+        # Initialize Firebase if not already initialized
+        if not firebase_admin._apps:
+            cred_path = os.path.join(os.path.dirname(__file__), "firebase-credentials-2.json")
+            cred = credentials.Certificate(cred_path)
+            initialize_app(cred)
+        
+        db = firestore.client()
+        
+        # First, save the main lesson document
+        lesson_ref = db.collection("Teachers").document(request.teacher_id).collection("Lessons").document(lesson_id)
+        lesson_ref.set(lesson_doc)
+        
+        # Save each segment
+        for region in regions:
+            region_id = region["region_id"]
+            region_ref = lesson_ref.collection("Segments").document(region_id)
+            region_ref.set(region)
+        
+        # Add lesson to course
+        course_ref = db.collection("Courses").document(request.course_id)
+        course_ref.update({
+            "lessons": firestore.ArrayUnion([lesson_id])
+        })
+        
+        # Create a StudentView document that contains the lesson data for student viewing
+        student_view = {
+            "imageUrl": request.original_image_url,
+            "regions": regions,
+            "noteOrder": request.lesson_data.get("noteOrder", []),
+            "createdAt": current_time
+        }
+        
+        lesson_ref.collection("StudentView").document("config").set(student_view)
+        
+        logger.info(f"Lesson saved successfully with ID: {lesson_id}")
+        return {"success": True, "lesson_id": lesson_id, "message": "Lesson saved successfully"}
+    
+    except Exception as e:
+        logger.error(f"Error saving lesson: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save lesson: {str(e)}")

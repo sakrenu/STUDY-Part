@@ -6,8 +6,19 @@ import AddLabel from './AddLabel';
 import RecordNotes from './RecordNotes';
 import './FeatureAdditionEnhanced.css';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
-const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onComplete, onBack }) => {
+const FeatureAddition = ({ 
+  image, 
+  lessonId, 
+  regions, 
+  teacherEmail, 
+  onComplete, 
+  onBack, 
+  setLessonWithFeatures, 
+  setSegmentedRegions, 
+  setCurrentStep 
+}) => {
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [notes, setNotes] = useState({});
   const [labels, setLabels] = useState({});
@@ -128,6 +139,43 @@ const FeatureAddition = ({ image, lessonId, regions, teacherEmail, onComplete, o
       })),
       features: { notes, labels, annotations: clickCoordinates },
     });
+  };
+
+  const handleRegionsSegmented = (data) => {
+    console.log('Regions segmented with features:', data);
+    if (data && data.lessonId && data.regions) {
+      // Format the regions data to include all features (notes, labels, audio)
+      const enhancedRegions = data.regions.map(region => {
+        // Combine existing features with new data
+        const notes = data.features?.notes?.[region.region_id] || '';
+        const label = data.features?.labels?.[region.region_id] || '';
+        const annotation = data.features?.annotations?.[region.region_id] || null;
+        
+        return {
+          ...region,
+          notes: typeof notes === 'string' ? notes : notes?.text || '',
+          audioUrl: notes?.audioUrl || null,
+          label,
+          annotation,
+        };
+      });
+      
+      // Create a comprehensive lesson data structure
+      const lessonData = {
+        lessonId: data.lessonId,
+        regions: enhancedRegions,
+        features: data.features,
+        noteOrder: Object.keys(data.features?.notes || {})
+      };
+      
+      setLessonWithFeatures(lessonData);
+      setSegmentedRegions(enhancedRegions);
+      setCurrentStep('finalPreview');
+    } else {
+      console.error("Invalid data received from FeatureAddition:", data);
+      toast.error('An error occurred processing lesson features.');
+      setCurrentStep('select');
+    }
   };
 
   const renderPreview = () => {

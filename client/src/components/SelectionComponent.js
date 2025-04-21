@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -302,12 +301,9 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
 
   const handleFeaturesComplete = (data) => {
     onRegionsSegmented({
-      lesson_id: lessonId,
-      regions: regions.map(region => ({
-        ...region,
-        teacher_email: teacherEmail,
-        features: data.features
-      }))
+      lessonId: data.lessonId,
+      regions: data.regions,
+      features: data.features
     });
   };
 
