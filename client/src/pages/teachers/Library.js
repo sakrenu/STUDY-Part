@@ -309,22 +309,30 @@ const Library = () => {
                   <img 
                     src={selectedLesson.previewUrl || selectedLesson.originalImageUrl} 
                     alt={selectedLesson.title} 
+                    className="base-image"
                   />
                   
+                  {/* Overlay masks when no specific segment is selected */}
                   {!selectedSegment && selectedLesson.segments.map((segment) => (
-                    <div
+                    <img
                       key={segment.id}
-                      className="segment-hotspot"
+                      src={segment.mask_url}
+                      alt={`Segment ${segment.segmentIndex + 1}`}
+                      className="segment-mask-overlay"
                       style={{
-                        top: `${(segment.position?.y / 100) * 100}%`,
-                        left: `${(segment.position?.x / 100) * 100}%`,
-                        width: `${(segment.position?.width / 100) * 100}%`,
-                        height: `${(segment.position?.height / 100) * 100}%`,
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        opacity: 0.6,
+                        pointerEvents: 'auto',
+                        cursor: 'pointer'
                       }}
                       onClick={() => handleSegmentClick(selectedLesson, segment)}
-                    >
-                      <div className="segment-number">{segment.segmentIndex + 1}</div>
-                    </div>
+                      onError={() => console.error(`Failed to load mask: ${segment.mask_url}`)}
+                    />
                   ))}
                 </div>
                 
