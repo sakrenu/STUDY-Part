@@ -127,19 +127,19 @@ const LandingPage = () => {
             <div className="product-card">
               <h3 className="product-title">Learning Mode</h3>
               <p className="product-description">
-                Empower teachers to create engaging and interactive content using a combination of text and images. Students can access these materials to enhance their understanding in a dynamic and visually appealing way.
+                Teachers create interactive, image-based lessons with text and visuals. Students access these materials for dynamic, engaging learning experiences tailored to their courses.
               </p>
             </div>
             <div className="product-card">
-              <h3 className="product-title">Quiz Mode</h3>
+              <h3 className="product-title">Talk to Notes</h3>
               <p className="product-description">
-                Reimagine assessments with interactive image-based and text-based quizzes. Teachers can design creative quizzes that challenge students while keeping them engaged in the learning process.
+                Upload your notes (PDF or PPT), then ask questions about them using text or voice. Get instant, AI-powered answers and explanations based on your own study materials.
               </p>
             </div>
             <div className="product-card">
               <h3 className="product-title">Notes Mode</h3>
               <p className="product-description">
-                Enable students to create their own personalized, interactive notes. These notes integrate text and visuals seamlessly, helping learners retain information more effectively and making study sessions more productive.
+                Create personalized, interactive notes by segmenting images and annotating regions. Organize and review your study content visually for better retention and productivity.
               </p>
             </div>
           </div>
