@@ -11,10 +11,6 @@ const QuizTeachingDashboard = () => {
     navigate('/dashboard'); // Adjust this path as needed
   };
 
-  const handleLogout = () => {
-    navigate('/');
-  };
-
   return (
     <div className="quiz-mode">
       {/* Top Navigation */}
@@ -28,14 +24,10 @@ const QuizTeachingDashboard = () => {
         </div>
         <div className="nav-actions">
           <button className="back-btn" onClick={handleBack}>Back</button>
-          <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </nav>
 
-      {/* Only Manual Segmentation (Point Segmentation) Mode */}
-      <div className="content">
-        <PointSegmentation />
-      </div>
+      <PointSegmentation />
     </div>
   );
 };

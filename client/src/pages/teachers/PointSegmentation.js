@@ -370,221 +370,130 @@ const PointSegmentation = () => {
 
   return (
     <div className="point-segmentation-container">
-      <header className="segmentation-header">
-        <h1>Point-Based Segmentation</h1>
-      </header>
-
-      {error && <div className="error-message">{error}</div>}
-      {successMessage && <div className="success-message">{successMessage}</div>}
+      <div className="segmentation-header">
+        <h1>Quiz Creation Mode</h1>
+        <h3>Create interactive quizzes by segmenting images</h3>
+      </div>
 
       <div className="main-content-with-sidebar">
-        {/* Sidebar for saved cutouts */}
-        <div className={`point-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+        {/* Sidebar */}
+        <aside className={`point-sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-header">
-            <h2>Saved Cutouts</h2>
-            <button 
-              className="toggle-sidebar-button"
-              onClick={toggleSidebar}
-            >
-              {sidebarOpen ? '❮' : '❯'}
-            </button>
+            <h2>Saved Segments</h2>
           </div>
-          
           <div className="saved-cutouts-container">
-            {savedCutouts.length === 0 ? (
-              <div className="no-cutouts">
-                <p>No cutouts saved yet</p>
+            {savedCutouts.map((cutout, index) => (
+              <div key={index} className="saved-cutout-item">
+                <img src={cutout.url} alt={`Cutout ${index + 1}`} style={{ width: '100%' }} />
+                <button
+                  className="remove-cutout-button"
+                  onClick={() => handleRemoveCutout(cutout.id)}
+                >
+                  Remove
+                </button>
               </div>
-            ) : (
-              savedCutouts.map((cutout) => (
-                <div key={cutout.id} className="saved-cutout-item">
-                  <img 
-                    src={cutout.url}
-                    alt="Saved cutout"
-                    style={{
-                      maxWidth: '100%',
-                      height: 'auto'
-                    }}
-                  />
-                  <button 
-                    className="remove-cutout-button"
-                    onClick={() => handleRemoveCutout(cutout.id)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))
+            ))}
+            {savedCutouts.length === 0 && (
+              <div className="no-cutouts">No segments saved yet</div>
             )}
           </div>
-          
-          {cumulativePuzzleOutlineUrl && (
-            <div className="cumulative-outline-container">
-              <h3>Puzzle Outline</h3>
-              <img 
-                src={cumulativePuzzleOutlineUrl}
-                alt="Cumulative Puzzle Outline"
-                style={{
-                  maxWidth: '100%',
-                  height: 'auto'
-                }}
-              />
-              <p className="outline-info">This outline shows the remaining image after all cutouts.</p>
-            </div>
-          )}
+        </aside>
+
+        {/* Toggle Sidebar Button */}
+        <div
+          className={`toggle-button-container ${sidebarOpen ? 'open' : 'closed'}`}
+          onClick={toggleSidebar}
+          aria-label={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <path
+              d={sidebarOpen ? "M12,3 L5,10 L12,17" : "M8,3 L15,10 L8,17"}
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
 
-        {/* Main content area */}
-        <div className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-          <section className="upload-section">
-            <h2>Upload your Image</h2>
+        {/* Main Content */}
+        <main className={`main-content ${sidebarOpen ? 'sidebar-open' : ''}`}>
+          <div className="upload-section">
             <div className="upload-container">
               <label className="file-upload-label">
                 <input
                   type="file"
+                  className="file-input"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="file-input"
                 />
                 <span className="upload-button">Choose Image</span>
               </label>
             </div>
 
             {imagePreview && (
-              <button 
-                onClick={handleGenerateEmbeddings} 
-                className={`generate-button ${isGeneratingEmbedding ? 'disabled' : ''}`}
+              <button
+                className="upload-button"
+                onClick={handleGenerateEmbeddings}
                 disabled={isGeneratingEmbedding}
               >
-                {isGeneratingEmbedding ? 'Generating Embeddings...' : 'Generate Embeddings'}
+                {isGeneratingEmbedding ? 'Generating...' : 'Generate Embeddings'}
               </button>
             )}
-          </section>
+          </div>
 
-          {imageEmbeddingId && (
-            <section className="selection-mode-section">
-              <h2>Selection Mode</h2>
+          {error && <div className="error-message">{error}</div>}
+          {successMessage && <div className="success-message">{successMessage}</div>}
+
+          {imagePreview && (
+            <div className="image-container">
+              <div className="image-canvas-wrapper">
+                <img
+                  ref={imageRef}
+                  src={imagePreview}
+                  alt="Selected"
+                  className={`segmentation-image ${maskUrl ? 'dull-image' : ''}`}
+                />
+                <canvas
+                  ref={canvasRef}
+                  className="selection-canvas"
+                  onClick={handleCanvasClick}
+                />
+              </div>
+
+              <div className="control-buttons">
+                <button onClick={handleUndoPoint} disabled={points.length === 0}>
+                  Undo Point
+                </button>
+                <button onClick={handleResetPoints} disabled={points.length === 0}>
+                  Reset Points
+                </button>
+                <button onClick={handleSegment} disabled={points.length === 0}>
+                  Segment
+                </button>
+                {currentCutoutUrl && (
+                  <button onClick={handleSaveCutout}>Save Segment</button>
+                )}
+              </div>
+
               <div className="mode-buttons">
-                <button 
+                <button
                   className={`mode-button ${selectionMode === 'foreground' ? 'active' : ''}`}
                   onClick={() => setSelectionMode('foreground')}
                 >
-                  Foreground (Green)
+                  Foreground Points
                 </button>
-                <button 
+                <button
                   className={`mode-button ${selectionMode === 'background' ? 'active' : ''}`}
                   onClick={() => setSelectionMode('background')}
                 >
-                  Background (Red)
+                  Background Points
                 </button>
               </div>
-              <div className="selection-instructions">
-                <p>Click on the image to add points. Green points select what to keep, red points select what to remove.</p>
-              </div>
-            </section>
+            </div>
           )}
-
-          {imagePreview && (
-            <section className="image-interaction-section">
-              <div className="image-container">
-                <div className="image-canvas-wrapper">
-                  <img 
-                    ref={imageRef}
-                    src={imagePreview} 
-                    alt="Uploaded preview" 
-                    className={`segmentation-image ${simulationVisible ? 'dull-image' : ''}`}
-                  />
-                  {maskUrl && (
-                    <img
-                      src={maskUrl}
-                      alt="Segmentation mask"
-                      className="mask-overlay"
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        opacity: 0.5, // Translucent overlay
-                        pointerEvents: 'none', // Allows clicks to pass through to the canvas
-                      }}
-                    />
-                  )}
-                  <canvas 
-                    ref={canvasRef}
-                    className="selection-canvas"
-                    onClick={handleCanvasClick}
-                  />
-                  {simulationVisible && (
-                    <>
-                      <div className="simulation-overlay" style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        textAlign: 'center',
-                        color: 'white',
-                        zIndex: 10,
-                        padding: '20px',
-                        borderRadius: '10px',
-                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                        backdropFilter: 'blur(8px)',
-                        width: '400px',
-                      }}>
-                        <div className="simulation-bar-container">
-                          <div className="simulation-bar">
-                            <div className="simulation-progress" style={{
-                              width: `${simulationProgress}%`
-                            }}></div>
-                            <div className="simulation-glow"></div>
-                          </div>
-                        </div>
-                        <div className="simulation-percentage">
-                          {Math.round(simulationProgress)}%
-                        </div>
-                        <div className="simulation-message">
-                          {simulationMessage}
-                        </div>
-                      </div>
-                      <div className="neural-animation-overlay">
-                        <div className="neural-particles"></div>
-                        <div className="neural-particles"></div>
-                        <div className="neural-particles"></div>
-                      </div>
-                    </>
-                  )}
-                </div>
-                
-                {imageEmbeddingId && (
-                  <div className="control-buttons">
-                    <button onClick={handleUndoPoint} disabled={points.length === 0}>
-                      Undo Last Point
-                    </button>
-                    <button onClick={handleResetPoints} disabled={points.length === 0 && !maskUrl}>
-                      Reset Selection
-                    </button>
-                    <button 
-                      onClick={handleSegment} 
-                      className={`segment-button ${isSegmenting ? 'disabled' : ''}`}
-                      disabled={isSegmenting || points.length === 0}
-                    >
-                      {isSegmenting ? 'Segmenting...' : 'Generate Segment'}
-                    </button>
-                    {maskUrl && (
-                      <button 
-                        onClick={handleSaveCutout} 
-                        className={`cutout-button ${isCuttingOut ? 'disabled' : ''}`}
-                        disabled={isCuttingOut || !maskUrl}
-                      >
-                        {isCuttingOut ? 'Saving Cutout...' : 'Save Cutout'}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-        </div>
+        </main>
       </div>
     </div>
   );
