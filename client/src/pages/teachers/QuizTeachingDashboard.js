@@ -1,48 +1,40 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import QuizCreation from './QuizCreation';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import PointSegmentation from './PointSegmentation';
 import './QuizTeachingDashboard.css';
 
 const QuizTeachingDashboard = () => {
-  const location = useLocation();
-  const navigate = useNavigate(); // For navigation
-  const queryParams = new URLSearchParams(location.search);
-  const initialTab = queryParams.get('tab') === 'manual' ? 'manual' : 'automatic';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const navigate = useNavigate();
 
   // Function to handle back navigation
   const handleBack = () => {
     navigate('/dashboard'); // Adjust this path as needed
   };
 
+  const handleLogout = () => {
+    navigate('/');
+  };
+
   return (
     <div className="quiz-mode">
-      {/* Back Button */}
-      <button className="back-button" onClick={handleBack}>
-        Back to Dashboard
-      </button>
+      {/* Top Navigation */}
+      <nav className="top-nav">
+        <div className="logo-container">
+          <img src="/studpartlogo.png" alt="StudyPart Logo" className="logo-image" />
+          <a href="/" className="logo">
+            <span className="study">Study</span>
+            <span className="part">Part</span>
+          </a>
+        </div>
+        <div className="nav-actions">
+          <button className="back-btn" onClick={handleBack}>Back</button>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        </div>
+      </nav>
 
-      {/* Tab Navigation */}
-      <div className="tabs">
-        <button
-          className={activeTab === 'automatic' ? 'active' : ''}
-          onClick={() => setActiveTab('automatic')}
-        >
-          Automatic Segmentation
-        </button>
-        <button
-          className={activeTab === 'manual' ? 'active' : ''}
-          onClick={() => setActiveTab('manual')}
-        >
-          Manual Segmentation
-        </button>
-      </div>
-
-      {/* Content Area */}
+      {/* Only Manual Segmentation (Point Segmentation) Mode */}
       <div className="content">
-        {activeTab === 'automatic' && <QuizCreation />}
-        {activeTab === 'manual' && <PointSegmentation />}
+        <PointSegmentation />
       </div>
     </div>
   );

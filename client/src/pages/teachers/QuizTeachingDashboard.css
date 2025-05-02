@@ -1,57 +1,90 @@
 .quiz-mode {
-    padding: 2rem;
-    background: #0a192f; /* Dark background */
+    background: #000000;
     min-height: 100vh;
-    color: #ffffff; /* Light text */
+    color: #ffffff;
+    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Helvetica Neue', sans-serif;
+    padding: 7rem 2rem 2rem;
+    box-sizing: border-box;
   }
   
-  .tabs {
+  .top-nav {
+    background-color: #3c2468;
+    padding: 1rem 1.5rem;
     display: flex;
-    justify-content: center;
-    margin-bottom: 2rem;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
   }
   
-  .tabs button {
-    padding: 0.75rem 1.5rem;
-    margin: 0 0.5rem;
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .logo-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  
+  .logo {
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-decoration: none;
+  }
+  
+  .logo .study { color: white; }
+  .logo .part { color: pink; }
+  
+  .nav-actions {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .back-btn {
+    background: linear-gradient(90deg, #573688, #520c5b);
+    padding: 0.5rem 1rem;
     border: none;
-    background: #112240; /* Slightly lighter dark shade */
-    color: #ccd6f6; /* Light gray text */
+    border-radius: 9999px;
+    color: #FFFFFF;
     cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.3s ease;
-    font-size: 1.1rem;
+    transition: box-shadow 0.3s ease;
   }
   
-  .tabs button.active {
-    background: #64ffda; /* Teal accent for active tab */
-    color: #0a192f; /* Dark text on active tab */
+  .back-btn:hover {
+    box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
   }
   
-  .tabs button:hover {
-    background: #52d1b2; /* Lighter teal on hover */
+  .logout-btn {
+    background: #ff4d4d;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+  }
+  
+  .logout-btn:hover {
+    background: #e60000;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.5);
   }
   
   .content {
     background: #112240;
-    border: 2px solid #64ffda; /* Teal border */
+    border: 2px solid #6f42c1;
+    box-shadow: 0 0 12px #6f42c1;
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 0 12px #64ffda; /* Subtle glow effect */
-  }
-
-  .back-button {
-    background: #353fc6; /* Coral red for visibility */
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    margin-bottom: 1rem; /* Space below the button */
-    transition: background 0.3s ease;
-  }
-  
-  .back-button:hover {
-    background: #ff5252; /* Darker coral red on hover */
+    margin: 0 auto;
+    max-width: 1200px;
   }
