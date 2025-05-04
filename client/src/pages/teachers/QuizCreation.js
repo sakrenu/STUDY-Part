@@ -53,14 +53,17 @@ const QuizCreation = () => {
       
       const uploadForm = new FormData();
       uploadForm.append('image', selectedFile);
-      const uploadResponse = await axios.post('http://57.159.24.129:8000/upload', uploadForm, {
+      // Use environment variable for backend URL
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const uploadResponse = await axios.post(`${API_URL}/upload`, uploadForm, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const imageUrl = uploadResponse.data.image_url;
       setUploadedImageUrl(imageUrl);
     
       const payload = { image_url: imageUrl, teacher_id: teacherId };
-      const segmentResponse = await axios.post('http://57.159.24.129:8000/segment_quiz', payload);
+      // Use environment variable for backend URL
+      const segmentResponse = await axios.post(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/segment_quiz`, payload);
     
       setSegmentedImages(segmentResponse.data.segmented_urls);
       setPuzzleOutline(segmentResponse.data.puzzle_outline_url);
@@ -99,7 +102,9 @@ const QuizCreation = () => {
       };
       
       // Send to the new /save_quiz endpoint
-      const response = await axios.post('http://57.159.24.129:8000/save_quiz', quizData);
+      // Use environment variable for backend URL
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const response = await axios.post(`${API_URL}/save_quiz`, quizData);
       
       setSuccessMessage('Quiz saved successfully!');
       

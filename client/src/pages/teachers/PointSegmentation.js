@@ -123,13 +123,15 @@ const PointSegmentation = () => {
       try {
         const uploadForm = new FormData();
         uploadForm.append('image', selectedFile);
-        const uploadResponse = await axios.post('http://57.159.24.129:8000/deprecated/upload', uploadForm, {
+        // Use environment variable for backend URL
+        const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+        const uploadResponse = await axios.post(`${API_URL}/deprecated/upload`, uploadForm, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         const imageUrl = uploadResponse.data.image_url;
         setUploadedImageUrl(imageUrl);
         
-        const embeddingResponse = await axios.post('http://57.159.24.129:8000/deprecated/get_image_embedding', {
+        const embeddingResponse = await axios.post(`${API_URL}/deprecated/get_image_embedding`, {
           image_url: imageUrl,
           teacher_id: teacherId
         });
@@ -249,7 +251,9 @@ const PointSegmentation = () => {
       setIsSegmenting(true);
       setError('');
       
-      const segmentationResponse = await axios.post('http://127.0.0.1:8000/deprecated/segment_with_points', {
+      // Use environment variable for backend URL
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const segmentationResponse = await axios.post(`${API_URL}/deprecated/segment_with_points`, {
         image_embedding_id: imageEmbeddingId,
         points: points,
         labels: labels,
@@ -276,7 +280,9 @@ const PointSegmentation = () => {
       setIsCuttingOut(true);
       setError('');
       
-      const cutoutResponse = await axios.post('http://127.0.0.1:8000/get_point_cutouts', {
+      // Use environment variable for backend URL
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const cutoutResponse = await axios.post(`${API_URL}/get_point_cutouts`, {
         image_embedding_id: imageEmbeddingId,
         points: points,
         labels: labels,
@@ -348,7 +354,9 @@ const PointSegmentation = () => {
       // For demonstration, we'll assume you implemented a new endpoint that accepts a list of point selections
       // Let's simulate the regeneration of the puzzle outline using the last cutout for now
       const lastCutout = updatedCutouts[updatedCutouts.length - 1];
-      const regenerateResponse = await axios.post('http://127.0.0.1:8000/regenerate_puzzle_outline', {
+      // Use environment variable for backend URL
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const regenerateResponse = await axios.post(`${API_URL}/regenerate_puzzle_outline`, {
         image_embedding_id: imageEmbeddingId,
         cutout_ids: updatedCutouts.map(cutout => cutout.id)
       });
