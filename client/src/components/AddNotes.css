@@ -549,3 +549,131 @@
     transform: rotate(360deg);
   }
 }
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .addnotes-container {
+    max-width: 1000px;
+  }
+}
+
+@media (max-width: 992px) {
+  .addnotes-container {
+    max-width: 800px;
+    padding: 20px;
+  }
+
+  .addnotes-header h2 {
+    font-size: 1.8rem;
+  }
+
+  .addnotes-header p {
+    font-size: 1rem;
+  }
+
+  .addnotes-panel {
+    width: 90%;
+    max-width: 450px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .addnotes-container {
+    max-width: 100%;
+    padding: 16px;
+    margin: 16px;
+  }
+
+  .addnotes-image-container {
+    /* Adjust image container if needed, maybe reduce max-height */
+  }
+
+  .addnotes-panel {
+    width: 95%;
+    padding: 20px;
+    max-height: 70vh; /* Allow more vertical space if needed */
+  }
+
+  .addnotes-panel h3 {
+    font-size: 1.4rem;
+  }
+
+  .addnotes-textarea {
+    min-height: 120px;
+    font-size: 0.9rem;
+  }
+
+  .addnotes-save-button,
+  .addnotes-cancel-button,
+  .addnotes-back-button,
+  .addnotes-done-button,
+  .addnotes-ai-button,
+  .addnotes-record-button {
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  .addnotes-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .addnotes-back-button,
+  .addnotes-done-button {
+    width: 80%;
+  }
+}
+
+@media (max-width: 576px) {
+  .addnotes-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .addnotes-header p {
+    font-size: 0.9rem;
+  }
+
+  .addnotes-panel {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .addnotes-panel h3 {
+    font-size: 1.3rem;
+  }
+
+  .addnotes-textarea {
+    min-height: 100px;
+  }
+
+   .addnotes-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .addnotes-save-button,
+  .addnotes-cancel-button,
+  .addnotes-back-button,
+  .addnotes-done-button,
+  .addnotes-ai-button,
+  .addnotes-record-button {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  .addnotes-back-button,
+  .addnotes-done-button {
+    width: 90%;
+  }
+
+  .addnotes-tab {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .addnotes-footer {
+    margin-top: 16px;
+  }
+}
