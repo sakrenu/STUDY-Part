@@ -101,7 +101,9 @@ const QuizMode = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(`http://127.0.0.1:8000/get_quiz/${quizId}`);
+      // Use environment variable for backend URL
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const response = await axios.get(`${API_URL}/get_quiz/${quizId}`);
       const data = response.data;
 
       if (!data.segments || !Array.isArray(data.segments) || data.segments.length === 0) {

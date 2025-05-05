@@ -42,7 +42,8 @@ const Home = () => {
       try {
         const formData = new FormData();
         formData.append('image', file);
-        const response = await axios.post('http://57.159.24.129:8000/upload', formData);
+        const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+        const response = await axios.post(`${API_URL}/upload`, formData);
         const imageUrl = response.data.image_url;
         setCurrentImageUrl(imageUrl);
         setImage(file);
@@ -72,7 +73,7 @@ const Home = () => {
       setIsLoading(true);
       const processedResults = await Promise.all(
         selectedRegions.map((region, index) =>
-          axios.post('http://57.159.24.129:8000/segment', {
+          axios.post(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/segment`, {
             image_url: currentImageUrl,
             bounding_box: {
               x: Math.round(region.x),
@@ -153,7 +154,8 @@ const Home = () => {
     }
     try {
       const note = regionNotes[index] || '';
-      await axios.post('http://57.159.24.129:8000/add_note', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      await axios.post(`${API_URL}/add_note`, {
         image_url: currentImageUrl,
         segment_index: index,
         note: note,

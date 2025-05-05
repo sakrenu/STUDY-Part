@@ -30,7 +30,9 @@ const Library = () => {
     const fetchLessons = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('http://57.159.24.129:8000/get_lessons', {
+        // Use environment variable for backend URL
+        const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+        const response = await axios.get(`${API_URL}/get_lessons`, {
           params: { teacher_id: teacherEmail },
         });
         setLessons(response.data.lessons);
@@ -64,7 +66,9 @@ const Library = () => {
     }
     setIsLoading(true);
     try {
-      await axios.post('http://57.159.24.129:8000/add_note', {
+      // Use environment variable for backend URL
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      await axios.post(`${API_URL}/add_note`, {
         image_url: lessons.find((l) => l.id === currentLessonForNotes).originalImageUrl,
         segment_index: parseInt(currentSegmentForNotes.split('_')[1]),
         note: editNote,
