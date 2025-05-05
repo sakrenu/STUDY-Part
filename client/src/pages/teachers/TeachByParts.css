@@ -1,21 +1,35 @@
-/* Existing styles from TeachByParts.css */
-.teach-by-parts-container {
-  display: relative;
-  min-height: 100vh;
-  background-color: #000000;
-  padding-left: 250px; /* matches the sidebar width */
-  margin-top: 72px; /* Add margin-top to account for navbar height */
+/* CSS Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
+/* Base Container Styles */
+.teach-by-parts-container {
+  position: relative;
+  min-height: 100vh;
+  background-color: #000000;
+  margin-top: 72px; /* Account for navbar height */
+  transition: padding-left 0.3s ease; /* Smooth layout adjustment */
+}
+
+/* Sidebar Styles */
 .sidebar {
   width: 250px;
   background-color: #3c4249;
   color: #ecf0f1;
-  padding: 20px;
+  padding: 60px 20px 20px 20px; /* Increased top padding for hamburger button clearance */
   position: fixed;
-  top: 72px; /* Update top position to start below navbar */
+  top: 72px; /* Height of top nav */
   left: 0;
-  height: calc(100vh - 72px); /* Adjust height to account for navbar */
+  height: calc(100vh - 72px);
+  z-index: 1000;
+  transition: transform 0.3s ease; /* Smooth slide animation */
+}
+
+.sidebar.open {
+  transform: translateX(0); /* Show sidebar */
 }
 
 .sidebar-title {
@@ -53,77 +67,91 @@
   color: #ecf0f1;
 }
 
+/* Main Content Styles */
 .main-content {
   flex: 1;
-  padding: 0px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   background-color: #000000;
-  padding-top: 20px; /* Reduce padding since we now have margin from container */
+  min-height: calc(100vh - 72px);
+  padding-top: 60px; /* Added padding-top to prevent content overlap with fixed hamburger button */
 }
 
+/* Header Styles */
 .main-header {
   text-align: center;
   margin-bottom: 20px;
 }
 
 .header-title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   color: #ffffff;
-  text-shadow: 0 0 2px #FFFFFF, 0 0 15px #4A90E2, 0 0 10px #D774E4;
+  text-shadow: 0 0 2px #ffffff, 0 0 15px #4a90e2, 0 0 10px #d774e4;
 }
 
 .header-subtitle {
-  font-size: 1.2rem;
-  color: #D3D3D3;
+  font-size: 1rem;
+  color: #d3d3d3;
 }
 
+/* Welcome Card Styles */
 .welcome-card {
   background: #112240;
-  padding: 30px;
+  padding: 20px;
   border-radius: 10px;
   text-align: center;
-  max-width: 500px;
+  max-width: 90%;
   width: 100%;
   border: 2px solid #6f42c1;
   box-shadow: 0 0 12px #6f42c1;
 }
 
 .welcome-title {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   color: #6f42c1;
   margin-bottom: 10px;
   text-shadow: 0 0 8px #6f42c1;
 }
 
 .welcome-description {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #ccd6f6;
   margin-bottom: 20px;
 }
 
+/* Button Styles */
 .start-button {
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
-  padding: 10px 20px;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(111, 66, 193, 0.2);
+  display: inline-flex; /* Use flex to align text/icon */
+  align-items: center; /* Center items vertically */
+  justify-content: center; /* Center items horizontally */
+  gap: 5px; /* Space between text and icon if both are shown */
+  min-width: 120px;
 }
 
 .start-button:hover {
   box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
+/* Selection Container Styles */
 .selection-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 1200px;
+  max-width: 90%;
 }
 
 .controls {
@@ -140,10 +168,10 @@
   gap: 5px;
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
-  padding: 10px 15px;
+  padding: 8px 12px;
   border: none;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: box-shadow 0.3s ease;
 }
@@ -158,12 +186,14 @@
   box-shadow: none;
 }
 
+/* Image Container Styles */
 .image-container {
   position: relative;
   display: inline-block;
   border: 2px solid #6f42c1;
   border-radius: 8px;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .overlay-canvas {
@@ -211,20 +241,20 @@
   filter: drop-shadow(0 0 8px rgba(111, 66, 193, 0.8));
 }
 
-/* Updated styles for SelectionComponent */
+/* Selection Component Styles */
 .selcomp-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 1200px;
+  max-width: 90%;
   background-color: #000000;
   padding: 20px;
 }
 
 .selcomp-mask-preview {
-  width: 100%;
-  display: flex;
+  width: 100 ;
+   display: flex;
   flex-direction: column;
   align-items: center;
 }
@@ -235,11 +265,12 @@
   overflow: hidden;
   border: 2px solid #6f42c1;
   box-shadow: 0 0 12px #6f42c1;
+  max-width: 100%;
 }
 
 .selcomp-base-image {
   max-width: 100%;
-  max-height: 70vh;
+  max-height: 60vh;
   object-fit: contain;
   display: block;
   margin: 0 auto;
@@ -247,8 +278,9 @@
 
 .selcomp-toolbar {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1rem;
 }
 
 .selcomp-toolbar-button {
@@ -257,10 +289,10 @@
   gap: 8px;
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: box-shadow 0.3s ease;
 }
@@ -272,7 +304,7 @@
 .selcomp-back-button {
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -283,36 +315,37 @@
   box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
 }
 
+/* Top Navigation Styles */
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 1rem;
   background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
   position: fixed;
   top: 0;
-  left: 0; /* Change from 250px to 0 to span full width */
+  left: 0;
   right: 0;
   z-index: 1000;
   border-bottom: 1px solid rgba(111, 66, 193, 0.3);
-  height: 72px; /* Explicitly set navbar height */
+  height: 72px;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .logo-image {
-  height: 40px;
+  height: 32px;
   width: auto;
 }
 
 .logo {
   text-decoration: none;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: bold;
 }
 
@@ -324,18 +357,27 @@
   color: #cd579a;
 }
 
+.nav-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .back-btn {
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.3s ease;
   letter-spacing: 1px;
   font-weight: 600;
   box-shadow: 0 4px 6px rgba(111, 66, 193, 0.2);
+  display: inline-flex; /* Use flex to align text/icon */
+  align-items: center; /* Center items vertically */
+  justify-content: center; /* Center items horizontally */
+  gap: 5px; /* Space between text and icon if both are shown */
 }
 
 .back-btn:hover {
@@ -347,4 +389,222 @@
 .back-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
+}
+
+.back-btn-text {
+  display: inline; /* Show text by default */
+}
+
+.back-btn-icon {
+  display: none; /* Hide icon by default */
+}
+
+.hamburger-btn {
+  position: fixed; /* Position fixed relative to viewport */
+  top: 82px; /* Below the top nav (72px height + 10px margin) */
+  left: 15px;
+  background: linear-gradient(90deg, #573688, #520c5b);
+  color: #ffffff;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1001; /* Ensure it's above sidebar and content */
+}
+
+.hamburger-btn:hover {
+  box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+  transform: translateX(0); /* Show when toggled */
+}
+
+/* Final Preview Styles */
+.final-preview {
+  background: #112240;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 90%;
+  width: 100%;
+  border: 2px solid #6f42c1;
+  box-shadow: 0 0 12px #6f42c1;
+}
+
+.final-preview h2 {
+  font-size: 1.5rem;
+  color: #6f42c1;
+  margin-bottom: 10px;
+}
+
+.final-preview p {
+  font-size: 0.9rem;
+  color: #ccd6f6;
+  margin-bottom: 20px;
+}
+
+/* Media Queries for Responsive Design */
+@media (min-width: 1025px) {
+  .teach-by-parts-container {
+    padding-left: 250px; /* Fixed sidebar space */
+  }
+
+  .sidebar {
+    transform: translateX(0); /* Fixed by default */
+  }
+
+  .sidebar:not(.open) {
+    transform: translateX(-250px); /* Hide when toggled */
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .teach-by-parts-container {
+    padding-left: 250px; /* Fixed sidebar space */
+  }
+
+  .sidebar {
+    transform: translateX(0); /* Fixed by default */
+  }
+
+  .sidebar:not(.open) {
+    transform: translateX(-250px); /* Hide when toggled */
+  }
+}
+
+@media (max-width: 768px) {
+  .teach-by-parts-container {
+    padding-left: 0; /* No sidebar space by default */
+  }
+
+  .sidebar {
+    transform: translateX(-250px); /* Hidden by default */
+  }
+
+  .sidebar.open {
+    transform: translateX(0); /* Show when toggled */
+  }
+
+  .main-content {
+    padding: 15px;
+    padding-top: 60px; /* Ensure consistent padding top */
+  }
+
+  .header-title {
+    font-size: 1.8rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .welcome-card {
+    padding: 15px;
+  }
+
+  .welcome-title {
+    font-size: 1.3rem;
+  }
+
+  .welcome-description {
+    font-size: 0.8rem;
+  }
+
+  .start-button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .logo-image {
+    height: 28px;
+  }
+
+  .logo {
+    font-size: 1rem;
+  }
+
+  .back-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.7rem;
+  }
+
+  .back-btn-text {
+    display: none;
+  }
+
+  .back-btn-icon {
+    display: inline;
+  }
+
+  .selcomp-base-image {
+    max-height: 50vh;
+  }
+
+  .selcomp-toolbar {
+    gap: 0.5rem;
+  }
+
+  .selcomp-toolbar-button {
+    padding: 6px 12px;
+    font-size: 0.7rem;
+  }
+
+  .selcomp-back-button {
+    padding: 6px 12px;
+    font-size: 0.7rem;
+  }
+
+  .back-btn-text {
+    display: none;
+  }
+
+  .back-btn-icon {
+    display: inline;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-header {
+    margin-top: 30px; /* Add space below hamburger button */
+  }
+
+  .header-title {
+    font-size: 1.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .welcome-card {
+    padding: 10px;
+  }
+
+  .welcome-title {
+    font-size: 1.2rem;
+  }
+
+  .welcome-description {
+    font-size: 0.7rem;
+  }
+
+  .start-button {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
+
+  .final-preview h2 {
+    font-size: 1.3rem;
+  }
+
+  .final-preview p {
+    font-size: 0.8rem;
+  }
+
+  .back-btn-text {
+    display: none;
+  }
+
+  .back-btn-icon {
+    display: inline;
+  }
 }

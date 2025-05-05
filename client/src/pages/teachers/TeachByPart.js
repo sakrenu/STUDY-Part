@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UploadComponent from '../../components/UploadComponent';
 import { motion } from 'framer-motion';
-import { MdUpload, MdLibraryBooks, MdCrop } from 'react-icons/md';
+import { MdUpload, MdLibraryBooks, MdCrop, MdMenu, MdArrowBack } from 'react-icons/md';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { auth } from '../../firebase';
@@ -18,6 +18,7 @@ const TeachByParts = () => {
   const [uploadedImageId, setUploadedImageId] = useState(null);
   const [segmentedRegions, setSegmentedRegions] = useState(null);
   const [lessonWithFeatures, setLessonWithFeatures] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -62,6 +63,11 @@ const TeachByParts = () => {
     } else if (teacherEmail) {
       setCurrentStep(step);
     }
+    setIsSidebarOpen(false); // Close sidebar on step change
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
   const handleRegionsSegmented = (data) => {
@@ -103,15 +109,25 @@ const TeachByParts = () => {
             <span className="part">Part</span>
           </a>
         </div>
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>Back</button>
+        <div className="nav-buttons">
+          <button className="back-btn" onClick={() => navigate('/dashboard')}>
+            <span className="back-btn-text">Back</span>
+            <MdArrowBack size={20} className="back-btn-icon" />
+          </button>
+        </div>
       </nav>
 
-      <div className="teach-by-parts-container">
+      {/* Add conditional class based on sidebar state */}
+      <div className={`teach-by-parts-container ${isSidebarOpen ? 'sidebar-is-open' : ''}`}>
+        <button className="hamburger-btn" onClick={toggleSidebar}>
+          <MdMenu size={24} />
+        </button>
+
         <motion.div
-          className="sidebar"
-          initial={{ x: -250 }}
-          animate={{ x: 0 }}
-          transition={{ duration: 0.5 }}
+          className={`sidebar ${isSidebarOpen ? 'open' : ''}`}
+          initial={{ x: 0 }}
+          animate={{ x: isSidebarOpen ? 0 : -250 }}
+          transition={{ duration: 0.3 }}
         >
           <h3 className="sidebar-title">TeachByParts</h3>
           <ul className="sidebar-menu">
