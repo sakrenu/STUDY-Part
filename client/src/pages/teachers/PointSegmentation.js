@@ -27,12 +27,14 @@ const PointSegmentation = () => {
   const [simulationProgress, setSimulationProgress] = useState(0);
   const [simulationMessage, setSimulationMessage] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isLoadingOutline, setIsLoadingOutline] = useState(false);
+  const [outlineError, setOutlineError] = useState('');
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
   const teacherId = "teacher_demo";
 
-  // Handle image file selection
+  // Restore original handleImageUpload
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -47,9 +49,8 @@ const PointSegmentation = () => {
       setMaskUrl('');
       setCurrentCutoutUrl('');
       setCurrentCutoutPosition(null);
-      // Note: We don't reset savedCutouts here to maintain them across uploads
-      setSavedCutouts([]); // Clear saved cutouts for a new image
-      setCumulativePuzzleOutlineUrl(''); // Clear the cumulative outline for a new image
+      setSavedCutouts([]);
+      setCumulativePuzzleOutlineUrl('');
       setError('');
       setSuccessMessage('');
       
@@ -62,7 +63,7 @@ const PointSegmentation = () => {
     }
   };
 
-  // Generate embeddings for the uploaded image with simulated progress
+  // Restore original handleGenerateEmbeddings
   const handleGenerateEmbeddings = async () => {
     if (!selectedFile) {
       setError("Please select an image first.");
@@ -81,14 +82,13 @@ const PointSegmentation = () => {
     const simulationPromise = new Promise(resolve => {
       const updateProgress = () => {
         if (apiFinished) {
-          // When API is finished, quickly complete the progress
           const finishProgress = () => {
             currentProgress = Math.min(100, currentProgress + 5);
             setSimulationProgress(currentProgress);
             setSimulationMessage(`Finishing up (${Math.round(currentProgress)}%)`);
             
             if (currentProgress < 100) {
-              setTimeout(finishProgress, 50); // Quick progress updates
+              setTimeout(finishProgress, 50);
             } else {
               resolve();
             }
@@ -97,6 +97,7 @@ const PointSegmentation = () => {
           return;
         }
 
+        // Restore original progress messages
         if (currentProgress < 25) {
           setSimulationMessage(`Loading your image... (${Math.round(currentProgress)}%)`);
           currentProgress = Math.min(25, currentProgress + 1);
@@ -114,29 +115,28 @@ const PointSegmentation = () => {
           setTimeout(updateProgress, 100);
         }
       };
-
       updateProgress();
     });
     
-    // API calls in parallel with the simulation
+    // Restore original API calls (upload + get embedding)
     const apiPromise = (async () => {
       try {
         const uploadForm = new FormData();
         uploadForm.append('image', selectedFile);
-        const uploadResponse = await axios.post('http://57.159.24.129:8000/deprecated/upload', uploadForm, {
+        const uploadResponse = await axios.post('http://57.159.24.129:8000/v1/deprecated/upload', uploadForm, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         const imageUrl = uploadResponse.data.image_url;
         setUploadedImageUrl(imageUrl);
         
-        const embeddingResponse = await axios.post('http://57.159.24.129:8000/deprecated/get_image_embedding', {
+        const embeddingResponse = await axios.post('http://57.159.24.129:8000/v1/deprecated/get_image_embedding', {
           image_url: imageUrl,
           teacher_id: teacherId
         });
         
         setImageEmbeddingId(embeddingResponse.data.embedding_id);
       } catch (err) {
-        setError('Failed to generate embeddings: ' + err.message);
+        setError('Failed to generate embeddings: ' + (err.response?.data?.detail || err.message));
       } finally {
         apiFinished = true;
       }
@@ -145,7 +145,8 @@ const PointSegmentation = () => {
     await Promise.all([apiPromise, simulationPromise]);
     setSimulationVisible(false);
     
-    if (!error) {
+    // Restore original success message logic
+    if (!error && imageEmbeddingId) {
       setSuccessMessage('Embeddings generated successfully! Now select points on the image.');
     }
     setIsGeneratingEmbedding(false);
@@ -249,7 +250,7 @@ const PointSegmentation = () => {
       setIsSegmenting(true);
       setError('');
       
-      const segmentationResponse = await axios.post('http://127.0.0.1:8000/deprecated/segment_with_points', {
+      const segmentationResponse = await axios.post('http://57.159.24.129:8000/v1/segment_with_points', {
         image_embedding_id: imageEmbeddingId,
         points: points,
         labels: labels,
@@ -276,23 +277,21 @@ const PointSegmentation = () => {
       setIsCuttingOut(true);
       setError('');
       
-      const cutoutResponse = await axios.post('http://127.0.0.1:8000/get_point_cutouts', {
+      const cutoutResponse = await axios.post('http://57.159.24.129:8000/v1/get_point_cutouts', {
         image_embedding_id: imageEmbeddingId,
         points: points,
         labels: labels,
         original_size: [imageSize.width, imageSize.height]
       });
       
-      // Store the current cutout
+      // Store the current cutout with its ID
       const cutoutUrl = cutoutResponse.data.segmented_urls[0];
       const position = cutoutResponse.data.positions[0];
-      
-      setCurrentCutoutUrl(cutoutUrl);
-      setCurrentCutoutPosition(position);
+      const cutoutId = cutoutResponse.data.cutout_id;
       
       // Add the cutout to saved cutouts
       const newCutout = {
-        id: Date.now(), // Unique ID for each cutout
+        id: cutoutId,
         url: cutoutUrl,
         position: position
       };
@@ -300,17 +299,14 @@ const PointSegmentation = () => {
       const updatedCutouts = [...savedCutouts, newCutout];
       setSavedCutouts(updatedCutouts);
       
-      // Update the cumulative puzzle outline
-      setCumulativePuzzleOutlineUrl(cutoutResponse.data.puzzle_outline_url);
-      
-      setSuccessMessage('Cutout saved successfully! You can now reset and create another segment.');
-      
       // Reset points and segmentation for a new cutout
       setPoints([]);
       setLabels([]);
       setMaskUrl('');
+      
+      setSuccessMessage('Cutout saved successfully! You can now create another segment.');
     } catch (err) {
-      setError('Failed to save cutout: ' + err.message);
+      setError('Failed to save cutout: ' + (err.response?.data?.detail || err.message));
     } finally {
       setIsCuttingOut(false);
     }
@@ -348,7 +344,7 @@ const PointSegmentation = () => {
       // For demonstration, we'll assume you implemented a new endpoint that accepts a list of point selections
       // Let's simulate the regeneration of the puzzle outline using the last cutout for now
       const lastCutout = updatedCutouts[updatedCutouts.length - 1];
-      const regenerateResponse = await axios.post('http://127.0.0.1:8000/regenerate_puzzle_outline', {
+      const regenerateResponse = await axios.post('http://57.159.24.129:8000/v1/regenerate_puzzle_outline', {
         image_embedding_id: imageEmbeddingId,
         cutout_ids: updatedCutouts.map(cutout => cutout.id)
       });
@@ -368,6 +364,34 @@ const PointSegmentation = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  // Effect to update puzzle outline when cutouts change
+  useEffect(() => {
+    const updatePuzzleOutline = async () => {
+      if (savedCutouts.length === 0) {
+        setCumulativePuzzleOutlineUrl('');
+        return;
+      }
+
+      try {
+        setIsLoadingOutline(true);
+        setOutlineError('');
+        
+        const response = await axios.post('http://57.159.24.129:8000/v1/regenerate_puzzle_outline', {
+          image_embedding_id: imageEmbeddingId,
+          cutout_ids: savedCutouts.map(cutout => cutout.id)
+        });
+        
+        setCumulativePuzzleOutlineUrl(response.data.puzzle_outline_url);
+      } catch (err) {
+        setOutlineError('Failed to update puzzle outline: ' + (err.response?.data?.detail || err.message));
+      } finally {
+        setIsLoadingOutline(false);
+      }
+    };
+
+    updatePuzzleOutline();
+  }, [savedCutouts, imageEmbeddingId]);
+
   return (
     <div className="point-segmentation-container">
       <div className="segmentation-header">
@@ -381,6 +405,24 @@ const PointSegmentation = () => {
           <div className="sidebar-header">
             <h2>Saved Segments</h2>
           </div>
+          
+          {/* Puzzle Outline Section */}
+          {cumulativePuzzleOutlineUrl && (
+            <div className="puzzle-outline-section">
+              <h3>Puzzle Outline</h3>
+              {isLoadingOutline ? (
+                <div className="outline-loading">Updating outline...</div>
+              ) : (
+                <img 
+                  src={cumulativePuzzleOutlineUrl} 
+                  alt="Puzzle outline" 
+                  className="puzzle-outline-image"
+                />
+              )}
+              {outlineError && <div className="outline-error">{outlineError}</div>}
+            </div>
+          )}
+          
           <div className="saved-cutouts-container">
             {savedCutouts.map((cutout, index) => (
               <div key={index} className="saved-cutout-item">
@@ -419,6 +461,7 @@ const PointSegmentation = () => {
 
         {/* Main Content */}
         <main className={`main-content ${sidebarOpen ? 'sidebar-open' : ''}`}>
+          {/* Restore original upload section */}
           <div className="upload-section">
             <div className="upload-container">
               <label className="file-upload-label">
@@ -432,6 +475,7 @@ const PointSegmentation = () => {
               </label>
             </div>
 
+            {/* Restore Generate Embeddings button */}
             {imagePreview && (
               <button
                 className="upload-button"
@@ -443,9 +487,11 @@ const PointSegmentation = () => {
             )}
           </div>
 
+          {/* Display errors/success messages */}
           {error && <div className="error-message">{error}</div>}
           {successMessage && <div className="success-message">{successMessage}</div>}
 
+          {/* Display image and segmentation controls */}
           {imagePreview && (
             <div className="image-container">
               <div className="image-canvas-wrapper">
@@ -455,41 +501,132 @@ const PointSegmentation = () => {
                   alt="Selected"
                   className={`segmentation-image ${maskUrl ? 'dull-image' : ''}`}
                 />
+                {maskUrl && (
+                  <img
+                    src={maskUrl}
+                    alt="Segmentation mask"
+                    className="segmentation-mask"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      opacity: 0.5,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
                 <canvas
                   ref={canvasRef}
                   className="selection-canvas"
                   onClick={handleCanvasClick}
+                  style={{ width: imageRef.current?.width, height: imageRef.current?.height }}
                 />
-              </div>
-
-              <div className="control-buttons">
-                <button onClick={handleUndoPoint} disabled={points.length === 0}>
-                  Undo Point
-                </button>
-                <button onClick={handleResetPoints} disabled={points.length === 0}>
-                  Reset Points
-                </button>
-                <button onClick={handleSegment} disabled={points.length === 0}>
-                  Segment
-                </button>
-                {currentCutoutUrl && (
-                  <button onClick={handleSaveCutout}>Save Segment</button>
+                {/* Simulation Overlay */}
+                {simulationVisible && (
+                  <div className="simulation-overlay-container">
+                    <div className="simulation-overlay">
+                      <div className="simulation-bar-container">
+                        <div className="simulation-bar">
+                          <div 
+                            className="simulation-progress"
+                            style={{ width: `${simulationProgress}%` }}
+                          />
+                          <div className="simulation-glow" />
+                        </div>
+                      </div>
+                      <div className="simulation-percentage">
+                        {Math.round(simulationProgress)}%
+                      </div>
+                      <div className="simulation-message">
+                        {simulationMessage}
+                      </div>
+                    </div>
+                    <div className="neural-animation-overlay">
+                      <div className="neural-particles" />
+                      <div className="neural-particles" />
+                      <div className="neural-particles" />
+                    </div>
+                  </div>
                 )}
               </div>
 
-              <div className="mode-buttons">
-                <button
-                  className={`mode-button ${selectionMode === 'foreground' ? 'active' : ''}`}
-                  onClick={() => setSelectionMode('foreground')}
-                >
-                  Foreground Points
-                </button>
-                <button
-                  className={`mode-button ${selectionMode === 'background' ? 'active' : ''}`}
-                  onClick={() => setSelectionMode('background')}
-                >
-                  Background Points
-                </button>
+              <div className="control-panel">
+                {/* Animated Workflow Steps */}
+                <div className="workflow-steps">
+                  <div className={`step ${points.length > 0 ? 'active' : ''}`}>
+                    <span className="step-number">1</span>
+                    Mark Areas
+                    <div className="step-underline"></div>
+                  </div>
+                  <div className={`step ${maskUrl ? 'active' : ''}`}>
+                    <span className="step-number">2</span>
+                    Preview
+                    <div className="step-underline"></div>
+                  </div>
+                  <div className={`step ${savedCutouts.length > 0 ? 'active' : ''}`}>
+                    <span className="step-number">3</span>
+                    Save
+                    <div className="step-underline"></div>
+                  </div>
+                </div>
+
+                {/* Point Selection Mode */}
+                <div className="mode-buttons">
+                  <button
+                    className={`mode-button ${selectionMode === 'foreground' ? 'active' : ''}`}
+                    onClick={() => setSelectionMode('foreground')}
+                  >
+                    🎯 Target Area
+                  </button>
+                  <button
+                    className={`mode-button ${selectionMode === 'background' ? 'active' : ''}`}
+                    onClick={() => setSelectionMode('background')}
+                  >
+                    🚫 Exclude Area
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="action-group">
+                  <div className="management-buttons">
+                    <button 
+                      onClick={handleUndoPoint} 
+                      disabled={points.length === 0}
+                      className="secondary-button"
+                    >
+                      ↩️ Last Point
+                    </button>
+                    <button 
+                      onClick={handleResetPoints} 
+                      disabled={points.length === 0}
+                      className="secondary-button"
+                    >
+                      🗑️ Clear All
+                    </button>
+                  </div>
+                  
+                  <div className="primary-actions">
+                    <button 
+                      onClick={handleSegment} 
+                      disabled={points.length === 0 || isSegmenting || !imageEmbeddingId}
+                      className="primary-button"
+                    >
+                      {isSegmenting ? '🔍 Analyzing...' : '👀 Preview Mask'}
+                    </button>
+                    {maskUrl && (
+                      <button 
+                        onClick={handleSaveCutout} 
+                        disabled={isCuttingOut}
+                        className="success-button"
+                      >
+                        {isCuttingOut ? '⏳ Saving...' : '💾 Save Segment'}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}

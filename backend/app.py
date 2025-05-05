@@ -18,7 +18,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 from gemini_service import generate_notes_with_gemini
 from huggingface_hub import login
-from routes.deprecated_app import deprecated_router
+from routes.deprecated_app import deprecated_router, point_router
 from routes.rag_routes import router as rag_router
 import PyPDF2
 import pytesseract
@@ -50,6 +50,14 @@ app.include_router(
     prefix="/v1",
     tags=["deprecated"],
     responses={404: {"description": "Not found"}}
+)
+
+# Include the point-based segmentation router under the same /v1 prefix
+app.include_router(
+    point_router,
+    prefix="/v1",
+    tags=["point_segmentation"],
+    responses={500: {"description": "Internal server error"}}
 )
 
 # Include the RAG router with proper configuration

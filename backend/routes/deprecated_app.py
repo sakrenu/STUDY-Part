@@ -227,6 +227,9 @@ class PointSegmentationRequest(BaseModel):
 # In-memory storage for embeddings (consider a more persistent solution for production)
 image_embeddings_store = {}
 
+# APIRouter for point-based segmentation
+point_router = APIRouter()
+
 # Routes
 
 @app.get('/')
@@ -287,7 +290,7 @@ async def segment_image(data: SegmentRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/segment_with_points')
+@point_router.post('/segment_with_points')
 async def segment_with_points_route(data: PointSegmentationRequest):
     try:
         # Retrieve the stored embedding
@@ -360,7 +363,7 @@ async def segment_with_points_route(data: PointSegmentationRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/get_point_cutouts')
+@point_router.post('/get_point_cutouts')
 async def get_point_cutouts(data: PointSegmentationRequest):
     try:
         # Check if the embedding exists
@@ -411,6 +414,16 @@ async def get_point_cutouts(data: PointSegmentationRequest):
         if 'cumulative_mask' not in embedding_data:
             embedding_data['cumulative_mask'] = np.zeros_like(mask)
         
+        # Initialize cutout_masks dictionary if it doesn't exist
+        if 'cutout_masks' not in embedding_data:
+            embedding_data['cutout_masks'] = {}
+            
+        # Generate a unique ID for this cutout
+        cutout_id = str(uuid.uuid4())
+        
+        # Store the individual mask
+        embedding_data['cutout_masks'][cutout_id] = mask.copy()
+        
         # Update the cumulative mask by combining with the current mask
         embedding_data['cumulative_mask'] = np.logical_or(embedding_data['cumulative_mask'], mask).astype(np.uint8) * 255
         cumulative_mask = embedding_data['cumulative_mask']
@@ -460,13 +473,14 @@ async def get_point_cutouts(data: PointSegmentationRequest):
         return {
             'segmented_urls': [cutout_url],         # Single cutout URL in a list
             'puzzle_outline_url': puzzle_outline_url,
-            'positions': [position]                 # Single position in a list
+            'positions': [position],                # Single position in a list
+            'cutout_id': cutout_id                 # Return the cutout ID
         }
     except Exception as e:
         print(f"Error in get_point_cutouts: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/regenerate_puzzle_outline')
+@point_router.post('/regenerate_puzzle_outline')
 async def regenerate_puzzle_outline(data: dict):
     try:
         # Extract data
@@ -978,3 +992,5 @@ async def get_embedding(data: GetEmbeddingRequest):
         raise HTTPException(status_code=500, detail=str(e))
 # Include the deprecated router in the main app
 app.include_router(deprecated_router)
+# Include the point router in the main app
+app.include_router(point_router)
