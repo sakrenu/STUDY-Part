@@ -19,9 +19,9 @@
   width: 250px;
   background-color: #3c4249;
   color: #ecf0f1;
-  padding: 20px;
+  padding: 60px 20px 20px 20px; /* Increased top padding for hamburger button clearance */
   position: fixed;
-  top: 72px;
+  top: 72px; /* Height of top nav */
   left: 0;
   height: calc(100vh - 72px);
   z-index: 1000;
@@ -76,6 +76,7 @@
   align-items: center;
   background-color: #000000;
   min-height: calc(100vh - 72px);
+  padding-top: 60px; /* Added padding-top to prevent content overlap with fixed hamburger button */
 }
 
 /* Header Styles */
@@ -124,12 +125,19 @@
 .start-button {
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(111, 66, 193, 0.2);
+  display: inline-flex; /* Use flex to align text/icon */
+  align-items: center; /* Center items vertically */
+  justify-content: center; /* Center items horizontally */
+  gap: 5px; /* Space between text and icon if both are shown */
   min-width: 120px;
 }
 
@@ -366,6 +374,10 @@
   letter-spacing: 1px;
   font-weight: 600;
   box-shadow: 0 4px 6px rgba(111, 66, 193, 0.2);
+  display: inline-flex; /* Use flex to align text/icon */
+  align-items: center; /* Center items vertically */
+  justify-content: center; /* Center items horizontally */
+  gap: 5px; /* Space between text and icon if both are shown */
 }
 
 .back-btn:hover {
@@ -379,7 +391,18 @@
   box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
 }
 
+.back-btn-text {
+  display: inline; /* Show text by default */
+}
+
+.back-btn-icon {
+  display: none; /* Hide icon by default */
+}
+
 .hamburger-btn {
+  position: fixed; /* Position fixed relative to viewport */
+  top: 82px; /* Below the top nav (72px height + 10px margin) */
+  left: 15px;
   background: linear-gradient(90deg, #573688, #520c5b);
   color: #ffffff;
   padding: 0.5rem;
@@ -387,10 +410,12 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
+  z-index: 1001; /* Ensure it's above sidebar and content */
 }
 
 .hamburger-btn:hover {
   box-shadow: 0 0 10px #8868ab, 0 0 10px #680baf, 0 0 10px #330465;
+  transform: translateX(0); /* Show when toggled */
 }
 
 /* Final Preview Styles */
@@ -461,6 +486,7 @@
 
   .main-content {
     padding: 15px;
+    padding-top: 60px; /* Ensure consistent padding top */
   }
 
   .header-title {
@@ -501,6 +527,14 @@
     font-size: 0.7rem;
   }
 
+  .back-btn-text {
+    display: none;
+  }
+
+  .back-btn-icon {
+    display: inline;
+  }
+
   .selcomp-base-image {
     max-height: 50vh;
   }
@@ -518,9 +552,21 @@
     padding: 6px 12px;
     font-size: 0.7rem;
   }
+
+  .back-btn-text {
+    display: none;
+  }
+
+  .back-btn-icon {
+    display: inline;
+  }
 }
 
 @media (max-width: 480px) {
+  .main-header {
+    margin-top: 30px; /* Add space below hamburger button */
+  }
+
   .header-title {
     font-size: 1.5rem;
   }
@@ -552,5 +598,13 @@
 
   .final-preview p {
     font-size: 0.8rem;
+  }
+
+  .back-btn-text {
+    display: none;
+  }
+
+  .back-btn-icon {
+    display: inline;
   }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UploadComponent from '../../components/UploadComponent';
 import { motion } from 'framer-motion';
-import { MdUpload, MdLibraryBooks, MdCrop, MdMenu } from 'react-icons/md';
+import { MdUpload, MdLibraryBooks, MdCrop, MdMenu, MdArrowBack } from 'react-icons/md';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { auth } from '../../firebase';
@@ -110,14 +110,19 @@ const TeachByParts = () => {
           </a>
         </div>
         <div className="nav-buttons">
-          <button className="hamburger-btn" onClick={toggleSidebar}>
-            <MdMenu size={24} />
+          <button className="back-btn" onClick={() => navigate('/dashboard')}>
+            <span className="back-btn-text">Back</span>
+            <MdArrowBack size={20} className="back-btn-icon" />
           </button>
-          <button className="back-btn" onClick={() => navigate('/dashboard')}>Back</button>
         </div>
       </nav>
 
-      <div className="teach-by-parts-container">
+      {/* Add conditional class based on sidebar state */}
+      <div className={`teach-by-parts-container ${isSidebarOpen ? 'sidebar-is-open' : ''}`}>
+        <button className="hamburger-btn" onClick={toggleSidebar}>
+          <MdMenu size={24} />
+        </button>
+
         <motion.div
           className={`sidebar ${isSidebarOpen ? 'open' : ''}`}
           initial={{ x: 0 }}
