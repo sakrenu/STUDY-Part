@@ -202,7 +202,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
           labels: pointLabels.length > 0 ? pointLabels : null
         };
   
-        const API_URL = process.env.REACT_APP_API_URL || 'http://57.159.24.129:8000';
+        const API_URL = process.env.REACT_APP_API_URL || 'http://20.193.248.159:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });
@@ -231,7 +231,7 @@ const SelectionComponent = ({ image, image_id, teacherEmail, onRegionsSegmented,
           labels: pointLabels
         };
   
-        const API_URL = process.env.REACT_APP_API_URL || 'http://57.159.24.129:8000';
+        const API_URL = process.env.REACT_APP_API_URL || 'http://20.193.248.159:8000';
         const response = await axios.post(`${API_URL}/segment`, payload, {
           headers: { 'Content-Type': 'application/json' }
         });

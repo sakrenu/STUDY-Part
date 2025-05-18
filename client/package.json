@@ -37,7 +37,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "start:azure": "cross-env REACT_APP_API_URL=http://57.159.24.129:8000 react-scripts start",
+    "start:azure": "cross-env REACT_APP_API_URL=http://20.193.248.159:8000 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

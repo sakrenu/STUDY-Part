@@ -47,7 +47,7 @@ const UploadComponent = ({ onImageUploaded, onBack }) => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const API_URL = process.env.REACT_APP_API_URL || 'http://57.159.24.129:8000';
+      const API_URL = process.env.REACT_APP_API_URL || 'http://20.193.248.159:8000';
       const response = await axios.post(`${API_URL}/upload_image`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
