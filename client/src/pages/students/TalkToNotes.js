@@ -40,7 +40,8 @@ const TalkToNotes = () => {
                 }
                 
                 console.log('Clearing vector stores...');
-                const response = await fetch('https://20.193.248.159:443/api/rag/clear_vector_store', {
+                const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
+                const response = await fetch(`${API_URL}/api/rag/clear_vector_store`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -138,8 +139,9 @@ const TalkToNotes = () => {
             formData.append('user_id', user.uid);
 
             let endpoint = file.type.includes('pdf') ? '/api/rag/process_pdf' : '/api/rag/process_ppt';
+            const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
 
-            const response = await fetch(`https://20.193.248.159:443${endpoint}`, {
+            const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 body: formData,
             });
@@ -210,7 +212,8 @@ const TalkToNotes = () => {
             const user = auth.currentUser;
             if (!user) throw new Error('No user logged in');
 
-            const response = await fetch('https://20.193.248.159:443/api/rag/query_notes', {
+            const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
+            const response = await fetch(`${API_URL}/api/rag/query_notes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -332,7 +335,8 @@ const TalkToNotes = () => {
         setChatHistory(prev => [...prev, { type: 'typing', content: '' }]);
 
         try {
-            const response = await fetch('https://20.193.248.159:443/api/rag/general_query', {
+            const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
+            const response = await fetch(`${API_URL}/api/rag/general_query`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
