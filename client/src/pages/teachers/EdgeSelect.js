@@ -41,7 +41,7 @@ const EdgeSelect = () => {
       try {
         const formData = new FormData();
         formData.append('image', file);
-        const response = await axios.post('http://57.159.24.129:8000/upload', formData);
+        const response = await axios.post('https://20.193.248.159:443/upload', formData);
         const imageUrl = response.data.image_url;
         setImage(imageUrl); // Use Cloudinary URL directly
       } catch (error) {
@@ -135,7 +135,7 @@ const EdgeSelect = () => {
       formData.append('image', blob, 'contour.png');
 
       // Send to app.py's /upload endpoint
-      const cloudinaryResponse = await axios.post('http://57.159.24.129:8000/upload', formData, {
+      const cloudinaryResponse = await axios.post('https://20.193.248.159:443/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const highlightedOutlineUrl = cloudinaryResponse.data.image_url;

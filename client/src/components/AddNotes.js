@@ -180,7 +180,7 @@ const AddNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, onCa
         formData.append('document', uploadedFile);
       }
 
-      const API_URL = process.env.REACT_APP_API_URL || 'http://57.159.24.129:8000';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://studypart.loca.lt';
       const response = await axios.post(`${API_URL}/generate_notes`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
