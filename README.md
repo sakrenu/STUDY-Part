@@ -6,14 +6,19 @@ StudyPart is a comprehensive educational platform designed to enhance interactiv
 ## Key Features
 - **Interactive Learning Modes**: 
   - TalkToNotes: Voice-to-text note generation
+  - CustomNotes: Create custom notes with unique features
   - LearningMode: Adaptive content delivery system
   - CoursePage: Structured curriculum management
 
 - **Teacher Tools**:
-  - QuizTeachingDashboard: Real-time assessment creation
   - TeachByPart: Modular lesson planning
   - ManageStudents: Classroom management interface
-  - PointSegmentation: Visual content analysis tool
+  - PointSegmentation: Create segments by drawing points
+  - BoundingBoxSegmentation: Create segments by drawing bounding box
+  - AI Notesassistace: Create notes with the help of AI
+  - RecordNotes: Record notes
+  - AnimatedNotes: Animate the notes and visualisation 
+  - QuizTeachingDashboard: Real-time assessment creation
 
 - **Content Management**:
   - Library: Centralized resource repository
@@ -22,12 +27,12 @@ StudyPart is a comprehensive educational platform designed to enhance interactiv
 
 ## Technology Stack
 **Frontend**: 
-- React.js with Tailwind CSS
+- React.js with Bootstrap CSS
 - Firebase integration for real-time data
 - Responsive design for cross-device compatibility
 
 **Backend**:
-- Python Flask API
+- Python Fast API
 - Gemini AI integration (gemini_service.py)
 - Segment Anything Model (SAM) for image processing
 - Firebase backend for authentication/storage
