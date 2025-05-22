@@ -40,7 +40,7 @@ const TalkToNotes = () => {
                 }
                 
                 console.log('Clearing vector stores...');
-                const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
+                const API_URL = process.env.REACT_APP_API_URL || 'https://studypart.loca.lt';
                 const response = await fetch(`${API_URL}/api/rag/clear_vector_store`, {
                     method: 'POST',
                     headers: {
@@ -139,7 +139,7 @@ const TalkToNotes = () => {
             formData.append('user_id', user.uid);
 
             let endpoint = file.type.includes('pdf') ? '/api/rag/process_pdf' : '/api/rag/process_ppt';
-            const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
+            const API_URL = process.env.REACT_APP_API_URL || 'https://studypart.loca.lt';
 
             const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
@@ -212,7 +212,7 @@ const TalkToNotes = () => {
             const user = auth.currentUser;
             if (!user) throw new Error('No user logged in');
 
-            const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
+            const API_URL = process.env.REACT_APP_API_URL || 'https://studypart.loca.lt';
             const response = await fetch(`${API_URL}/api/rag/query_notes`, {
                 method: 'POST',
                 headers: {
@@ -335,7 +335,7 @@ const TalkToNotes = () => {
         setChatHistory(prev => [...prev, { type: 'typing', content: '' }]);
 
         try {
-            const API_URL = process.env.REACT_APP_API_URL || 'https://20.193.248.159:443';
+            const API_URL = process.env.REACT_APP_API_URL || 'https://studypart.loca.lt';
             const response = await fetch(`${API_URL}/api/rag/general_query`, {
                 method: 'POST',
                 headers: {

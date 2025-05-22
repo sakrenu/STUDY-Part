@@ -158,7 +158,7 @@ const RecordNotes = ({ image, lessonId, regions, teacherEmail, onSave, onDone, o
       formData.append('file', new File([audioBlob], 'recording.webm', { type: 'audio/webm' }));
 
       // Use environment variable for backend URL
-      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://studypart.loca.lt';
       const response = await fetch(`${API_URL}/api/upload-audio`, {
         method: 'POST',
         body: formData,
